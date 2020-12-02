@@ -1,3 +1,3 @@
 from ._self import *
 
-__all__ = ['SelfTraining']
+__all__ = ['SelfTraining', 'CoTrainingByCommittee']
