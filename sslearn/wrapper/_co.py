@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.utils.validation import check_is_fitted
 from sklearn.metrics import accuracy_score
 from sklearn.utils import check_random_state, resample
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, ConvergenceWarning
 from sklearn.base import clone as skclone
 import math
 from abc import ABC, abstractmethod
@@ -147,7 +147,7 @@ class CoTraining(_BaseCoTraining):
         """
         X = np.asarray(X)
         y = np.asarray(y)
-        assert X2 is not None and features is not None,\
+        assert not (X2 is not None and features is not None),\
             "The list of features and x2 cannot be defined at the same time"
         X1 = X
         if X2 is None and features is None:
@@ -183,7 +183,7 @@ class CoTraining(_BaseCoTraining):
         U = [i for i, y_i in enumerate(y) if y_i == -1]
         self.random_state.shuffle(U)
 
-        U_ = U[-min(len(U), self.u_):]
+        U_ = U[-min(len(U), self.poolsize):]
         # remove the samples in U_ from U
         U = U[:-len(U_)]
 
@@ -196,7 +196,7 @@ class CoTraining(_BaseCoTraining):
             self.h[0].fit(X1[L], y[L], **kwards)
             self.h[1].fit(X2[L], y[L], **kwards)
 
-            if len(self.h[0].classes_):
+            if len(self.h[0].classes_) > 2:
                 raise Exception("CoTraining does not support multiclass")
 
             y1_prob = self.h[0].predict_proba(X1[U_])
@@ -259,7 +259,7 @@ class CoTraining(_BaseCoTraining):
         NotFittedError
             [description]
         """
-        if "columns_" in self:
+        if "columns_" in dir(self):
             return super().predict_proba(X, **kwards)
         else:
             if "h_" in dir(self):
@@ -286,7 +286,7 @@ class CoTraining(_BaseCoTraining):
         [type]
             [description]
         """
-        if "columns_" in self:
+        if "columns_" in dir(self):
             return super().predict(X, **kwards)
         else:
             predicted_probabilitiy = self.predict_proba(X, X2, **kwards)
@@ -386,15 +386,18 @@ class Rasco(_BaseCoTraining):
 
         if self.subspace_size is None:
             self.subspace_size = int(X.shape[1]/2)
-        idxs = self._generate_random_subspaces(X_label)
+        idxs = self._generate_random_subspaces(X_label, y_label)
 
         cfs = []
 
         for i in range(self.n_estimators):
             cfs.append(skclone(self.base_estimator)
-                       .fit(X_label[:, idxs[i]], y, **kwards))
-
-        for _ in range(self.max_iterations):
+                       .fit(X_label[:, idxs[i]], y_label, **kwards))
+        
+        it = 0
+        while True:
+            if (self.max_iterations != -1 and it >= self.max_iterations) or len(X_unlabel) == 0:
+                break
 
             raw_predicions = []
             for i in range(self.n_estimators):
@@ -413,19 +416,26 @@ class Rasco(_BaseCoTraining):
             if self.incremental:
                 # One of each class
                 for class_ in cfs[0].classes_:
-                    Lj.append(sorted_[pseudoy == class_][0])
+                    try:
+                        Lj.append(sorted_[pseudoy == class_][0])
+                    except IndexError:
+                        raise ConvergenceWarning("RASCO convergence warning, the class "+str(class_)+" not predicted")
                     yj.append(class_)
                 Lj = np.array(Lj)
             else:
                 Lj = sorted_[:self.batch_size]
                 yj = pseudoy[Lj]
 
-            X_label = np.append(X_label, X_unlabel[Lj], axis=0)
-            y_label - np.append(y_label, np.array(yj), axis=0)
-            X_unlabel = X_unlabel[~Lj]
+            X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
+            y_label = np.append(y_label, yj)
+            X_unlabel = np.delete(X_unlabel, Lj, axis=0)
 
-        for i in range(self.n_estimators):
-            cfs[i].fit(X_label[:, idxs[i]], y, **kwards)
+            for i in range(self.n_estimators):
+                cfs[i].fit(X_label[:, idxs[i]], y_label, **kwards)
+
+            it += 1
+
+
 
         self.h_ = cfs
         self.classes_ = self.h_[0].classes_
@@ -750,4 +760,4 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
         score: float
             Mean accuracy of self.predict(X) wrt. y.
         """
-        return self.base_estimator.score(X, y, sample_weight)
+        return self.ensemble_estimator.score(X, y, sample_weight)
