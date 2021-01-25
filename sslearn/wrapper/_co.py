@@ -648,16 +648,16 @@ class TriTraining(_BaseCoTraining):
 
         while something_has_changed:
             something_has_changed = False
-            L = [[]]*3
-            Ly = [[]]*3
-            _e = [0]*3
+            L = []
+            Ly = []
+            _e = []
 
             for i in range(self._n_learner):
-                L[i] = []
-                Ly[i] = []
+                L.append([])
+                Ly.append([])
                 updates[i] = False
                 hj, hk = TriTraining._another_hs(hypothesis, i)
-                _e[i] = TriTraining._measure_error(X_label, y_label, hj, hk)
+                _e.append(TriTraining._measure_error(X_label, y_label, hj, hk))
                 if e[i] > _e[i]:
                     y_p = hj.predict(X_unlabel)
                     validx = y_p == hk.predict(X_unlabel)
@@ -674,7 +674,7 @@ class TriTraining(_BaseCoTraining):
                                 TriTraining\
                                 ._subsample((L[i], Ly[i]),
                                             math.ceil(e[i]*l_[i]/_e[i]-1),
-                                            self.random_state)
+                                            self.random_sttate)
                             updates[i] = True
 
             for i in range(self._n_learner):
