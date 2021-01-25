@@ -631,8 +631,6 @@ class TriTraining(_BaseCoTraining):
         e = [.5]*self._N_LEARNER
         l_ = [0]*self._N_LEARNER
 
-        updates = [False]*3
-
         for _ in range(self._N_LEARNER):
             X_sampled, y_sampled = \
                 resample(X_label, y_label, replace=True,
@@ -651,9 +649,9 @@ class TriTraining(_BaseCoTraining):
             L = [[]]*self._N_LEARNER
             Ly = [[]]*self._N_LEARNER
             _e = []
+            updates = [False]*3
 
             for i in range(self._N_LEARNER):
-                updates[i] = False
                 hj, hk = TriTraining._another_hs(hypothesis, i)
                 _e.append(TriTraining._measure_error(X_label, y_label, hj, hk))
                 if e[i] > _e[i]:
