@@ -648,13 +648,11 @@ class TriTraining(_BaseCoTraining):
 
         while something_has_changed:
             something_has_changed = False
-            L = []
-            Ly = []
+            L = [[]]*self._N_LEARNER
+            Ly = [[]]*self._N_LEARNER
             _e = []
 
             for i in range(self._N_LEARNER):
-                L.append([])
-                Ly.append([])
                 updates[i] = False
                 hj, hk = TriTraining._another_hs(hypothesis, i)
                 _e.append(TriTraining._measure_error(X_label, y_label, hj, hk))
