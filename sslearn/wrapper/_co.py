@@ -535,7 +535,7 @@ class TriTraining(_BaseCoTraining):
         self.base_estimator = base_estimator
         self.random_state = check_random_state(random_state)
         self.n_samples = n_samples
-        self._n_learner = 3
+        self._N_LEARNER = 3
 
     def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin):
         """Calculate the error between two hypothesis
@@ -628,12 +628,12 @@ class TriTraining(_BaseCoTraining):
         X_unlabel = X[y == y.dtype.type(-1)]
 
         hypothesis = []
-        e = [.5]*self._n_learner
-        l_ = [0]*self._n_learner
+        e = [.5]*self._N_LEARNER
+        l_ = [0]*self._N_LEARNER
 
         updates = [False]*3
 
-        for _ in range(self._n_learner):
+        for _ in range(self._N_LEARNER):
             X_sampled, y_sampled = \
                 resample(X_label, y_label, replace=True,
                          n_samples=self.n_samples,
@@ -652,7 +652,7 @@ class TriTraining(_BaseCoTraining):
             Ly = []
             _e = []
 
-            for i in range(self._n_learner):
+            for i in range(self._N_LEARNER):
                 L.append([])
                 Ly.append([])
                 updates[i] = False
@@ -674,10 +674,10 @@ class TriTraining(_BaseCoTraining):
                                 TriTraining\
                                 ._subsample((L[i], Ly[i]),
                                             math.ceil(e[i]*l_[i]/_e[i]-1),
-                                            self.random_sttate)
+                                            self.random_state)
                             updates[i] = True
 
-            for i in range(self._n_learner):
+            for i in range(self._N_LEARNER):
                 if updates[i]:
                     _tempL = np.concatenate((X_label, L[i]))
                     _tempY = np.concatenate((y_label, Ly[i]))
@@ -688,7 +688,7 @@ class TriTraining(_BaseCoTraining):
 
         self.h_ = hypothesis
         self.classes_ = self.h_[0].classes_
-        self.columns_ = [list(range(X.shape[1]))]*self._n_learner
+        self.columns_ = [list(range(X.shape[1]))]*self._N_LEARNER
 
         return self
 
