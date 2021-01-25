@@ -65,7 +65,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                 y_preds.append(self.estimators[i].predict(X_unlabel))
 
 
-# Done, not tested
+# Done and tested
 class CoTraining(_BaseCoTraining):
     """
     Implementation based on https://github.com/jjrob13/sklearn_cotraining
@@ -294,7 +294,7 @@ class CoTraining(_BaseCoTraining):
                 (np.argmax(predicted_probabilitiy, axis=1)), axis=0)
 
 
-# TODO
+# Done and tested
 class Rasco(_BaseCoTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
@@ -393,7 +393,7 @@ class Rasco(_BaseCoTraining):
         for i in range(self.n_estimators):
             cfs.append(skclone(self.base_estimator)
                        .fit(X_label[:, idxs[i]], y_label, **kwards))
-        
+
         it = 0
         while True:
             if (self.max_iterations != -1 and it >= self.max_iterations) or len(X_unlabel) == 0:
@@ -419,7 +419,8 @@ class Rasco(_BaseCoTraining):
                     try:
                         Lj.append(sorted_[pseudoy == class_][0])
                     except IndexError:
-                        raise ConvergenceWarning("RASCO convergence warning, the class "+str(class_)+" not predicted")
+                        raise ConvergenceWarning(
+                            "RASCO convergence warning, the class "+str(class_)+" not predicted")
                     yj.append(class_)
                 Lj = np.array(Lj)
             else:
@@ -435,8 +436,6 @@ class Rasco(_BaseCoTraining):
 
             it += 1
 
-
-
         self.h_ = cfs
         self.classes_ = self.h_[0].classes_
         self.columns_ = idxs
@@ -444,7 +443,7 @@ class Rasco(_BaseCoTraining):
         return self
 
 
-# TODO
+# Done and tested
 class RelRasco(Rasco):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
@@ -510,33 +509,79 @@ class RelRasco(Rasco):
         return idxs
 
 
-# TODO
+# Done and tested
 class TriTraining(_BaseCoTraining):
-    """TriTraining
-
-    Zhi-Hua Zhou and Ming Li, 
-    "Tri-training: exploiting unlabeled data using three classifiers,"
-    in <i>IEEE Transactions on Knowledge and Data Engineering</i>, 
-    vol. 17, no. 11, pp. 1529-1541, Nov. 2005,
-    doi: 10.1109/TKDE.2005.186.
-    """
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
                  n_samples=None, random_state=None):
+        """TriTraining
+
+        Zhi-Hua Zhou and Ming Li, 
+        "Tri-training: exploiting unlabeled data using three classifiers,"
+        in <i>IEEE Transactions on Knowledge and Data Engineering</i>, 
+        vol. 17, no. 11, pp. 1529-1541, Nov. 2005,
+        doi: 10.1109/TKDE.2005.186.
+
+        Parameters
+        ----------
+        base_estimator : ClassifierMixin, optional
+            An estimator object implementing fit and predict_proba, by default DecisionTreeClassifier()
+        n_samples : int, optional
+            Number of samples to generate. 
+            If left to None this is automatically set to the first dimension of the arrays., by default None
+        random_state : int, RandomState instance, optional
+            controls the randomness of the estimator, by default None
+        """
         self.base_estimator = base_estimator
         self.random_state = check_random_state(random_state)
         self.n_samples = n_samples
         self._n_learner = 3
 
     def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin):
+        """Calculate the error between two hypothesis
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training labeled input samples.
+        y : array-like of shape (n_samples,)
+            The target values (class labels).
+        h1 : ClassifierMixin
+            First hypothesis
+        h2 : ClassifierMixin
+            Second hypothesis
+
+        Returns
+        -------
+        float
+            Divition of the number of labeled examples on which both h1 and h2 make incorrect classification,
+            by the number of labeled examples on which the classification made by h1 is the same as that made by h2.
+        """        
         y1 = h1.predict(X)
         y2 = h2.predict(X)
-        score1 = accuracy_score(y, y1)
-        score2 = accuracy_score(y, y2)
 
-        return 0.5  # TODO Real value
+        y1_fail = np.logical_not(y1 == y)
+        y2_fail = np.logical_not(y2 == y)
+
+        error = np.count_nonzero(np.logical_and(y1_fail, y2_fail))
+        coincidence = np.count_nonzero(y1 == y2)
+
+        return error/coincidence
 
     def _another_hs(hs, index):
+        """Get the another hypothesis
+
+        Parameters
+        ----------
+        hs : list
+            hypothesis collection
+        index : int
+            base hypothesis  index
+
+        Returns
+        -------
+        list
+        """
         another_hs = []
         for i in range(len(hs)):
             if i != index:
@@ -544,15 +589,45 @@ class TriTraining(_BaseCoTraining):
         return another_hs
 
     def _subsample(L, s, random_state=None):
+        """Randomly removes |L| - s number of examples from L
+
+        Parameters
+        ----------
+        L : tuple of array-like
+            Collection pseudo-labeled candidates and its labels
+        s : int
+            Equation 10 in paper
+        random_state : int, RandomState instance, optional
+            controls the randomness of the estimator, by default None
+
+        Returns
+        -------
+        tuple
+            Collection of pseudo-labeled selected for enlarged labeled examples.
+        """
         return resample(*L, replace=False,
                         n_samples=len(L)-s, random_state=random_state)
 
     def fit(self, X, y, **kwards):
+        """Build a Rasco classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples.
+        y : array-like of shape (n_samples,)
+            The target values (class labels), -1 if unlabel.
+
+        Returns
+        -------
+        self: TriTraining
+            Fitted estimator.
+        """
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
 
-        hipotesis = []
+        hypothesis = []
         e = [.5]*self._n_learner
         l_ = [0]*self._n_learner
 
@@ -564,12 +639,13 @@ class TriTraining(_BaseCoTraining):
                          n_samples=self.n_samples,
                          random_state=self.random_state)
 
-            hipotesis.append(
-              skclone(self.base_estimator).fit(X_sampled, y_sampled, **kwards)
+            hypothesis.append(
+                skclone(self.base_estimator).fit(
+                    X_sampled, y_sampled, **kwards)
             )
 
         something_has_changed = True
-        
+
         while something_has_changed:
             something_has_changed = False
             L = []
@@ -580,11 +656,11 @@ class TriTraining(_BaseCoTraining):
                 L.append([])
                 Ly.append([])
                 updates[i] = False
-                hj, hk = TriTraining._another_hs(hipotesis, i)
+                hj, hk = TriTraining._another_hs(hypothesis, i)
                 _e.append(TriTraining._measure_error(X_label, y_label, hj, hk))
                 if e[i] > _e[i]:
-                    y_p = hj(X_unlabel)
-                    validx = y_p == hk(X_unlabel)
+                    y_p = hj.predict(X_unlabel)
+                    validx = y_p == hk.predict(X_unlabel)
                     L[i] = X_unlabel[validx]
                     Ly[i] = y_p[validx]
 
@@ -598,20 +674,21 @@ class TriTraining(_BaseCoTraining):
                                 TriTraining\
                                 ._subsample((L[i], Ly[i]),
                                             math.ceil(e[i]*l_[i]/_e[i]-1),
-                                            self.random_state)
+                                            self.random_sttate)
                             updates[i] = True
 
-            for i in range(self._n_learning):
+            for i in range(self._n_learner):
                 if updates[i]:
-                    _tempL = np.concatenate(X_label, L[i])
-                    _tempY = np.concatenate(y_label, Ly[i])
-                    hipotesis[i].fit(_tempL, _tempY, **kwards)
+                    _tempL = np.concatenate((X_label, L[i]))
+                    _tempY = np.concatenate((y_label, Ly[i]))
+                    hypothesis[i].fit(_tempL, _tempY, **kwards)
                     e[i] = _e[i]
                     l_[i] = len(L[i])
                     something_has_changed = True
 
-        self.h_ = hipotesis
+        self.h_ = hypothesis
         self.classes_ = self.h_[0].classes_
+        self.columns_ = [list(range(X.shape[1]))]*self._n_learner
 
         return self
 
@@ -641,7 +718,8 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         """
-        assert isinstance(ensemble_estimator, ClassifierMixin), "This method only support classification"
+        assert isinstance(
+            ensemble_estimator, ClassifierMixin), "This method only support classification"
         self.ensemble_estimator = skclone(ensemble_estimator)
         self.max_iterations = max_iterations
         self.poolsize = poolsize
@@ -695,7 +773,7 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
             index = permutation[0:self.poolsize][to_label]
             X_label = np.append(X_label, X_unlabel[index], axis=0)
             pseudoy = np.array(list(map(lambda x: self.classes_[x],
-                               class_predicted[to_label])))
+                                        class_predicted[to_label])))
             y_label = np.append(y_label, pseudoy, axis=0)
             permutation = permutation[
                 list(map(lambda x: x not in index, permutation))
