@@ -148,7 +148,8 @@ class CoTraining(_BaseCoTraining):
         self.negatives = negatives
 
     def fit(self, X, y, X2=None, features: list = None, **kwards):
-        """Build a CoTraining classifier from the training set.
+        """
+        Build a CoTraining classifier from the training set.
 
         Parameters
         ----------
@@ -855,14 +856,45 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
 # Done and tested
 class CoForest(_BaseCoTraining):
 
-    def __init__(self, n_estimators=10, confidence=0.5, random_state=None, epsilon=1**-5, **kwards):
+    def __init__(self, n_estimators=7, threshold=0.75, epsilon=10**-5 ,random_state=None, **kwards):
+        """
+        Li, M., & Zhou, Z.-H. (2007). 
+        Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples. 
+        <i>IEEE Transactions on Systems, Man, and Cybernetics - Part A: Systems and Humans</i>,
+        37(6), 1088–1098. doi:10.1109/tsmca.2007.904745 
+
+        Parameters
+        ----------
+        n_estimators : int, optional
+            The number of base estimators in the ensemble., by default 7
+        threshold : float, optional
+            The decision threshold. Should be in [0, 1)., by default 0.5
+        epsilon : float, optional
+            Value to avoid dividing by zero, by default 10**-5
+        random_state : int, RandomState instance, optional
+            controls the randomness of the estimator, by default None
+        """
         self._base = DecisionTreeClassifier(**kwards)
         self.n_estimators = n_estimators
-        self.confidence = confidence
+        self.threshold = threshold
         self.epsilon = epsilon
         self.random_state = check_random_state(random_state)
     
     def fit(self, X, y, **kwards):
+        """Build a CoForest classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples.
+        y : array-like of shape (n_samples,)
+            The target values (class labels), -1 if unlabel.
+
+        Returns
+        -------
+        self: CoForest
+            Fitted estimator.
+        """
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
@@ -894,15 +926,13 @@ class CoForest(_BaseCoTraining):
                 if ei_t < ei:
                     random_index_subsample = list(range(X_unlabel.shape[0]))
                     random_index_subsample = self.random_state.permutation(random_index_subsample)
-                    print(ei,"*",wi,"/",ei_t,"=", ei*wi/ei_t)
                     Ui_t = X_unlabel[random_index_subsample[0:int(ei*wi/ei_t)],:]
 
-                    raw_predictions = \
-                        self.ensemble_estimator.predict_proba(Ui_t)
+                    raw_predictions = hi.predict_proba(Ui_t)
                     predictions = np.max(raw_predictions, axis=1)
                     class_predicted = np.array(list(map(lambda x: hi.classes_[x], np.argmax(raw_predictions, axis=1))))
 
-                    to_label = predictions > self.confidence
+                    to_label = predictions > self.threshold
                     wi_t = predictions[to_label].sum()
 
                     if ei_t * wi_t < ei * wi:
