@@ -3,7 +3,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
 import numpy as np
 from sklearn.utils.validation import check_is_fitted
-from sklearn.metrics import accuracy_score
 from sklearn.utils import check_random_state, resample
 from sklearn.exceptions import NotFittedError, ConvergenceWarning
 from sklearn.base import clone as skclone
@@ -12,6 +11,7 @@ from abc import ABC, abstractmethod
 from sklearn.base import MetaEstimatorMixin
 from sklearn.feature_selection import mutual_info_classif
 from sslearn.utils import calculate_prior_probability
+from sklearn.ensemble import RandomForestClassifier
 
 
 class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
@@ -21,11 +21,32 @@ class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
         pass
 
     def predict(self, X, **kwards):
+        """Predict the classes of X.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+        Returns
+        -------
+        y : ndarray of shape (n_samples,)
+            Array with predicted labels.
+        """
         predicted_probabilitiy = self.predict_proba(X, **kwards)
         return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
                                   axis=0)
 
     def predict_proba(self, X, **kwards):
+        """Predict probability for each possible outcome.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+        Returns
+        -------
+        ndarray of shape (n_samples, n_features)
+            Array with prediction probabilities.
+        """        
         if "h_" in dir(self):
             ys = []
             for i in range(len(self.h_)):
@@ -127,24 +148,26 @@ class CoTraining(_BaseCoTraining):
         self.negatives = negatives
 
     def fit(self, X, y, X2=None, features: list = None, **kwards):
-        """[summary]
+        """Build a CoTraining classifier from the training set.
 
         Parameters
         ----------
-        X : [type]
-            [description]
-        y : [type]
-            [description]
-        X2 : [type], optional
-            [description], by default None
-        features : [type], optional
-            [description], by default None:list
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+        y : array-like of shape (n_samples,)
+            The target values (class labels), -1 if unlabel.
+        X2 : {array-like, sparse matrix} of shape (n_samples, n_features), optional
+            Array representing the data from another view, not compatible with `features`, by default None
+        features : {list, tuple}, optional
+            list or tuple of two arrays with `feature` index for each subspace view, not compatible with `X2`, by default None
 
         Returns
         -------
-        [type]
-            [description]
+        self: CoTraining
+            Fitted estimator.
         """
+        y = y.copy()
+        X = X.copy()
         X = np.asarray(X)
         y = np.asarray(y)
         assert not (X2 is not None and features is not None),\
@@ -240,51 +263,43 @@ class CoTraining(_BaseCoTraining):
         return self
 
     def predict_proba(self, X, X2=None, **kwards):
-        """[summary]
+        """Predict probability for each possible outcome.
 
         Parameters
         ----------
-        X : [type]
-            [description]
-        X2 : [type], optional
-            [description], by default None
-
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+        X2 : {array-like, sparse matrix} of shape (n_samples, n_features), optional
+            Array representing the data from another view, by default None
         Returns
         -------
-        [type]
-            [description]
-
-        Raises
-        ------
-        NotFittedError
-            [description]
-        """
+        ndarray of shape (n_samples, n_features)
+            Array with prediction probabilities.
+        """    
         if "columns_" in dir(self):
             return super().predict_proba(X, **kwards)
+        elif "h_" in dir(self):
+            ys = []
+            ys.append(self.h_[0].predict_proba(X, **kwards))
+            ys.append(self.h_[1].predict_proba(X2, **kwards))
+            y = (sum(ys)/len(ys))
+            return y
         else:
-            if "h_" in dir(self):
-                ys = []
-                ys.append(self.h_[0].predict_proba(X, **kwards))
-                ys.append(self.h_[1].predict_proba(X2, **kwards))
-                y = (sum(ys)/len(ys))
-                return y
-            else:
-                raise NotFittedError("Classifier not fitted")
+            raise NotFittedError("Classifier not fitted")
 
     def predict(self, X, X2=None, **kwards):
-        """[summary]
-
+        """Predict the classes of X.
         Parameters
         ----------
-        X : [type]
-            [description]
-        X2 : [type], optional
-            [description], by default None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+        X2 : {array-like, sparse matrix} of shape (n_samples, n_features), optional
+            Array representing the data from another view, by default None
 
         Returns
         -------
-        [type]
-            [description]
+        y : ndarray of shape (n_samples,)
+            Array with predicted labels.
         """
         if "columns_" in dir(self):
             return super().predict(X, **kwards)
@@ -556,7 +571,7 @@ class TriTraining(_BaseCoTraining):
         float
             Divition of the number of labeled examples on which both h1 and h2 make incorrect classification,
             by the number of labeled examples on which the classification made by h1 is the same as that made by h2.
-        """        
+        """
         y1 = h1.predict(X)
         y2 = h2.predict(X)
 
@@ -835,3 +850,70 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
             Mean accuracy of self.predict(X) wrt. y.
         """
         return self.ensemble_estimator.score(X, y, sample_weight)
+
+
+# Done and tested
+class CoForest(_BaseCoTraining):
+
+    def __init__(self, n_estimators=10, confidence=0.5, random_state=None, epsilon=1**-5, **kwards):
+        self._base = DecisionTreeClassifier(**kwards)
+        self.n_estimators = n_estimators
+        self.confidence = confidence
+        self.epsilon = epsilon
+        self.random_state = check_random_state(random_state)
+    
+    def fit(self, X, y, **kwards):
+        X_label = X[y != y.dtype.type(-1)]
+        y_label = y[y != y.dtype.type(-1)]
+        X_unlabel = X[y == y.dtype.type(-1)]
+
+        hipothesis = []
+        errors = []
+        weights = []
+        for i in range(self.n_estimators):
+            hipothesis.append(skclone(self._base).fit(X_label, y_label, **kwards))
+            errors.append(.5)
+            weights.append(np.max(hipothesis[i].predict_proba(X_label), axis=1).sum())
+        
+        changing = True
+        while changing:
+            changing = False
+            for i in range(self.n_estimators):
+                hi, ei, wi = hipothesis[i], errors[i], weights[i]
+                
+                probas = hi.predict_proba(X_label)
+                ei_t = 0
+                classes = list(hi.classes_)
+                for j in range(y_label.shape[0]):
+                    true_y = y_label[j]
+                    true_y_index = classes.index(true_y)
+                    ei_t += 1-probas[j, true_y_index]
+                if ei_t == 0:
+                    ei_t = self.epsilon
+                wi_t = wi
+                if ei_t < ei:
+                    random_index_subsample = list(range(X_unlabel.shape[0]))
+                    random_index_subsample = self.random_state.permutation(random_index_subsample)
+                    print(ei,"*",wi,"/",ei_t,"=", ei*wi/ei_t)
+                    Ui_t = X_unlabel[random_index_subsample[0:int(ei*wi/ei_t)],:]
+
+                    raw_predictions = \
+                        self.ensemble_estimator.predict_proba(Ui_t)
+                    predictions = np.max(raw_predictions, axis=1)
+                    class_predicted = np.array(list(map(lambda x: hi.classes_[x], np.argmax(raw_predictions, axis=1))))
+
+                    to_label = predictions > self.confidence
+                    wi_t = predictions[to_label].sum()
+
+                    if ei_t * wi_t < ei * wi:
+                        changing = True
+                        hi.fit(np.concatenate((X_label, Ui_t[to_label])), np.concatenate((y_label, class_predicted[to_label])), **kwards)
+                errors[i] = ei_t
+                weights[i] = wi_t                           
+
+        self.h_ = hipothesis
+        self.classes_ = self.h_[0].classes_
+        self.columns_ = [list(range(X.shape[1]))]*self.n_estimators
+
+        return self
+        
