@@ -11,8 +11,6 @@ from abc import ABC, abstractmethod
 from sklearn.base import MetaEstimatorMixin
 from sklearn.feature_selection import mutual_info_classif
 from sslearn.utils import calculate_prior_probability
-from sklearn.ensemble import RandomForestClassifier
-
 
 class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
 
@@ -66,7 +64,7 @@ class DemocraticCoLearning(_BaseCoTraining):
         self.estimators = estimators
         self.random_state = check_random_state(random_state)
 
-    def fit(self, X, y, **kwards):
+    def fit(self, X, y, estimator_kwards):
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
@@ -79,12 +77,37 @@ class DemocraticCoLearning(_BaseCoTraining):
         while changed:
             changed = False
             for i in range(len(self.estimators)):
-                self.estimators[i].fit(L[i], Ly[i], **kwards)
+                self.estimators[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
-            y_preds = []
+            temp = list()
             for i in range(len(self.estimators)):
-                y_preds.append(self.estimators[i].predict(X_unlabel))
+                temp.extend(list(self.estimators[i].predict(X_unlabel)))
+            k = dict(zip(np.unique(np.array(temp), return_counts=True)))
 
+            clss = self.estimators[0].classes_
+            w = [0] * len(self.estimators)
+            for i in range(len(self.estimators)):
+                temp = self.estimators[i].predict_proba(L[i])
+                
+                
+                h = temp[:,list(map(lambda x: clss.index(x), Ly[i]))]
+                w[i] = (1+h)/2
+
+            # raw_predictions = None
+            # for i in range(len(self.estimators)):
+            #     temp = self.estimators[i].predict_proba(X_unlabel)
+            #     if raw_predictions is None:
+            #         raw_predictions = temp
+            #     else:
+            #         raw_predictions += temp
+            
+            # class_predicted = np.argmax(raw_predictions, axis=1)
+
+
+
+            for i in range(len(self.estimators)):
+                pass
+                
 
 # Done and tested
 class CoTraining(_BaseCoTraining):
@@ -625,7 +648,7 @@ class TriTraining(_BaseCoTraining):
                         n_samples=len(L)-s, random_state=random_state)
 
     def fit(self, X, y, **kwards):
-        """Build a Rasco classifier from the training set (X, y).
+        """Build a TriTraining classifier from the training set (X, y).
 
         Parameters
         ----------
@@ -899,19 +922,19 @@ class CoForest(_BaseCoTraining):
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
 
-        hipothesis = []
+        hypothesis = []
         errors = []
         weights = []
         for i in range(self.n_estimators):
-            hipothesis.append(skclone(self._base).fit(X_label, y_label, **kwards))
+            hypothesis.append(skclone(self._base).fit(X_label, y_label, **kwards))
             errors.append(.5)
-            weights.append(np.max(hipothesis[i].predict_proba(X_label), axis=1).sum())
+            weights.append(np.max(hypothesis[i].predict_proba(X_label), axis=1).sum())
         
         changing = True
         while changing:
             changing = False
             for i in range(self.n_estimators):
-                hi, ei, wi = hipothesis[i], errors[i], weights[i]
+                hi, ei, wi = hypothesis[i], errors[i], weights[i]
                 
                 probas = hi.predict_proba(X_label)
                 ei_t = 0
@@ -941,9 +964,8 @@ class CoForest(_BaseCoTraining):
                 errors[i] = ei_t
                 weights[i] = wi_t                           
 
-        self.h_ = hipothesis
+        self.h_ = hypothesis
         self.classes_ = self.h_[0].classes_
         self.columns_ = [list(range(X.shape[1]))]*self.n_estimators
 
         return self
-        
