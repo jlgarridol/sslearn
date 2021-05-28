@@ -98,10 +98,11 @@ class DeTriTraining(TriTraining):
             return k_min
 
         def constrained(x):
-            if x in S[0]:
-                return S[1][S[0]==x]
-            else:
+            candidate = S[1][(S[0]==x).sum(axis=1)==X.shape[1]]
+            if len(candidate) == 0:
                 return seeded(x)
+            else:
+                return candidate[0]
 
         if self.mode == "seeded":
             op = seeded
