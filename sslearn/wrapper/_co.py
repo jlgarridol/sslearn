@@ -11,6 +11,9 @@ from abc import ABC, abstractmethod
 from sklearn.base import MetaEstimatorMixin
 from sklearn.feature_selection import mutual_info_classif
 from sslearn.utils import calculate_prior_probability
+from statsmodels.stats.proportion import proportion_confint
+import operator
+from sklearn.discriminant_analysis import softmax
 
 class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
 
@@ -64,6 +67,28 @@ class DemocraticCoLearning(_BaseCoTraining):
         self.estimators = estimators
         self.random_state = check_random_state(random_state)
 
+    def __vote_ponderate(self, x, confidence, H):
+        predicted = []
+        ponderated = {}
+        for i, h in enumerate(H):
+            w = confidence[i][-1]
+            y = H.predict(x)
+            if y not in ponderated:
+                ponderated[i] = w
+            else:
+                ponderated[i] += w
+            predicted.append(y)
+        return max(ponderated.iteritems(), key=operator.itemgetter(1))[0], predicted
+
+    def __calcule_last_confidences(self, X, y):
+        w = []
+        for H in self.h_:
+            successes = len(H.predict(X) == y)
+            trials = len(X)
+            li, hi = proportion_confint(successes, trials)
+            w.append((li + hi)/2)
+        self.confidences_ = w
+
     def fit(self, X, y, estimator_kwards):
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
@@ -79,34 +104,100 @@ class DemocraticCoLearning(_BaseCoTraining):
             for i in range(len(self.estimators)):
                 self.estimators[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
+            ##################################
+            # Estos pasos parecen sobrar #####
             temp = list()
             for i in range(len(self.estimators)):
                 temp.extend(list(self.estimators[i].predict(X_unlabel)))
             k = dict(zip(np.unique(np.array(temp), return_counts=True)))
+            ##################################
 
-            clss = self.estimators[0].classes_
-            w = [0] * len(self.estimators)
-            for i in range(len(self.estimators)):
-                temp = self.estimators[i].predict_proba(L[i])
-                
-                
-                h = temp[:,list(map(lambda x: clss.index(x), Ly[i]))]
-                w[i] = (1+h)/2
+            L_ = list()
+            Ly_ = list()
+            confidence = [()] * len(self.estimators)
+            for i, H in enumerate(self.estimators):
+                successes = len(H.predict(X_label) == y_label)
+                trials = len(X_label)
+                li, hi = proportion_confint(successes, trials)
+                wi = (li + hi)/2
+                confidence[i] = li, hi, wi
 
-            # raw_predictions = None
-            # for i in range(len(self.estimators)):
-            #     temp = self.estimators[i].predict_proba(X_unlabel)
-            #     if raw_predictions is None:
-            #         raw_predictions = temp
-            #     else:
-            #         raw_predictions += temp
-            
-            # class_predicted = np.argmax(raw_predictions, axis=1)
+                L_.append([])
+                Ly_.append([])
 
+            for x in X_unlabel:
+                y, predicted = self.__vote_ponderate(x, confidence, self.estimators)
+                for i, y_ in enumerate(predicted):
+                    if y_ != y:
+                        L_[i].append(x)
+                        Ly_[i].append(y)
 
+            new_confidences = []
+            e_factor = 0
+            for i, H in enumerate(self.estimators):
+                successes = len(H.predict(L[i]) == Ly[i])
+                trials = len(L[i])
+                new_confidences.append(proportion_confint(successes, trials))
+                e_factor += new_confidences[-1][0]
+            e_factor = 1 - e_factor / len(new_confidences)
 
-            for i in range(len(self.estimators)):
-                pass
+            for i, _ in enumerate(self.estimators):
+                if len(L_[i] > 0):
+                    li, hi = new_confidences[i]
+                    
+                    qi = len(L[i])*( (1- 2*(e[i]/len(L[i])) )**2 )
+                    e_i = e_factor * len(L_[i])
+
+                    q_i = (len(L[i])+len(L_[i])) * (1 - (2*e[i]+e_i)/(len(L[i])+len(L_[i])) )
+
+                    if q_i > qi:
+                        L[i] = np.concatenate((L[i],np.array(L_[i])))
+                        Ly[i] = np.concatenate((Ly[i],np.array(Ly_[i])))
+                        e[i] = e[i]+e_i
+                        changed = True
+
+        
+        self.h_ = self.estimators
+        self.classes_ = self.h_[0].classes_
+        self.columns_ = [list(range(X.shape[1]))]*self.n_estimators
+
+        return self
+
+    def predict_proba(self, X, **kwards):
+        """Predict probability for each possible outcome.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+        Returns
+        -------
+        ndarray of shape (n_samples, n_features)
+            Array with prediction probabilities.
+        """        
+        if "h_" in dir(self):
+            y_ = list()
+            if len(X) == 1:
+                X = [X]
+            for x in X:
+                groups = dict(zip(self.classes_, [list() for _ in range(len(self.classes_))]))
+                for w, H in zip(self.confidences_, self.h_):
+                    cj = H.predict(x)
+                    if w > 0.5:
+                        groups[cj].append(w)
+                C_G_j = list()
+                for c in self.classes_:
+                    size = len(groups[c])
+                    if size == 0:
+                        cgj = 0.5
+                    else:
+                        cgj = ( (size+0.5)/(size+1) ) * (sum(groups[c])/size)
+
+                    C_G_j.append(cgj)
+                y_.append(softmax(np.array(C_G_j)))
+            return np.array(y_)
+        else:
+            raise NotFittedError("Classifier not fitted")
                 
 
 # Done and tested
