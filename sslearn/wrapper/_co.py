@@ -1,4 +1,5 @@
-from sklearn.base import ClassifierMixin
+from scipy.sparse.construct import random
+from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
 import numpy as np
@@ -10,8 +11,8 @@ import math
 from abc import ABC, abstractmethod
 from sklearn.base import MetaEstimatorMixin
 from sklearn.feature_selection import mutual_info_classif
-from sslearn.utils import calculate_prior_probability
-from sklearn.ensemble import RandomForestClassifier
+from ..utils import calculate_prior_probability
+import sys
 
 
 class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
@@ -137,7 +138,7 @@ class CoTraining(_BaseCoTraining):
             self.h.append(skclone(base_estimator))
         self.max_iterations = max_iterations
         self.poolsize = poolsize
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
         if (positives == -1 and negatives != -1) or \
            (positives != -1 and negatives == -1):
@@ -167,6 +168,8 @@ class CoTraining(_BaseCoTraining):
         self: CoTraining
             Fitted estimator.
         """
+        rs = check_random_state(self.random_state)
+        
         y = y.copy()
         X = X.copy()
         X = np.asarray(X)
@@ -205,7 +208,7 @@ class CoTraining(_BaseCoTraining):
 
         # Set of unlabeled samples
         U = [i for i, y_i in enumerate(y) if y_i == -1]
-        self.random_state.shuffle(U)
+        rs.shuffle(U)
 
         U_ = U[-min(len(U), self.poolsize):]
         # remove the samples in U_ from U
@@ -354,7 +357,9 @@ class Rasco(_BaseCoTraining):
         self.incremental = incremental
         self.batch_size = batch_size
 
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
+        self._rs = check_random_state(self.random_state)
+
 
     def _generate_random_subspaces(self, X, y=None):
         """Generate the random subspaces
@@ -371,11 +376,10 @@ class Rasco(_BaseCoTraining):
         list
             List of index of features
         """
-        rs = self.random_state
         features = list(range(X.shape[1]))
         idxs = []
         for i in range(self.n_estimators):
-            idxs.append(rs.permutation(features)[:self.subspace_size])
+            idxs.append(self._rs.permutation(features)[:self.subspace_size])
         return idxs
 
     def fit(self, X, y, **kwards):
@@ -515,8 +519,8 @@ class RelRasco(Rasco):
         for _ in range(self.n_estimators):
             subspace = []
             for __ in range(self.subspace_size):
-                f1 = self.random_state.randint(0, X.shape[0])
-                f2 = self.random_state.randint(0, X.shape[0])
+                f1 = self._rs.randint(0, X.shape[0])
+                f2 = self._rs.randint(0, X.shape[0])
                 if relevance[f1] > relevance[f2]:
                     subspace.append(f1)
                 else:
@@ -549,9 +553,10 @@ class TriTraining(_BaseCoTraining):
             controls the randomness of the estimator, by default None
         """
         self.base_estimator = base_estimator
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
         self.n_samples = n_samples
         self._N_LEARNER = 3
+        self._rs = check_random_state(random_state)
 
     def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin):
         """Calculate the error between two hypothesis
@@ -651,7 +656,7 @@ class TriTraining(_BaseCoTraining):
             X_sampled, y_sampled = \
                 resample(X_label, y_label, replace=True,
                          n_samples=self.n_samples,
-                         random_state=self.random_state)
+                         random_state=self._rs)
 
             hypothesis.append(
                 skclone(self.base_estimator).fit(
@@ -686,7 +691,7 @@ class TriTraining(_BaseCoTraining):
                                 TriTraining\
                                 ._subsample((L[i], Ly[i]),
                                             math.ceil(e[i]*l_[i]/_e[i]-1),
-                                            self.random_state)
+                                            self._rs)
                             updates[i] = True
 
             for i in range(self._N_LEARNER):
@@ -735,7 +740,7 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
         self.ensemble_estimator = skclone(ensemble_estimator)
         self.max_iterations = max_iterations
         self.poolsize = poolsize
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def fit(self, X, y, **kwards):
         """Build a CoTrainingByCommittee classifier from the training set (X, y).
@@ -752,11 +757,12 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
         self: CoTrainingByCommittee
             Fitted estimator.
         """
+        rs = check_random_state(self.random_state)
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
         prior = calculate_prior_probability(y_label)
-        permutation = self.random_state.permutation(len(X_unlabel))
+        permutation = rs.permutation(len(X_unlabel))
 
         self.ensemble_estimator.fit(X_label, y_label, **kwards)
         self.classes_ = self.ensemble_estimator.classes_
@@ -856,7 +862,7 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
 # Done and tested
 class CoForest(_BaseCoTraining):
 
-    def __init__(self, n_estimators=7, threshold=0.75, epsilon=10**-5 ,random_state=None, **kwards):
+    def __init__(self, n_estimators=7, threshold=0.75, random_state=None, **kwards):
         """
         Li, M., & Zhou, Z.-H. (2007). 
         Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples. 
@@ -869,17 +875,27 @@ class CoForest(_BaseCoTraining):
             The number of base estimators in the ensemble., by default 7
         threshold : float, optional
             The decision threshold. Should be in [0, 1)., by default 0.5
-        epsilon : float, optional
-            Value to avoid dividing by zero, by default 10**-5
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         """
-        self._base = DecisionTreeClassifier(**kwards)
+        self._base = DecisionTreeClassifier(random_state=random_state, **kwards)
         self.n_estimators = n_estimators
         self.threshold = threshold
-        self.epsilon = epsilon
-        self.random_state = check_random_state(random_state)
+        self._epsilon = sys.float_info.epsilon
+        self.random_state = random_state
     
+    def __estimate_error(self, hypothesis, X, y):
+        probas = hypothesis.predict_proba(X)
+        ei_t = 0
+        classes = list(hypothesis.classes_)
+        for j in range(y.shape[0]):
+            true_y = y[j]
+            true_y_index = classes.index(true_y)
+            ei_t += 1-probas[j, true_y_index]
+        if ei_t == 0:
+            ei_t = self._epsilon
+        return ei_t
+
     def fit(self, X, y, **kwards):
         """Build a CoForest classifier from the training set (X, y).
 
@@ -895,6 +911,9 @@ class CoForest(_BaseCoTraining):
         self: CoForest
             Fitted estimator.
         """
+        rs = check_random_state(self.random_state)
+
+
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
@@ -913,19 +932,12 @@ class CoForest(_BaseCoTraining):
             for i in range(self.n_estimators):
                 hi, ei, wi = hipothesis[i], errors[i], weights[i]
                 
-                probas = hi.predict_proba(X_label)
-                ei_t = 0
-                classes = list(hi.classes_)
-                for j in range(y_label.shape[0]):
-                    true_y = y_label[j]
-                    true_y_index = classes.index(true_y)
-                    ei_t += 1-probas[j, true_y_index]
-                if ei_t == 0:
-                    ei_t = self.epsilon
+                ei_t = self.__estimate_error(hi, X_label, y_label)
+                
                 wi_t = wi
                 if ei_t < ei:
                     random_index_subsample = list(range(X_unlabel.shape[0]))
-                    random_index_subsample = self.random_state.permutation(random_index_subsample)
+                    random_index_subsample = rs.permutation(random_index_subsample)
                     Ui_t = X_unlabel[random_index_subsample[0:int(ei*wi/ei_t)],:]
 
                     raw_predictions = hi.predict_proba(Ui_t)
