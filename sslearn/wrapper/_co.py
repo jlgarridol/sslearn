@@ -68,19 +68,20 @@ class DemocraticCoLearning(_BaseCoTraining):
                  random_state=None):
         self.estimators = estimators
         self.random_state = check_random_state(random_state)
+        self.n_estimators = len(estimators)
 
     def __vote_ponderate(self, x, confidence, H):
         predicted = []
         ponderated = {}
         for i, h in enumerate(H):
             w = confidence[i][-1]
-            y = H.predict(x)
-            if y not in ponderated:
-                ponderated[i] = w
+            y = h.predict(x.reshape(1, -1))
+            if y[0] not in ponderated:
+                ponderated[y[0]] = w
             else:
-                ponderated[i] += w
+                ponderated[y[0]] += w
             predicted.append(y)
-        return max(ponderated.iteritems(), key=operator.itemgetter(1))[0], predicted
+        return max(ponderated.items(), key=operator.itemgetter(1))[0], predicted
 
     def __calcule_last_confidences(self, X, y):
         w = []
@@ -91,32 +92,34 @@ class DemocraticCoLearning(_BaseCoTraining):
             w.append((li + hi)/2)
         self.confidences_ = w
 
-    def fit(self, X, y, estimator_kwards):
+    def fit(self, X, y, estimator_kwards=None):
+        if estimator_kwards is None:
+            estimator_kwards = [{} for _ in range(self.n_estimators)]
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
 
-        L = [X_label] * len(self.estimators)
-        Ly = [y_label] * len(self.estimators)
-        e = [0] * len(self.estimators)
+        L = [X_label] * self.n_estimators
+        Ly = [y_label] * self.n_estimators
+        e = [0] * self.n_estimators
 
         changed = True
         while changed:
             changed = False
-            for i in range(len(self.estimators)):
+            for i in range(self.n_estimators):
                 self.estimators[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
             ##################################
             # Estos pasos parecen sobrar #####
             temp = list()
-            for i in range(len(self.estimators)):
+            for i in range(self.n_estimators):
                 temp.extend(list(self.estimators[i].predict(X_unlabel)))
-            k = dict(zip(np.unique(np.array(temp), return_counts=True)))
+            k = np.unique(np.array(temp), return_counts=True)
             ##################################
 
             L_ = list()
             Ly_ = list()
-            confidence = [()] * len(self.estimators)
+            confidence = [()] * self.n_estimators
             for i, H in enumerate(self.estimators):
                 successes = len(H.predict(X_label) == y_label)
                 trials = len(X_label)
@@ -144,7 +147,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             e_factor = 1 - e_factor / len(new_confidences)
 
             for i, _ in enumerate(self.estimators):
-                if len(L_[i] > 0):
+                if len(L_[i]) > 0:
                     li, hi = new_confidences[i]
                     
                     qi = len(L[i])*( (1- 2*(e[i]/len(L[i])) )**2 )
@@ -161,6 +164,7 @@ class DemocraticCoLearning(_BaseCoTraining):
         
         self.h_ = self.estimators
         self.classes_ = self.h_[0].classes_
+        self.__calcule_last_confidences(X_label, y_label)
         self.columns_ = [list(range(X.shape[1]))]*self.n_estimators
 
         return self
@@ -184,9 +188,9 @@ class DemocraticCoLearning(_BaseCoTraining):
             for x in X:
                 groups = dict(zip(self.classes_, [list() for _ in range(len(self.classes_))]))
                 for w, H in zip(self.confidences_, self.h_):
-                    cj = H.predict(x)
+                    cj = H.predict(x.reshape(1,-1))
                     if w > 0.5:
-                        groups[cj].append(w)
+                        groups[cj[0]].append(w)
                 C_G_j = list()
                 for c in self.classes_:
                     size = len(groups[c])
