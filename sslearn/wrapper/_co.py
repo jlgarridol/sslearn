@@ -1,4 +1,5 @@
 from scipy.sparse.construct import random
+from scipy.sparse.sputils import isintlike
 from sklearn.base import ClassifierMixin, RegressorMixin
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
@@ -61,14 +62,27 @@ class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
             raise NotFittedError("Classifier not fitted")
 
 
-# TODO
+# Done and tested
 class DemocraticCoLearning(_BaseCoTraining):
 
-    def __init__(self, estimators=[DecisionTreeClassifier()],
-                 random_state=None):
-        self.estimators = estimators
+    def __init__(self, base_estimator=DecisionTreeClassifier(),
+                 n_estimators=3, random_state=None):
+        if n_estimators is None and isinstance(base_estimator, list):
+            self.base_estimator = base_estimator
+        elif n_estimators is not None and not isinstance(base_estimator, list):
+            estimators = list()
+            for _ in range(n_estimators):
+                estimators.append(skclone(base_estimator))
+            self.base_estimator = estimators
+        else:
+            b = "not "
+            l = "`ClassifierMixin`"            
+            if n_estimators is None:
+                b = ""
+                l = "list"
+            raise AttributeError(f"If `n_estimators` is {b}None then `base_estimator` must be a {l}.")
         self.random_state = check_random_state(random_state)
-        self.n_estimators = len(estimators)
+        self.n_estimators = len(self.base_estimator)
 
     def __vote_ponderate(self, x, confidence, H):
         predicted = []
@@ -107,20 +121,20 @@ class DemocraticCoLearning(_BaseCoTraining):
         while changed:
             changed = False
             for i in range(self.n_estimators):
-                self.estimators[i].fit(L[i], Ly[i], **estimator_kwards[i])
+                self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
             ##################################
             # Estos pasos parecen sobrar #####
             temp = list()
             for i in range(self.n_estimators):
-                temp.extend(list(self.estimators[i].predict(X_unlabel)))
+                temp.extend(list(self.base_estimator[i].predict(X_unlabel)))
             k = np.unique(np.array(temp), return_counts=True)
             ##################################
 
             L_ = list()
             Ly_ = list()
             confidence = [()] * self.n_estimators
-            for i, H in enumerate(self.estimators):
+            for i, H in enumerate(self.base_estimator):
                 successes = len(H.predict(X_label) == y_label)
                 trials = len(X_label)
                 li, hi = proportion_confint(successes, trials)
@@ -131,7 +145,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                 Ly_.append([])
 
             for x in X_unlabel:
-                y, predicted = self.__vote_ponderate(x, confidence, self.estimators)
+                y, predicted = self.__vote_ponderate(x, confidence, self.base_estimator)
                 for i, y_ in enumerate(predicted):
                     if y_ != y:
                         L_[i].append(x)
@@ -139,14 +153,14 @@ class DemocraticCoLearning(_BaseCoTraining):
 
             new_confidences = []
             e_factor = 0
-            for i, H in enumerate(self.estimators):
+            for i, H in enumerate(self.base_estimator):
                 successes = len(H.predict(L[i]) == Ly[i])
                 trials = len(L[i])
                 new_confidences.append(proportion_confint(successes, trials))
                 e_factor += new_confidences[-1][0]
             e_factor = 1 - e_factor / len(new_confidences)
 
-            for i, _ in enumerate(self.estimators):
+            for i, _ in enumerate(self.base_estimator):
                 if len(L_[i]) > 0:
                     li, hi = new_confidences[i]
                     
@@ -162,7 +176,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                         changed = True
 
         
-        self.h_ = self.estimators
+        self.h_ = self.base_estimator
         self.classes_ = self.h_[0].classes_
         self.__calcule_last_confidences(X_label, y_label)
         self.columns_ = [list(range(X.shape[1]))]*self.n_estimators
@@ -200,7 +214,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                         cgj = ( (size+0.5)/(size+1) ) * (sum(groups[c])/size)
 
                     C_G_j.append(cgj)
-                y_.append(softmax(np.array(C_G_j)))
+                y_.append(softmax(np.array(C_G_j).reshape(1,-1))[0])
             return np.array(y_)
         else:
             raise NotFittedError("Classifier not fitted")
