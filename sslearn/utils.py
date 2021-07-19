@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.utils import check_random_state
 
 
 def calculate_prior_probability(y):
@@ -20,3 +21,4 @@ def calculate_prior_probability(y):
     for u in u_c:
         u_c[u] = float(u_c[u]/instances)
     return u_c
+

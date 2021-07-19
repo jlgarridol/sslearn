@@ -4,7 +4,6 @@ from sklearn.base import clone as skclone
 from ._co import TriTraining
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
 
 # Done and tested
 class DeTriTraining(TriTraining):
@@ -194,3 +193,4 @@ class DeTriTraining(TriTraining):
             self.columns_ = [list(range(X.shape[1]))]
 
             return self
+
