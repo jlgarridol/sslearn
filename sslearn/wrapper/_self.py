@@ -20,6 +20,25 @@ class Setred(ClassifierMixin):
     def __init__(self, base_estimator=DecisionTreeClassifier(), max_iterations=40,
                        distance="euclidean", pool_size=0.25, rejection_threshold=0.1,
                        random_state=None, n_jobs=None):
+        """[summary]
+
+        Parameters
+        ----------
+        base_estimator : [type], optional
+            [description], by default DecisionTreeClassifier()
+        max_iterations : int, optional
+            [description], by default 40
+        distance : str, optional
+            [description], by default "euclidean"
+        pool_size : float, optional
+            [description], by default 0.25
+        rejection_threshold : float, optional
+            [description], by default 0.1
+        random_state : [type], optional
+            [description], by default None
+        n_jobs : [type], optional
+            [description], by default None
+        """
         self.base_estimator = skclone(base_estimator)
         self.max_iterations = max_iterations
         self.pool_size = pool_size
