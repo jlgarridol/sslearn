@@ -19,6 +19,7 @@ from sklearn.discriminant_analysis import softmax
 from sslearn.supervised import rotation as rot
 from sklearn.decomposition import PCA
 import math
+from statsmodels.stats.proportion import proportion_confint
 
 class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
 
@@ -68,7 +69,7 @@ class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
 class DemocraticCoLearning(_BaseCoTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
-                 n_estimators=3, random_state=None):
+                 n_estimators=3):
         if n_estimators is None and isinstance(base_estimator, list):
             self.base_estimator = base_estimator
         elif n_estimators is not None and not isinstance(base_estimator, list):
@@ -83,7 +84,6 @@ class DemocraticCoLearning(_BaseCoTraining):
                 b = ""
                 l = "list"
             raise AttributeError(f"If `n_estimators` is {b}None then `base_estimator` must be a {l}.")
-        self.random_state = check_random_state(random_state)
         self.n_estimators = len(self.base_estimator)
 
     def __vote_ponderate(self, x, confidence, H):
@@ -493,10 +493,8 @@ class Rasco(_BaseCoTraining):
         self.batch_size = batch_size
 
         self.random_state = random_state
-        self._rs = check_random_state(self.random_state)
 
-
-    def _generate_random_subspaces(self, X, y=None):
+    def _generate_random_subspaces(self, X, y=None, random_state=None):
         """Generate the random subspaces
 
         Parameters
@@ -511,10 +509,11 @@ class Rasco(_BaseCoTraining):
         list
             List of index of features
         """
+        random_state = check_random_state(random_state)
         features = list(range(X.shape[1]))
         idxs = []
         for _ in range(self.n_estimators):
-            idxs.append(self._rs.permutation(features)[:self.subspace_size])
+            idxs.append(random_state.permutation(features)[:self.subspace_size])
         return idxs
 
     def fit(self, X, y, **kwards):
@@ -536,12 +535,14 @@ class Rasco(_BaseCoTraining):
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
 
+        random_state = check_random_state(self.random_state)
+
         if not self.incremental and self.batch_size is None:
             self.batch_size = X_label.shape[0]
 
         if self.subspace_size is None:
             self.subspace_size = int(X.shape[1]/2)
-        idxs = self._generate_random_subspaces(X_label, y_label)
+        idxs = self._generate_random_subspaces(X_label, y_label, random_state)
 
         cfs = []
 
@@ -635,7 +636,7 @@ class RelRasco(Rasco):
         super().__init__(base_estimator, max_iterations, n_estimators,
                          incremental, batch_size, subspace_size, random_state)
 
-    def _generate_random_subspaces(self, X, y):
+    def _generate_random_subspaces(self, X, y, random_state=None):
         """Generate the relevant random subspcaes
 
         Parameters
@@ -650,13 +651,14 @@ class RelRasco(Rasco):
         list
             List of index of features
         """
-        relevance = mutual_info_classif(X, y)
+        random_state = check_random_state(random_state)
+        relevance = mutual_info_classif(X, y, random_state=random_state)
         idxs = []
         for _ in range(self.n_estimators):
             subspace = []
             for __ in range(self.subspace_size):
-                f1 = self._rs.randint(0, X.shape[1])
-                f2 = self._rs.randint(0, X.shape[1])
+                f1 = random_state.randint(0, X.shape[1])
+                f2 = random_state.randint(0, X.shape[1])
                 if relevance[f1] > relevance[f2]:
                     subspace.append(f1)
                 else:
@@ -713,6 +715,8 @@ class RotRelRasco(RelRasco):
         self: Rasco
             Fitted estimator.
         """
+        random_state = check_random_state(self.random_state)
+
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
@@ -724,15 +728,15 @@ class RotRelRasco(RelRasco):
             self.subspace_size = int(X.shape[1]/2)
 
         if self.pre_rotation:
-            self._rotations = rot.Rotation(math.ceil(X.shape[1]/self.subspace_size), self.group_weight, skclone(self.pca), random_state=self._rs)
+            self._rotations = rot.Rotation(math.ceil(X.shape[1]/self.subspace_size), self.group_weight, skclone(self.pca), random_state=random_state)
             X_unlabel = self._rotations.fit_transform(X_unlabel)
             X_label = self._rotations.transform(X_label)
 
-        idxs = self._generate_random_subspaces(X_label, y_label)
+        idxs = self._generate_random_subspaces(X_label, y_label, random_state=random_state)
 
         if not self.pre_rotation:
             for idx in idxs:
-                self.__rotate(X_unlabel, idx, fit=True)
+                self.__rotate(X_unlabel, idx, fit=True, random_state=random_state)
         
         cfs = []
 
@@ -801,9 +805,9 @@ class RotRelRasco(RelRasco):
 
         return self
 
-    def __rotate(self, X, idx, fit=False):
+    def __rotate(self, X, idx, fit=False, random_state=None):
         if fit:
-            rt = rot.Rotation(len(idx), self.group_weight, skclone(self.pca), random_state=self.random_state)
+            rt = rot.Rotation(len(idx), self.group_weight, skclone(self.pca), random_state=random_state)
             self._rotations[tuple(idx)] = rt
             rt.fit(X[:,idx])
         else:
@@ -863,11 +867,11 @@ class TriTraining(_BaseCoTraining):
             controls the randomness of the estimator, by default None
         """
         self.base_estimator = base_estimator
-        self.random_state = random_state
         self.n_samples = n_samples
         self._N_LEARNER = 3
-        self._rs = check_random_state(random_state)
+        self.random_state = random_state
 
+    @staticmethod
     def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin):
         """Calculate the error between two hypothesis
 
@@ -899,6 +903,7 @@ class TriTraining(_BaseCoTraining):
 
         return error/coincidence
 
+    @staticmethod
     def _another_hs(hs, index):
         """Get the another hypothesis
 
@@ -919,6 +924,7 @@ class TriTraining(_BaseCoTraining):
                 another_hs.append(hs[i])
         return another_hs
 
+    @staticmethod
     def _subsample(L, s, random_state=None):
         """Randomly removes |L| - s number of examples from L
 
@@ -954,6 +960,8 @@ class TriTraining(_BaseCoTraining):
         self: TriTraining
             Fitted estimator.
         """
+        random_state = check_random_state(self.random_state)
+
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
@@ -966,7 +974,7 @@ class TriTraining(_BaseCoTraining):
             X_sampled, y_sampled = \
                 resample(X_label, y_label, replace=True,
                          n_samples=self.n_samples,
-                         random_state=self._rs)
+                         random_state=random_state)
 
             hypothesis.append(
                 skclone(self.base_estimator).fit(
@@ -1001,7 +1009,7 @@ class TriTraining(_BaseCoTraining):
                                 TriTraining\
                                 ._subsample((L[i], Ly[i]),
                                             math.ceil(e[i]*l_[i]/_e[i]-1),
-                                            self._rs)
+                                            random_state)
                             updates[i] = True
 
             for i in range(self._N_LEARNER):
@@ -1067,12 +1075,12 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
         self: CoTrainingByCommittee
             Fitted estimator.
         """
-        rs = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
         prior = calculate_prior_probability(y_label)
-        permutation = rs.permutation(len(X_unlabel))
+        permutation = random_state.permutation(len(X_unlabel))
 
         self.ensemble_estimator.fit(X_label, y_label, **kwards)
         self.classes_ = self.ensemble_estimator.classes_
@@ -1221,7 +1229,7 @@ class CoForest(_BaseCoTraining):
         self: CoForest
             Fitted estimator.
         """
-        rs = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
 
 
         X_label = X[y != y.dtype.type(-1)]
@@ -1247,7 +1255,7 @@ class CoForest(_BaseCoTraining):
                 wi_t = wi
                 if ei_t < ei:
                     random_index_subsample = list(range(X_unlabel.shape[0]))
-                    random_index_subsample = rs.permutation(random_index_subsample)
+                    random_index_subsample = random_state.permutation(random_index_subsample)
                     Ui_t = X_unlabel[random_index_subsample[0:int(ei*wi/ei_t)],:]
 
                     raw_predictions = hi.predict_proba(Ui_t)

@@ -3,7 +3,7 @@ from sklearn.decomposition import PCA
 import sklearn.utils
 from sklearn.base import TransformerMixin, BaseEstimator, ClassifierMixin, clone
 from sklearn.tree import DecisionTreeClassifier
-
+import collections
 
 class Rotation(TransformerMixin, BaseEstimator):
 
@@ -132,6 +132,8 @@ class RotatedTree(ClassifierMixin, BaseEstimator):
         self.base_estimator.fit(X, y)
         self.classes_ = self.base_estimator.classes_
 
+        return self
+
     def predict(self, X):
         """Predict class for X.
 
@@ -197,6 +199,8 @@ class RotationForestClassifier(ClassifierMixin, BaseEstimator):
             self.estimators.append(tree)
         self.classes_ = self.estimators[0].classes_
 
+        return self
+
     def predict(self, X):
         """Predict class for X.
 
@@ -206,15 +210,9 @@ class RotationForestClassifier(ClassifierMixin, BaseEstimator):
         Returns:
             ndarray of shape (n_samples,): The predicted classes.
         """
-        classes = []
-        for t in self.estimators:
-            predicts = t.predict(X)
-            classes.append(predicts)
-        # Vote
-        classes = np.array(classes)
-        (v, c) = np.unique(classes, return_counts=True, axis=0)
-        ind = np.argmax(c, axis=0)
-        return v[ind]
+        predicted_probabilitiy = self.predict_proba(X)
+        return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
+                                  axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
