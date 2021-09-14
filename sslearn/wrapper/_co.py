@@ -1,6 +1,6 @@
 from scipy.sparse.construct import random
 from scipy.sparse.sputils import isintlike
-from sklearn.base import ClassifierMixin, RegressorMixin
+from sklearn.base import ClassifierMixin, RegressorMixin, BaseEstimator
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
 import numpy as np
@@ -20,8 +20,9 @@ from sslearn.supervised import rotation as rot
 from sklearn.decomposition import PCA
 import math
 from statsmodels.stats.proportion import proportion_confint
+import warnings
 
-class _BaseCoTraining(ABC, ClassifierMixin, MetaEstimatorMixin):
+class _BaseCoTraining(ABC, BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     @abstractmethod
     def fit(self, X, y, **kwards):
@@ -574,10 +575,9 @@ class Rasco(_BaseCoTraining):
                 for class_ in cfs[0].classes_:
                     try:
                         Lj.append(sorted_[pseudoy == class_][-1])
+                        yj.append(class_)
                     except IndexError:
-                        raise ConvergenceWarning(
-                            "RASCO convergence warning, the class "+str(class_)+" not predicted")
-                    yj.append(class_)
+                        warnings.warn("RASCO convergence warning, the class "+str(class_)+" not predicted",ConvergenceWarning                     )
                 Lj = np.array(Lj)
             else:
                 Lj = sorted_[- self.batch_size:]
@@ -777,10 +777,10 @@ class RotRelRasco(RelRasco):
                 for class_ in cfs[0].classes_:
                     try:
                         Lj.append(sorted_[pseudoy == class_][-1])
+                        yj.append(class_)
                     except IndexError:
-                        raise ConvergenceWarning(
-                            "RASCO convergence warning, the class "+str(class_)+" not predicted")
-                    yj.append(class_)
+                        warnings.warn("RASCO convergence warning, the class "+str(class_)+" not predicted",ConvergenceWarning                     )
+
                 Lj = np.array(Lj)
             else:
                 Lj = sorted_[- self.batch_size:]

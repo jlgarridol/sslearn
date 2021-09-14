@@ -137,4 +137,21 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
+
+# Addons
 .vscode/
+
+*.ipynb
+*.pkl
+*.pickle
+*.arff
+*.dat
+*.numpy
+*.pandas
+*.csv
+*.svg
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
