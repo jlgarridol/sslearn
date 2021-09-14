@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearnx import patch_sklearn
+from sklearnex import patch_sklearn
 patch_sklearn()
 
 import os, gc, sys, pickle
@@ -89,7 +89,8 @@ for lr in label_rates:
 
         X, y = datasets[d]
 
-        for learner in classifiers:
+        for c in classifiers:
+            learner = classifiers[c]
             for r in range(repetitions):
                 skf = StratifiedKFold(n_splits=10, random_state=seed, shuffle=True)
                 for train, test in skf.split(X, y):
