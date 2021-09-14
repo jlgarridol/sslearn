@@ -21,27 +21,13 @@ from sklearn.decomposition import PCA
 import math
 from statsmodels.stats.proportion import proportion_confint
 import warnings
+from sslearn.base import Ensemble
 
-class _BaseCoTraining(ABC, BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
 
     @abstractmethod
     def fit(self, X, y, **kwards):
         pass
-
-    def predict(self, X, **kwards):
-        """Predict the classes of X.
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Array representing the data.
-        Returns
-        -------
-        y : ndarray of shape (n_samples,)
-            Array with predicted labels.
-        """
-        predicted_probabilitiy = self.predict_proba(X, **kwards)
-        return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
-                                  axis=0)
 
     def predict_proba(self, X, **kwards):
         """Predict probability for each possible outcome.
@@ -696,9 +682,7 @@ class RotRelRasco(RelRasco):
                          incremental, batch_size, subspace_size, random_state)
         self.group_weight = group_weight
         self.pca = pca
-        self.no_train = True
         self.pre_rotation = pre_rotation
-        self._rotations = dict()
 
     def fit(self, X, y, **kwards):
         """Build a RotRelRasco classifier from the training set (X, y).
@@ -715,6 +699,8 @@ class RotRelRasco(RelRasco):
         self: Rasco
             Fitted estimator.
         """
+        self._rotations = dict()
+
         random_state = check_random_state(self.random_state)
 
         X_label = X[y != y.dtype.type(-1)]
