@@ -105,8 +105,8 @@ for lr in label_rates:
                     score_trans = learner.score(X_unlabel, y_true)
                     score_ind = learner.score(X_test, y_test)
 
-                    acc_trans[learner][d].append(score_trans)
-                    acc_ind[learner][d].append(score_ind)
+                    acc_trans[c][d].append(score_trans)
+                    acc_ind[c][d].append(score_ind)
     with open("acc_trans_"+str(int(lr*10)), "wb") as f:
         pickle.dump(acc_trans, f)
     with open("acc_ind_"+str(int(lr*10)), "wb") as f:
