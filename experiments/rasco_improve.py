@@ -75,7 +75,7 @@ for file in os.listdir(path):
     datasets[file.split(".")[0]] = (X.to_numpy(), y.to_numpy())
 
 for lr in label_rates:
-
+    print("Label rate: {}".format(int(lr*100)))
     acc_trans, acc_ind = dict(), dict()
     for c in classifiers:
         acc_trans[c] = dict()
@@ -83,7 +83,9 @@ for lr in label_rates:
         for d in datasets:
             acc_trans[c][d] = list()
             acc_ind[c][d] = list()
-
+    
+    steps = len(classifiers)*len(datasets)*repetitions
+    step = 0
     for i, d in enumerate(datasets):
         gc.collect()
 
@@ -92,6 +94,8 @@ for lr in label_rates:
         for c in classifiers:
             learner = classifiers[c]
             for r in range(repetitions):
+                step += 1
+                print("Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(c,d,r+1, step, steps), end="\r")
                 skf = StratifiedKFold(n_splits=10, random_state=seed, shuffle=True)
                 for train, test in skf.split(X, y):
                     score_trans, score_ind = list(), list()
@@ -107,9 +111,9 @@ for lr in label_rates:
 
                     acc_trans[c][d].append(score_trans)
                     acc_ind[c][d].append(score_ind)
-    with open("acc_trans_"+str(int(lr*10)), "wb") as f:
+    with open("acc_trans_"+str(int(lr*100)), "wb") as f:
         pickle.dump(acc_trans, f)
-    with open("acc_ind_"+str(int(lr*10)), "wb") as f:
+    with open("acc_ind_"+str(int(lr*100)), "wb") as f:
         pickle.dump(acc_ind, f)
 
 
