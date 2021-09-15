@@ -98,11 +98,11 @@ for lr in label_rates:
                     X_train, y_train = X[train], y[train]
                     X_test, y_test = X[test], y[test]
 
-                    X_, y_, y_true = artificial_ssl_dataset(X_train, y_train, label_rate=lr, random_state=global_rs.randint(100))
+                    X_, y_, X_unlabel,  y_true = artificial_ssl_dataset(X_train, y_train, label_rate=lr, random_state=global_rs.randint(100))
                     learner.random_state = classifier_seed+r
                     learner.fit(X_, y_)
 
-                    score_trans = learner.score(X_, y_true)
+                    score_trans = learner.score(X_unlabel, y_true)
                     score_ind = learner.score(X_test, y_test)
 
                     acc_trans[learner][d].append(score_trans)

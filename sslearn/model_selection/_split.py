@@ -71,6 +71,8 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
         The feature set.
     y : ndarray
         The label set, -1 for unlabel instance.
+    X_unlabel: ndarray
+        The feature set for each y mark as unlabel
     y_unlabel: ndarray
         The true label for each y in the same order.
     """
@@ -85,4 +87,4 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
     X = np.concatenate((X_label, X_unlabel), axis=0)
     y = np.concatenate((y_label, np.array([-1]*len(true_label))), axis=0)
 
-    return X, y, true_label
+    return X, y, X_unlabel, true_label
