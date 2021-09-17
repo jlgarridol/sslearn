@@ -61,7 +61,6 @@ class Setred(ClassifierMixin):
 
     def __calculate_H0(self, p_y_y_, G, weights, instance):
 
-            U_ = resample(X_unlabel, replace=False,
         sum_w = weights[instance, G[instance,:]==1].sum()
         sum_sq_w = sum(map(lambda x: x**2,weights[instance, G[instance,:]==1]))
 
