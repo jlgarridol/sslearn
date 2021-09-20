@@ -75,7 +75,7 @@ for file in os.listdir(path):
     datasets[file.split(".")[0]] = (X.to_numpy(), y.to_numpy())
 
 for lr in label_rates:
-    print("Label rate: {}".format(int(lr*100)))
+    print("\nLabel rate: {}".format(int(lr*100)))
     acc_trans, acc_ind = dict(), dict()
     for c in classifiers:
         acc_trans[c] = dict()
