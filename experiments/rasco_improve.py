@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from sklearnex import patch_sklearn
-patch_sklearn()
+#from sklearnex import patch_sklearn
+#patch_sklearn()
 
 import os, gc, sys, pickle
 sys.path.insert(1,"..")
@@ -87,15 +87,14 @@ for lr in label_rates:
     steps = len(classifiers)*len(datasets)*repetitions
     step = 0
     for i, d in enumerate(datasets):
-        gc.collect()
 
         X, y = datasets[d]
 
         for c in classifiers:
-            learner = classifiers[c]
+            learner = skclone(classifiers[c])
             for r in range(repetitions):
                 step += 1
-                print("Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(c,d,r+1, step, steps), end="\r")
+                print("Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(c,d,r+1, step, steps))
                 skf = StratifiedKFold(n_splits=10, random_state=seed, shuffle=True)
                 for train, test in skf.split(X, y):
                     score_trans, score_ind = list(), list()
@@ -111,6 +110,19 @@ for lr in label_rates:
 
                     acc_trans[c][d].append(score_trans)
                     acc_ind[c][d].append(score_ind)
+                    
+                    del X_
+                    del y_
+                    del X_unlabel
+                    del y_true
+                    del X_train
+                    del y_train
+                    del X_test
+                    del y_test
+                    gc.collect()
+            del learner
+            gc.collect()
+
     with open("acc_trans_"+str(int(lr*100)), "wb") as f:
         pickle.dump(acc_trans, f)
     with open("acc_ind_"+str(int(lr*100)), "wb") as f:
