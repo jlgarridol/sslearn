@@ -57,20 +57,16 @@ class DemocraticCoLearning(_BaseCoTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
                  n_estimators=3):
-        if n_estimators is None and isinstance(base_estimator, list):
-            self.base_estimator = base_estimator
-        elif n_estimators is not None and not isinstance(base_estimator, list):
+        
+        if isinstance(base_estimator, ClassifierMixin) and n_estimators is not None:
             estimators = list()
             for _ in range(n_estimators):
                 estimators.append(skclone(base_estimator))
             self.base_estimator = estimators
+        elif isinstance(base_estimator,list):
+            self.base_estimator = base_estimator
         else:
-            b = "not "
-            l = "`ClassifierMixin`"            
-            if n_estimators is None:
-                b = ""
-                l = "list"
-            raise AttributeError(f"If `n_estimators` is {b}None then `base_estimator` must be a {l}.")
+            raise AttributeError("If `n_estimators` is None then `base_estimator` must be a `list`.")
         self.n_estimators = len(self.base_estimator)
 
     def __vote_ponderate(self, x, confidence, H):
@@ -765,7 +761,7 @@ class RotRelRasco(RelRasco):
                         Lj.append(sorted_[pseudoy == class_][-1])
                         yj.append(class_)
                     except IndexError:
-                        warnings.warn("RASCO convergence warning, the class "+str(class_)+" not predicted",ConvergenceWarning                     )
+                        warnings.warn("RASCO convergence warning, the class "+str(class_)+" not predicted",ConvergenceWarning)
 
                 Lj = np.array(Lj)
             else:
