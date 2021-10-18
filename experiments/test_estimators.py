@@ -65,16 +65,16 @@ label_rates = [x/10 for x in range(1,5)]
 colors = ['red','blue','green','yellow','cyan','magenta','white','gray']
 
 classifiers = {
-    "DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=RandomForestClassifier(random_state=classifier_seed)),
-    "SelfTraining": wrp.SelfTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed)),
-    "TriTraining": wrp.TriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed), random_state=classifier_seed),
-    "Rasco": wrp.Rasco(base_estimator=RandomForestClassifier(random_state=classifier_seed), random_state=classifier_seed),
-    "RelRasco": wrp.RelRasco(base_estimator=RandomForestClassifier(random_state=classifier_seed), random_state=classifier_seed),
+    "DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
+    "SelfTraining": wrp.SelfTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
+    "TriTraining": wrp.TriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
+    "Rasco": wrp.Rasco(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
+    "RelRasco": wrp.RelRasco(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
     "CoForest": wrp.CoForest(random_state=classifier_seed),
-    "DeTriTraining": wrp.DeTriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed), random_state=classifier_seed),
-    "Setred": wrp.Setred(base_estimator=RandomForestClassifier(random_state=classifier_seed), random_state=classifier_seed),
-    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed), random_state=classifier_seed),
-    "CoTraining": OneVsRestClassifier(wrp.CoTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed)))
+    "DeTriTraining": wrp.DeTriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
+    "Setred": wrp.Setred(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
+    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
+    "CoTraining": OneVsRestClassifier(wrp.CoTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)))
 }
 
 
