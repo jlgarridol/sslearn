@@ -1,3 +1,11 @@
+
+import pandas as pd
+import numpy as np
+import os
+import sys
+sys.path.insert(1,"..")
+import pathlib
+
 from sklearn.ensemble import RandomForestClassifier
 from sslearn.supervised.rotation import RotationForestClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -16,12 +24,9 @@ import warnings
 import pickle
 import gc 
 import joblib as jl
+import curses
 
-import pandas as pd
-import numpy as np
-import os
-import sys
-import pathlib
+
 
 save_path = pathlib.Path(__file__).parent.resolve()
 path = "/home/jlgarridol/data/uci/csv"
@@ -58,6 +63,7 @@ for k in to_delete:
 data_it = ['vowel', 'flare-solar', 'banana', 'autos', 'titanic', 'contraceptive', 'monks', 'thyroid', 'appendicitis', 'saheart', 'kr-vs-k', 'movement_libras', 'letter', 'hepatitis', 'segment', 'satimage', 'nursery', 'led7digit', 'chess', 'pima', 'abalone', 'car', 'shuttle', 'mammographic', 'lymphography', 'optdigits', 'penbased', 'glass', 'dermatology', 'sonar', 'bands', 'vehicle', 'iris', 'spectfheart', 'german', 'pagebloks', 'housevotes', 'haberman', 'australian', 'ecoli', 'texture', 'yeast', 'crx', 'balance', 'marketing', 'bupa', 'mushroom', 'tae', 'breast', 'tic-tac-toe', 'coil2000', 'spambase', 'wine', 'ionosphere', 'hayes-roth', 'phoneme', 'wdbc', 'splice', 'newthyroid', 'twonorm', 'zoo', 'ring', 'cleveland', 'post-operative', 'wisconsin', 'heart', 'magic']
 
 seed = 100
+n_splits = 10
 classifier_seed = 0
 repetitions = 5
 global_rs = crs(seed)
@@ -76,8 +82,6 @@ classifiers = {
     "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
     "CoTraining": OneVsRestClassifier(wrp.CoTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)))
 }
-
-
 
 def experiment(lr):
     #print("\nLabel rate: {}".format(int(lr*100)))
@@ -102,9 +106,19 @@ def experiment(lr):
             learner = skclone(classifiers[c])
             for r in range(repetitions):
                 step += 1
-                print(colored("Learning Rate {}, Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(lr,c,d,r+1, step, steps),colors[color_index]))
-                skf = StratifiedKFold(n_splits=10, random_state=seed, shuffle=True)
+                
+                skf = StratifiedKFold(n_splits=n_splits, random_state=seed, shuffle=True)
+                vuelta = 0
                 for train, test in skf.split(X, y):
+                    vuelta += 1
+                    vueltas = str(vuelta)+"/"+str(n_splits)
+
+                    cols = curses.tigetnum('cols')
+                    text = "Learning Rate {}, Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(lr,c,d,r+1, step, steps)
+                    points = cols-len(text)-len(vueltas)
+                    final_text = f"{text}{vueltas:.>points}"
+                    print(colored(final_text,colors[color_index]), end="\r")
+
                     score_trans, score_ind = list(), list()
                     X_train, y_train = X[train], y[train]
                     X_test, y_test = X[test], y[test]
@@ -137,5 +151,6 @@ def experiment(lr):
     with open(save_path+"/acc_ind_"+str(int(lr*100))+".pkl", "wb") as f:
         pickle.dump(acc_ind, f)
 
-
-jl.Parallel(n_jobs=4)(jl.delayed(experiment)(lr) for lr in label_rates)
+for lr in label_rates:
+    experiment(lr)
+# jl.Parallel(n_jobs=4)(jl.delayed(experiment)(lr) for lr in label_rates)

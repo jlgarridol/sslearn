@@ -1011,7 +1011,7 @@ class TriTraining(_BaseCoTraining):
 
 
 # Done and tested
-class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
+class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
     def __init__(self, ensemble_estimator=BaggingClassifier(),
                  max_iterations=100, poolsize=100, random_state=None):

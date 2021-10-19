@@ -1,6 +1,6 @@
 from math import isnan
 from numpy.random import random_sample
-from sklearn.base import ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.base import clone as skclone
@@ -15,7 +15,7 @@ import math
 
 SelfTraining = SelfTrainingClassifier
 
-class Setred(ClassifierMixin):
+class Setred(ClassifierMixin, BaseEstimator):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(), max_iterations=40,
                        distance="euclidean", pool_size=0.25, rejection_threshold=0.1,
@@ -39,12 +39,12 @@ class Setred(ClassifierMixin):
         n_jobs : [type], optional
             [description], by default None
         """
-        self.base_estimator = skclone(base_estimator)
+        self.base_estimator = base_estimator
         self.max_iterations = max_iterations
         self.pool_size = pool_size
         self.distance = distance
         self.rejection_threshold = rejection_threshold
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
         self.n_jobs = n_jobs
 
     def __create_neighborhood(self, X):
@@ -52,11 +52,11 @@ class Setred(ClassifierMixin):
                kneighbors_graph(X, 1, metric=self.distance, n_jobs=self.n_jobs, mode='distance').toarray()
 
 
-    def __calculate_J(self, X, p_y_y_, G, weights, instance):
+    def __calculate_J(self, X, p_y_y_, G, weights, instance, random_state):
         J=0
         for i in range(len(X)):
             if G[instance, i] == 1:
-                J += weights[instance, i]*bernoulli.rvs(p_y_y_, random_state=self.random_state)
+                J += weights[instance, i]*bernoulli.rvs(p_y_y_, random_state=random_state)
         return J
 
     def __calculate_H0(self, p_y_y_, G, weights, instance):
@@ -75,24 +75,26 @@ class Setred(ClassifierMixin):
         X_unlabel = X[y == y.dtype.type(-1)]
 
         pool = int(len(X_label)*self.pool_size)
+        random_state = check_random_state(self.random_state)
+        self._base_estimator = skclone(self.base_estimator)
 
-        self.base_estimator.fit(X_label, y_label, **kwars)
+        self._base_estimator.fit(X_label, y_label, **kwars)
         for _ in range(self.max_iterations):
             U_ = resample(X_unlabel, replace=False,
                           n_samples=len(X_label),
-                          random_state=self.random_state)
+                          random_state=random_state)
 
             # Se supone que solo necesito las kj más relevantes
             # Es número aún no se cual es
             # De momento cojo el 25% de L:
             raw_predictions = \
-                self.base_estimator.predict_proba(U_)
+                self._base_estimator.predict_proba(U_)
             predictions = np.max(raw_predictions, axis=1)
             class_predicted = np.argmax(raw_predictions, axis=1)
             indexes = predictions.argsort()[-pool:]
 
             L_ = U_[indexes]
-            y_ = np.array(list(map(lambda x: self.base_estimator.classes_[x],
+            y_ = np.array(list(map(lambda x: self._base_estimator.classes_[x],
                                         class_predicted[indexes])))
 
             pre_L = np.concatenate((X_label, L_), axis=0)
@@ -102,7 +104,7 @@ class Setred(ClassifierMixin):
             to_add = list()
             for i, _ in enumerate(L_):
                 i_plus = i+len(X_label)
-                Ji = self.__calculate_J(pre_L, y_probabilities[y_[i]] , G, weights, i_plus)
+                Ji = self.__calculate_J(pre_L, y_probabilities[y_[i]] , G, weights, i_plus, random_state)
                 mu_, sigma_ = self.__calculate_H0(y_probabilities[y_[i]], G, weights, i)
 
                 oi = norm(mu_, sigma_).pdf(Ji)
@@ -120,10 +122,10 @@ class Setred(ClassifierMixin):
         return self
     
     def predict(self, X, **kwards):
-        return self.base_estimator.predict(X, **kwards)
+        return self._base_estimator.predict(X, **kwards)
 
     def predict_proba(self, X, **kwards):
-        return self.base_estimator.predict_proba(X, **kwards)
+        return self._base_estimator.predict_proba(X, **kwards)
 
 
 
