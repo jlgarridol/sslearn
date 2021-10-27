@@ -11,6 +11,7 @@ from sklearn.base import clone as skclone
 import math
 from abc import ABC, abstractmethod
 from sklearn.base import MetaEstimatorMixin
+from sklearn.multiclass import LabelBinarizer
 from sklearn.feature_selection import mutual_info_classif
 from ..utils import calculate_prior_probability
 import sys
@@ -18,10 +19,12 @@ import operator
 from sklearn.discriminant_analysis import softmax
 from sslearn.supervised import rotation as rot
 from sklearn.decomposition import PCA
-import math
 from statsmodels.stats.proportion import proportion_confint
 import warnings
 from sslearn.base import Ensemble
+from sslearn.utils import check_n_jobs
+from joblib import Parallel, delayed
+
 
 class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
 
@@ -40,7 +43,7 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
         -------
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
-        """        
+        """
         if "h_" in dir(self):
             ys = []
             for i in range(len(self.h_)):
@@ -57,16 +60,17 @@ class DemocraticCoLearning(_BaseCoTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
                  n_estimators=3):
-        
+
         if isinstance(base_estimator, ClassifierMixin) and n_estimators is not None:
             estimators = list()
             for _ in range(n_estimators):
                 estimators.append(skclone(base_estimator))
             self.base_estimator = estimators
-        elif isinstance(base_estimator,list):
+        elif isinstance(base_estimator, list):
             self.base_estimator = base_estimator
         else:
-            raise AttributeError("If `n_estimators` is None then `base_estimator` must be a `list`.")
+            raise AttributeError(
+                "If `n_estimators` is None then `base_estimator` must be a `list`.")
         self.n_estimators = len(self.base_estimator)
 
     def __vote_ponderate(self, x, confidence, H):
@@ -129,12 +133,18 @@ class DemocraticCoLearning(_BaseCoTraining):
                 L_.append([])
                 Ly_.append([])
 
-            for x in X_unlabel:
-                y, predicted = self.__vote_ponderate(x, confidence, self.base_estimator)
-                for i, y_ in enumerate(predicted):
-                    if y_ != y:
-                        L_[i].append(x)
-                        Ly_[i].append(y)
+            def check_if_add_to_L(x):
+                y, predicted = self.__vote_ponderate(
+                    x, confidence, self.base_estimator)
+                return y == predicted, y
+
+            instance_to_add, label_to_add = np.apply_along_axis(
+                check_if_add_to_L, 1, X_unlabel)
+            for i in range(self.n_estimators):
+                L_[i] = np.concatenate(
+                    (L_[i], X_unlabel[:, instance_to_add[i]]), axis=0)
+                Ly_[i] = np.concatenate(
+                    (L_[i], label_to_add[instance_to_add[i]]), axis=0)
 
             new_confidences = []
             e_factor = 0
@@ -148,19 +158,19 @@ class DemocraticCoLearning(_BaseCoTraining):
             for i, _ in enumerate(self.base_estimator):
                 if len(L_[i]) > 0:
                     li, hi = new_confidences[i]
-                    
-                    qi = len(L[i])*( (1- 2*(e[i]/len(L[i])) )**2 )
+
+                    qi = len(L[i])*((1 - 2*(e[i]/len(L[i])))**2)
                     e_i = e_factor * len(L_[i])
 
-                    q_i = (len(L[i])+len(L_[i])) * (1 - (2*e[i]+e_i)/(len(L[i])+len(L_[i])) )
+                    q_i = (len(L[i])+len(L_[i])) * \
+                        (1 - (2*e[i]+e_i)/(len(L[i])+len(L_[i])))
 
                     if q_i > qi:
-                        L[i] = np.concatenate((L[i],np.array(L_[i])))
-                        Ly[i] = np.concatenate((Ly[i],np.array(Ly_[i])))
+                        L[i] = np.concatenate((L[i], np.array(L_[i])))
+                        Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
                         e[i] = e[i]+e_i
                         changed = True
 
-        
         self.h_ = self.base_estimator
         self.classes_ = self.h_[0].classes_
         self.__calcule_last_confidences(X_label, y_label)
@@ -179,15 +189,16 @@ class DemocraticCoLearning(_BaseCoTraining):
         -------
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
-        """        
+        """
         if "h_" in dir(self):
             y_ = list()
             if len(X) == 1:
                 X = [X]
             for x in X:
-                groups = dict(zip(self.classes_, [list() for _ in range(len(self.classes_))]))
+                groups = dict(
+                    zip(self.classes_, [list() for _ in range(len(self.classes_))]))
                 for w, H in zip(self.confidences_, self.h_):
-                    cj = H.predict(x.reshape(1,-1))
+                    cj = H.predict(x.reshape(1, -1))
                     if w > 0.5:
                         groups[cj[0]].append(w)
                 C_G_j = list()
@@ -196,14 +207,14 @@ class DemocraticCoLearning(_BaseCoTraining):
                     if size == 0:
                         cgj = 0.5
                     else:
-                        cgj = ( (size+0.5)/(size+1) ) * (sum(groups[c])/size)
+                        cgj = ((size+0.5)/(size+1)) * (sum(groups[c])/size)
 
                     C_G_j.append(cgj)
-                y_.append(softmax(np.array(C_G_j).reshape(1,-1))[0])
+                y_.append(softmax(np.array(C_G_j).reshape(1, -1))[0])
             return np.array(y_)
         else:
             raise NotFittedError("Classifier not fitted")
-                
+
 
 # Done and tested
 class CoTraining(_BaseCoTraining):
@@ -249,11 +260,10 @@ class CoTraining(_BaseCoTraining):
         """
         assert isinstance(
             base_estimator, ClassifierMixin), "This method only support classification"
-        self.h = [base_estimator]
-        if second_base_estimator is not None:
-            self.h.append(second_base_estimator)
-        else:
-            self.h.append(skclone(base_estimator))
+
+        self.base_estimator = base_estimator
+        self.second_base_estimator = second_base_estimator
+
         self.max_iterations = max_iterations
         self.poolsize = poolsize
         self.random_state = random_state
@@ -287,7 +297,13 @@ class CoTraining(_BaseCoTraining):
             Fitted estimator.
         """
         rs = check_random_state(self.random_state)
-        
+
+        self.h = [skclone(self.base_estimator)]
+        if self.second_base_estimator is not None:
+            self.h.append(skclone(self.second_base_estimator))
+        else:
+            self.h.append(skclone(self.base_estimator))
+
         y = y.copy()
         X = X.copy()
         X = np.asarray(X)
@@ -333,6 +349,11 @@ class CoTraining(_BaseCoTraining):
         U = U[:-len(U_)]
 
         L = [i for i, y_i in enumerate(y) if y_i != -1]
+
+        y = y.reshape((y.shape[0],1))
+
+        self.label_binarize = LabelBinarizer().fit(y[L])
+        y[L] = self.label_binarize.transform(y[L])
 
         it = 0
         while it != self.max_iterations and U:
@@ -397,7 +418,7 @@ class CoTraining(_BaseCoTraining):
         -------
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
-        """    
+        """
         if "columns_" in dir(self):
             return super().predict_proba(X, **kwards)
         elif "h_" in dir(self):
@@ -424,11 +445,12 @@ class CoTraining(_BaseCoTraining):
             Array with predicted labels.
         """
         if "columns_" in dir(self):
-            return super().predict(X, **kwards)
+            result = super().predict(X, **kwards)
         else:
             predicted_probabilitiy = self.predict_proba(X, X2, **kwards)
-            return self.classes_.take(
+            result = self.classes_.take(
                 (np.argmax(predicted_probabilitiy, axis=1)), axis=0)
+        return self.label_binarize.inverse_transform(result)
 
 
 # Done and tested
@@ -436,7 +458,7 @@ class Rasco(_BaseCoTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
                  max_iterations=10, n_estimators=30, incremental=True,
-                 batch_size=None, subspace_size=None, random_state=None):
+                 batch_size=None, subspace_size=None, random_state=None, n_jobs=None):
         """
         Co-Training based on random subspaces
 
@@ -474,6 +496,7 @@ class Rasco(_BaseCoTraining):
         self.subspace_size = subspace_size  # m in paper
         self.incremental = incremental
         self.batch_size = batch_size
+        self.n_jobs = check_n_jobs(n_jobs)
 
         self.random_state = random_state
 
@@ -496,8 +519,12 @@ class Rasco(_BaseCoTraining):
         features = list(range(X.shape[1]))
         idxs = []
         for _ in range(self.n_estimators):
-            idxs.append(random_state.permutation(features)[:self.subspace_size])
+            idxs.append(random_state.permutation(
+                features)[:self.subspace_size])
         return idxs
+
+    def __fit_estimator(self, X, y, **kwards):
+        return skclone(self.base_estimator).fit(X, y,  **kwards)
 
     def fit(self, X, y, **kwards):
         """Build a Rasco classifier from the training set (X, y).
@@ -527,11 +554,12 @@ class Rasco(_BaseCoTraining):
             self.subspace_size = int(X.shape[1]/2)
         idxs = self._generate_random_subspaces(X_label, y_label, random_state)
 
-        cfs = []
-
-        for i in range(self.n_estimators):
-            cfs.append(skclone(self.base_estimator)
-                       .fit(X_label[:, idxs[i]], y_label, **kwards))
+        cfs = Parallel(n_jobs=self.n_jobs)(
+            delayed(self.__fit_estimator)(
+                X_label[:, idxs[i]], y_label, **kwards
+            )
+            for i in range(self.n_estimators)
+        )
 
         it = 0
         while True:
@@ -542,7 +570,7 @@ class Rasco(_BaseCoTraining):
             for i in range(self.n_estimators):
                 rp = cfs[i].predict_proba(X_unlabel[:, idxs[i]])
                 raw_predicions.append(rp)
-            raw_predicions = sum(raw_predicions)/self.n_estimators
+            raw_predicions = sum(raw_predicions) / self.n_estimators
             predictions = np.max(raw_predicions, axis=1)
             class_predicted = np.argmax(raw_predicions, axis=1)
             pseudoy = np.array(
@@ -559,19 +587,23 @@ class Rasco(_BaseCoTraining):
                         Lj.append(sorted_[pseudoy == class_][-1])
                         yj.append(class_)
                     except IndexError:
-                        warnings.warn("RASCO convergence warning, the class "+str(class_)+" not predicted",ConvergenceWarning                     )
+                        warnings.warn("RASCO convergence warning, the class " +
+                                      str(class_) + " not predicted", ConvergenceWarning)
                 Lj = np.array(Lj)
             else:
                 Lj = sorted_[- self.batch_size:]
                 yj = pseudoy[Lj]
 
-
             X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
             y_label = np.append(y_label, yj)
             X_unlabel = np.delete(X_unlabel, Lj, axis=0)
 
-            for i in range(self.n_estimators):
-                cfs[i].fit(X_label[:, idxs[i]], y_label, **kwards)
+            cfs = Parallel(n_jobs=self.n_jobs)(
+                delayed(self.__fit_estimator)(
+                    X_label[:, idxs[i]], y_label, **kwards
+                )
+                for i in range(self.n_estimators)
+            )
 
             it += 1
 
@@ -587,7 +619,7 @@ class RelRasco(Rasco):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(),
                  max_iterations=10, n_estimators=30, incremental=True,
-                 batch_size=None, subspace_size=None, random_state=None):
+                 batch_size=None, subspace_size=None, random_state=None, n_jobs=None):
         """Co-Training with relevant random subspaces
 
         Yaslan, Y., & Cataltepe, Z. (2010).
@@ -616,7 +648,7 @@ class RelRasco(Rasco):
             controls the randomness of the estimator, by default None
         """
         super().__init__(base_estimator, max_iterations, n_estimators,
-                         incremental, batch_size, subspace_size, random_state)
+                         incremental, batch_size, subspace_size, random_state, n_jobs)
 
     def _generate_random_subspaces(self, X, y, random_state=None):
         """Generate the relevant random subspcaes
@@ -648,8 +680,9 @@ class RelRasco(Rasco):
             idxs.append(subspace)
         return idxs
 
+
 class RotRelRasco(RelRasco):
-    def __init__(self, base_estimator=DecisionTreeClassifier(), 
+    def __init__(self, base_estimator=DecisionTreeClassifier(),
                  group_weight=0.5, pca=PCA(), pre_rotation=False,
                  max_iterations=10, n_estimators=30, incremental=True,
                  batch_size=None, subspace_size=None, random_state=None):
@@ -710,16 +743,19 @@ class RotRelRasco(RelRasco):
             self.subspace_size = int(X.shape[1]/2)
 
         if self.pre_rotation:
-            self._rotations = rot.Rotation(math.ceil(X.shape[1]/self.subspace_size), self.group_weight, skclone(self.pca), random_state=random_state)
+            self._rotations = rot.Rotation(math.ceil(
+                X.shape[1]/self.subspace_size), self.group_weight, skclone(self.pca), random_state=random_state)
             X_unlabel = self._rotations.fit_transform(X_unlabel)
             X_label = self._rotations.transform(X_label)
 
-        idxs = self._generate_random_subspaces(X_label, y_label, random_state=random_state)
+        idxs = self._generate_random_subspaces(
+            X_label, y_label, random_state=random_state)
 
         if not self.pre_rotation:
             for idx in idxs:
-                self.__rotate(X_unlabel, idx, fit=True, random_state=random_state)
-        
+                self.__rotate(X_unlabel, idx, fit=True,
+                              random_state=random_state)
+
         cfs = []
 
         for i in range(self.n_estimators):
@@ -761,7 +797,8 @@ class RotRelRasco(RelRasco):
                         Lj.append(sorted_[pseudoy == class_][-1])
                         yj.append(class_)
                     except IndexError:
-                        warnings.warn("RASCO convergence warning, the class "+str(class_)+" not predicted",ConvergenceWarning)
+                        warnings.warn("RASCO convergence warning, the class " + 
+                                      str(class_) + " not predicted", ConvergenceWarning)
 
                 Lj = np.array(Lj)
             else:
@@ -789,14 +826,15 @@ class RotRelRasco(RelRasco):
 
     def __rotate(self, X, idx, fit=False, random_state=None):
         if fit:
-            rt = rot.Rotation(len(idx), self.group_weight, skclone(self.pca), random_state=random_state)
+            rt = rot.Rotation(len(idx), self.group_weight, skclone(
+                self.pca), random_state=random_state)
             self._rotations[tuple(idx)] = rt
-            rt.fit(X[:,idx])
+            rt.fit(X[:, idx])
         else:
             rt = self._rotations[tuple(idx)]
-        X_rotated = rt.transform(X[:,idx])
+        X_rotated = rt.transform(X[:, idx])
         return X_rotated
-        
+
     def predict_proba(self, X, **kwards):
         """Predict probability for each possible outcome.
 
@@ -808,7 +846,7 @@ class RotRelRasco(RelRasco):
         -------
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
-        """        
+        """
         if "h_" in dir(self):
             ys = []
             if self.pre_rotation:
@@ -824,6 +862,7 @@ class RotRelRasco(RelRasco):
             return y
         else:
             raise NotFittedError("Classifier not fitted")
+
 
 # Done and tested
 class TriTraining(_BaseCoTraining):
@@ -883,7 +922,7 @@ class TriTraining(_BaseCoTraining):
         error = np.count_nonzero(np.logical_and(y1_fail, y2_fail))
         coincidence = np.count_nonzero(y1 == y2)
 
-        return error/coincidence
+        return error / coincidence
 
     @staticmethod
     def _another_hs(hs, index):
@@ -949,8 +988,8 @@ class TriTraining(_BaseCoTraining):
         X_unlabel = X[y == y.dtype.type(-1)]
 
         hypothesis = []
-        e = [.5]*self._N_LEARNER
-        l_ = [0]*self._N_LEARNER
+        e = [.5] * self._N_LEARNER
+        l_ = [0] * self._N_LEARNER
 
         for _ in range(self._N_LEARNER):
             X_sampled, y_sampled = \
@@ -967,10 +1006,10 @@ class TriTraining(_BaseCoTraining):
 
         while something_has_changed:
             something_has_changed = False
-            L = [[]]*self._N_LEARNER
-            Ly = [[]]*self._N_LEARNER
+            L = [[]] * self._N_LEARNER
+            Ly = [[]] * self._N_LEARNER
             _e = []
-            updates = [False]*3
+            updates = [False] * 3
 
             for i in range(self._N_LEARNER):
                 hj, hk = TriTraining._another_hs(hypothesis, i)
@@ -982,15 +1021,15 @@ class TriTraining(_BaseCoTraining):
                     Ly[i] = y_p[validx]
 
                     if l_[i] == 0:
-                        l_[i] = math.floor(_e[i]/(e[i]-_e[i])+1)
+                        l_[i] = math.floor(_e[i] / (e[i] - _e[i]) + 1)
                     if l_[i] < len(L[i]):
-                        if _e[i]*len(L[i]) < e[i]*l_[i]:
+                        if _e[i] * len(L[i]) < e[i] * l_[i]:
                             updates[i] = True
-                        elif l_[i] > (_e[i]/(e[i]-_e[i])):
+                        elif l_[i] > (_e[i] / (e[i] - _e[i])):
                             L[i], Ly[i] = \
                                 TriTraining\
                                 ._subsample((L[i], Ly[i]),
-                                            math.ceil(e[i]*l_[i]/_e[i]-1),
+                                            math.ceil(e[i] * l_[i] / _e[i] - 1),
                                             random_state)
                             updates[i] = True
 
@@ -1178,12 +1217,13 @@ class CoForest(_BaseCoTraining):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         """
-        self._base = DecisionTreeClassifier(random_state=random_state, **kwards)
+        self._base = DecisionTreeClassifier(
+            random_state=random_state, **kwards)
         self.n_estimators = n_estimators
         self.threshold = threshold
         self._epsilon = sys.float_info.epsilon
         self.random_state = random_state
-    
+
     def __estimate_error(self, hypothesis, X, y):
         probas = hypothesis.predict_proba(X)
         ei_t = 0
@@ -1213,7 +1253,6 @@ class CoForest(_BaseCoTraining):
         """
         random_state = check_random_state(self.random_state)
 
-
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]
         X_unlabel = X[y == y.dtype.type(-1)]
@@ -1222,40 +1261,45 @@ class CoForest(_BaseCoTraining):
         errors = []
         weights = []
         for i in range(self.n_estimators):
-            hypothesis.append(skclone(self._base).fit(X_label, y_label, **kwards))
+            hypothesis.append(skclone(self._base).fit(
+                X_label, y_label, **kwards))
             errors.append(.5)
-            weights.append(np.max(hypothesis[i].predict_proba(X_label), axis=1).sum())
-        
+            weights.append(
+                np.max(hypothesis[i].predict_proba(X_label), axis=1).sum())
+
         changing = True
         while changing:
             changing = False
             for i in range(self.n_estimators):
                 hi, ei, wi = hypothesis[i], errors[i], weights[i]
-                
+
                 ei_t = self.__estimate_error(hi, X_label, y_label)
-                
+
                 wi_t = wi
                 if ei_t < ei:
                     random_index_subsample = list(range(X_unlabel.shape[0]))
-                    random_index_subsample = random_state.permutation(random_index_subsample)
-                    Ui_t = X_unlabel[random_index_subsample[0:int(ei*wi/ei_t)],:]
+                    random_index_subsample = random_state.permutation(
+                        random_index_subsample)
+                    Ui_t = X_unlabel[random_index_subsample[0:int(
+                        ei*wi/ei_t)], :]
 
                     raw_predictions = hi.predict_proba(Ui_t)
                     predictions = np.max(raw_predictions, axis=1)
-                    class_predicted = np.array(list(map(lambda x: hi.classes_[x], np.argmax(raw_predictions, axis=1))))
+                    class_predicted = np.array(
+                        list(map(lambda x: hi.classes_[x], np.argmax(raw_predictions, axis=1))))
 
                     to_label = predictions > self.threshold
                     wi_t = predictions[to_label].sum()
 
                     if ei_t * wi_t < ei * wi:
                         changing = True
-                        hi.fit(np.concatenate((X_label, Ui_t[to_label])), np.concatenate((y_label, class_predicted[to_label])), **kwards)
+                        hi.fit(np.concatenate((X_label, Ui_t[to_label])), np.concatenate(
+                            (y_label, class_predicted[to_label])), **kwards)
                 errors[i] = ei_t
-                weights[i] = wi_t                           
+                weights[i] = wi_t
 
         self.h_ = hypothesis
         self.classes_ = self.h_[0].classes_
         self.columns_ = [list(range(X.shape[1]))]*self.n_estimators
 
         return self
-        

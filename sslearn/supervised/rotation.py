@@ -8,7 +8,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import clone as skclone
 from sklearn.utils.validation import check_is_fitted
-from sktime.utils.validation import check_n_jobs
+from sslearn.utils import check_n_jobs
 from joblib import Parallel, delayed
 from sklearn.preprocessing import LabelEncoder
 
