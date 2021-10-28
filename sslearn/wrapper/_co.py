@@ -51,7 +51,6 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
         else:
             raise NotFittedError("Classifier not fitted")
 
-
 # Done and tested
 class DemocraticCoLearning(_BaseCoTraining):
 
@@ -207,7 +206,6 @@ class DemocraticCoLearning(_BaseCoTraining):
             return np.array(y_)
         else:
             raise NotFittedError("Classifier not fitted")
-                
 
 # Done and tested
 class CoTraining(_BaseCoTraining):
@@ -434,7 +432,6 @@ class CoTraining(_BaseCoTraining):
             return self.classes_.take(
                 (np.argmax(predicted_probabilitiy, axis=1)), axis=0)
 
-
 # Done and tested
 class Rasco(_BaseCoTraining):
 
@@ -584,7 +581,6 @@ class Rasco(_BaseCoTraining):
         self.columns_ = idxs
 
         return self
-
 
 # Done and tested
 class RelRasco(Rasco):
@@ -1013,7 +1009,6 @@ class TriTraining(_BaseCoTraining):
 
         return self
 
-
 # Done and tested
 class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
 
@@ -1161,7 +1156,6 @@ class CoTrainingByCommittee(ClassifierMixin, MetaEstimatorMixin):
             Mean accuracy of self.predict(X) wrt. y.
         """
         return self.ensemble_estimator.score(X, y, sample_weight)
-
 
 # Done and tested
 class CoForest(_BaseCoTraining):

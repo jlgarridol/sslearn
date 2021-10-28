@@ -18,7 +18,7 @@ from sklearn.utils import check_random_state as crs
 import warnings
 warnings.filterwarnings("ignore")
 
-path = "/route/to/datasets"
+path = "/home/jlgarridol/Dropbox/UBU/Research/SSRotation/csv"
 
 seed = 100
 classifier_seed = 0

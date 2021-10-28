@@ -193,4 +193,3 @@ class DeTriTraining(TriTraining):
             self.columns_ = [list(range(X.shape[1]))]
 
             return self
-
