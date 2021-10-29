@@ -148,15 +148,15 @@ label_rates = [x / 10 for x in range(1, 5)]
 colors = ["red", "blue", "green", "yellow", "cyan", "magenta", "white", "gray"]
 
 classifiers = {
-    "RandomForest": RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)
+    # "RandomForest": RandomForestClassifier(random_state=classifier_seed, n_jobs=-1),
     # "DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
     # "SelfTraining": wrp.SelfTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
     # "TriTraining": wrp.TriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    # "Rasco": wrp.Rasco(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
-    # "RelRasco": wrp.RelRasco(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
+    "Rasco": wrp.Rasco(base_estimator=RandomForestClassifier(n_estimators=10, random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
+    "RelRasco": wrp.RelRasco(base_estimator=RandomForestClassifier(n_estimators=10, random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
     # "CoForest": wrp.CoForest(random_state=classifier_seed),
     # "DeTriTraining": wrp.DeTriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    # "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
+    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
     # "CoTraining": OneVsRestClassifier(wrp.CoTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)))
 }
 
