@@ -1,4 +1,5 @@
 from sklearn.base import ClassifierMixin, BaseEstimator
+from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
 import numpy as np
@@ -10,16 +11,16 @@ import math
 from abc import abstractmethod
 from sklearn.multiclass import LabelBinarizer
 from sklearn.feature_selection import mutual_info_classif
-from ..utils import calculate_prior_probability
+from ..utils import calculate_prior_probability, choice_with_proportion, safe_division
 import sys
-import operator
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import softmax
 from sslearn.supervised import rotation as rot
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import OneHotEncoder
 from statsmodels.stats.proportion import proportion_confint
 import warnings
-from sslearn.base import Ensemble
+from ..base import Ensemble, get_dataset
 from sslearn.utils import check_n_jobs
 from joblib import Parallel, delayed
 
@@ -53,11 +54,18 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
 
 # Done and tested
 class DemocraticCoLearning(_BaseCoTraining):
-
-    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=3):
+    def __init__(
+        self,
+        base_estimator=[
+            DecisionTreeClassifier(),
+            GaussianNB(),
+            KNeighborsClassifier(n_neighbors=3),
+        ],
+        n_estimators=3,
+    ):
         """
         Y. Zhou and S. Goldman, "Democratic co-learning,"
-        16th IEEE International Conference on Tools with Artificial Intelligence, 
+        16th IEEE International Conference on Tools with Artificial Intelligence,
         2004, pp. 594-602, doi: 10.1109/ICTAI.2004.48.
 
         Parameters
@@ -71,7 +79,7 @@ class DemocraticCoLearning(_BaseCoTraining):
         ------
         AttributeError
             If n_estimators is None and base_estimator is not a list
-        """ 
+        """
 
         if isinstance(base_estimator, ClassifierMixin) and n_estimators is not None:
             estimators = list()
@@ -90,7 +98,7 @@ class DemocraticCoLearning(_BaseCoTraining):
     def __calculate_y(self, X, H):
         for h in H:
             yield h.predict(X)
-    
+
     def __ponderate_y(self, predictions, confidence):
         y_complete = None
         for c, p in zip(confidence, predictions):
@@ -103,35 +111,6 @@ class DemocraticCoLearning(_BaseCoTraining):
         y_zeros = np.zeros(y_complete.shape)
         y_zeros[np.arange(y_complete.shape[0]), y_complete.argmax(1)] = 1
         return self.one_hot.inverse_transform(y_zeros).flatten()
-
-    # def __vote_ponderate(self, x, confidence, H):
-    #     """Calculates the value of the class for instance x using the weighted vote
-
-    #     Parameters
-    #     ----------
-    #     x : {array_like}
-    #         Instance
-    #     confidence : list
-    #         List of confidences for each learner in H
-    #     H : list
-    #         List of learners (hypothesis)
-
-    #     Returns
-    #     -------
-    #     tuple (class, list)
-    #         Two-dimensional tuple with the predicted class and the list of predictions for each learner
-    #     """        
-    #     predicted = []
-    #     ponderated = {}
-    #     for i, h in enumerate(H):
-    #         w = confidence[i][-1]
-    #         y = h.predict(x.reshape(1, -1))
-    #         if y[0] not in ponderated:
-    #             ponderated[y[0]] = w
-    #         else:
-    #             ponderated[y[0]] += w
-    #         predicted.append(y)
-    #     return max(ponderated.items(), key=operator.itemgetter(1))[0], predicted
 
     def __calcule_last_confidences(self, X, y):
         """Calculate the confidence of each learner
@@ -170,10 +149,8 @@ class DemocraticCoLearning(_BaseCoTraining):
         """
         if estimator_kwards is None:
             estimator_kwards = [{} for _ in range(self.n_estimators)]
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
-        
+        X_label, y_label, X_unlabel = get_dataset(X, y)
+
         self.one_hot.fit(y_label.reshape(-1, 1))
 
         L = [X_label] * self.n_estimators
@@ -213,7 +190,9 @@ class DemocraticCoLearning(_BaseCoTraining):
 
             for i in range(self.n_estimators):
                 to_add_candidates = predictions[i] == y_predicted
-                to_add = np.logical_xor(L_added[i], to_add_candidates) * to_add_candidates
+                to_add = (
+                    np.logical_xor(L_added[i], to_add_candidates) * to_add_candidates
+                )
                 L_added[i] += to_add
                 L_[i] = X_unlabel[to_add, :]
                 Ly_[i] = y_predicted[to_add]
@@ -233,7 +212,7 @@ class DemocraticCoLearning(_BaseCoTraining):
 
                     qi = len(L[i]) * ((1 - 2 * (e[i] / len(L[i]))) ** 2)
                     e_i = e_factor * len(L_[i])
-
+                    # Assumption: |Li|+|L'i| == |Li U L'i|
                     q_i = (len(L[i]) + len(L_[i])) * (
                         1 - (2 * e[i] + e_i) / (len(L[i]) + len(L_[i]))
                     )
@@ -251,7 +230,7 @@ class DemocraticCoLearning(_BaseCoTraining):
 
         return self
 
-    def predict_proba(self, X, **kwards):
+    def predict_proba(self, X):
         """Predict probability for each possible outcome.
 
         Parameters
@@ -638,9 +617,7 @@ class Rasco(_BaseCoTraining):
         self: Rasco
             Fitted estimator.
         """
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
+        X_label, y_label, X_unlabel = get_dataset(X, y)
 
         random_state = check_random_state(self.random_state)
 
@@ -861,9 +838,7 @@ class RotRelRasco(RelRasco):
 
         random_state = check_random_state(self.random_state)
 
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
+        X_label, y_label, X_unlabel = get_dataset(X, y)
 
         if not self.incremental and self.batch_size is None:
             self.batch_size = X_label.shape[0]
@@ -1007,16 +982,18 @@ class RotRelRasco(RelRasco):
 # Done and tested
 class TriTraining(_BaseCoTraining):
     def __init__(
-        self, base_estimator=DecisionTreeClassifier(), n_samples=None, random_state=None
+        self,
+        base_estimator=DecisionTreeClassifier(),
+        n_samples=None,
+        epsilon=1e-07,
+        random_state=None,
     ):
         """TriTraining
-
         Zhi-Hua Zhou and Ming Li,
         "Tri-training: exploiting unlabeled data using three classifiers,"
         in <i>IEEE Transactions on Knowledge and Data Engineering</i>,
         vol. 17, no. 11, pp. 1529-1541, Nov. 2005,
         doi: 10.1109/TKDE.2005.186.
-
         Parameters
         ----------
         base_estimator : ClassifierMixin, optional
@@ -1030,12 +1007,12 @@ class TriTraining(_BaseCoTraining):
         self.base_estimator = base_estimator
         self.n_samples = n_samples
         self._N_LEARNER = 3
+        self.epsilon = epsilon
         self.random_state = random_state
 
     @staticmethod
-    def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin):
+    def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon):
         """Calculate the error between two hypothesis
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -1046,7 +1023,6 @@ class TriTraining(_BaseCoTraining):
             First hypothesis
         h2 : ClassifierMixin
             Second hypothesis
-
         Returns
         -------
         float
@@ -1062,19 +1038,17 @@ class TriTraining(_BaseCoTraining):
         error = np.count_nonzero(np.logical_and(y1_fail, y2_fail))
         coincidence = np.count_nonzero(y1 == y2)
 
-        return error / coincidence
+        return safe_division(error, coincidence, epsilon)
 
     @staticmethod
     def _another_hs(hs, index):
         """Get the another hypothesis
-
         Parameters
         ----------
         hs : list
             hypothesis collection
         index : int
             base hypothesis  index
-
         Returns
         -------
         list
@@ -1088,7 +1062,6 @@ class TriTraining(_BaseCoTraining):
     @staticmethod
     def _subsample(L, s, random_state=None):
         """Randomly removes |L| - s number of examples from L
-
         Parameters
         ----------
         L : tuple of array-like
@@ -1097,26 +1070,24 @@ class TriTraining(_BaseCoTraining):
             Equation 10 in paper
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
-
         Returns
         -------
         tuple
             Collection of pseudo-labeled selected for enlarged labeled examples.
         """
-        return resample(
-            *L, replace=False, n_samples=len(L) - s, random_state=random_state
-        )
+        to_remove = len(L[0]) - s
+        select = len(L[0]) - to_remove
+
+        return resample(*L, replace=False, n_samples=select, random_state=random_state)
 
     def fit(self, X, y, **kwards):
         """Build a TriTraining classifier from the training set (X, y).
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
         y : array-like of shape (n_samples,)
             The target values (class labels), -1 if unlabel.
-
         Returns
         -------
         self: TriTraining
@@ -1129,8 +1100,20 @@ class TriTraining(_BaseCoTraining):
         X_unlabel = X[y == y.dtype.type(-1)]
 
         hypothesis = []
-        e = [0.5] * self._N_LEARNER
+        e_ = [0.5] * self._N_LEARNER
         l_ = [0] * self._N_LEARNER
+
+        # Get a random instance for each class to keep class index
+        classes = set(np.unique(y_label))
+        instances = list()
+        labels = list()
+        for x_, y_ in zip(X_label, y_label):
+            if y_ in classes:
+                classes.remove(y_)
+                instances.append(x_)
+                labels.append(y_)
+            if len(classes) == 0:
+                break
 
         for _ in range(self._N_LEARNER):
             X_sampled, y_sampled = resample(
@@ -1140,6 +1123,9 @@ class TriTraining(_BaseCoTraining):
                 n_samples=self.n_samples,
                 random_state=random_state,
             )
+
+            X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
+            y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
 
             hypothesis.append(
                 skclone(self.base_estimator).fit(X_sampled, y_sampled, **kwards)
@@ -1151,27 +1137,33 @@ class TriTraining(_BaseCoTraining):
             something_has_changed = False
             L = [[]] * self._N_LEARNER
             Ly = [[]] * self._N_LEARNER
-            _e = []
+            e = []
             updates = [False] * 3
 
             for i in range(self._N_LEARNER):
                 hj, hk = TriTraining._another_hs(hypothesis, i)
-                _e.append(TriTraining._measure_error(X_label, y_label, hj, hk))
-                if e[i] > _e[i]:
+                e.append(
+                    TriTraining._measure_error(X_label, y_label, hj, hk, self.epsilon)
+                )
+                if e_[i] > e[i]:
                     y_p = hj.predict(X_unlabel)
                     validx = y_p == hk.predict(X_unlabel)
                     L[i] = X_unlabel[validx]
                     Ly[i] = y_p[validx]
 
                     if l_[i] == 0:
-                        l_[i] = math.floor(_e[i] / (e[i] - _e[i]) + 1)
+                        l_[i] = math.floor(
+                            safe_division(e[i], (e_[i] - e[i]), self.epsilon) + 1
+                        )
                     if l_[i] < len(L[i]):
-                        if _e[i] * len(L[i]) < e[i] * l_[i]:
+                        if e[i] * len(L[i]) < e_[i] * l_[i]:
                             updates[i] = True
-                        elif l_[i] > (_e[i] / (e[i] - _e[i])):
+                        elif l_[i] > (e[i] / (e_[i] - e[i])):
                             L[i], Ly[i] = TriTraining._subsample(
                                 (L[i], Ly[i]),
-                                math.ceil(e[i] * l_[i] / _e[i] - 1),
+                                math.ceil(
+                                    safe_division(e_[i] * l_[i], e[i], self.epsilon) - 1
+                                ),
                                 random_state,
                             )
                             updates[i] = True
@@ -1181,7 +1173,7 @@ class TriTraining(_BaseCoTraining):
                     _tempL = np.concatenate((X_label, L[i]))
                     _tempY = np.concatenate((y_label, Ly[i]))
                     hypothesis[i].fit(_tempL, _tempY, **kwards)
-                    e[i] = _e[i]
+                    e_[i] = e[i]
                     l_[i] = len(L[i])
                     something_has_changed = True
 
@@ -1203,12 +1195,10 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
     ):
         """Create a committee trained by cotraining based on
         the diversity of classifiers.
-
         M. F. A. Hady and F. Schwenker,
         "Co-training by Committee: A New Semi-supervised Learning Framework,"
         2008 IEEE International Conference on Data Mining Workshops,
         Pisa, 2008, pp. 563-572, doi: 10.1109/ICDMW.2008.27.
-
         Parameters
         ----------
         ensemble_estimator : ClassifierMixin, optional
@@ -1231,14 +1221,12 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
     def fit(self, X, y, **kwards):
         """Build a CoTrainingByCommittee classifier from the training set (X, y).
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
         y : array-like of shape (n_samples,)
             The target values (class labels), -1 if unlabel.
-
         Returns
         -------
         self: CoTrainingByCommittee
@@ -1247,42 +1235,37 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
         self.ensemble_estimator = skclone(self.ensemble_estimator)
         random_state = check_random_state(self.random_state)
 
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
+        X_label, y_prev, X_unlabel = get_dataset(X, y)
+
+        self.label_binarizer_ = LabelBinarizer()
+        y_label = self.label_binarizer_.fit_transform(y_prev)
+
+        self.classes_ = self.label_binarizer_.classes_
 
         prior = calculate_prior_probability(y_label)
         permutation = random_state.permutation(len(X_unlabel))
 
         self.ensemble_estimator.fit(X_label, y_label, **kwards)
-        self.classes_ = self.ensemble_estimator.classes_
 
         for _ in range(self.max_iterations):
             if len(permutation) == 0:
                 break
             raw_predictions = self.ensemble_estimator.predict_proba(
-                X_unlabel[permutation[0 : self.poolsize]]
+                X_unlabel[permutation[0:self.poolsize]]
             )
 
             predictions = np.max(raw_predictions, axis=1)
             class_predicted = np.argmax(raw_predictions, axis=1)
 
-            to_label = None
-            for c in range(len(self.classes_)):
-                to_add = np.logical_and(
-                    class_predicted == c, predictions >= prior[self.classes_[c]]
-                )
-                if to_label is not None:
-                    to_label = np.logical_or(to_label, to_add)
-                else:
-                    to_label = to_add
+            to_label = choice_with_proportion(predictions, class_predicted, prior)
 
-            index = permutation[0 : self.poolsize][to_label]
+            index = permutation[0:self.poolsize][to_label]
             X_label = np.append(X_label, X_unlabel[index], axis=0)
-            pseudoy = np.array(
-                list(map(lambda x: self.classes_[x], class_predicted[to_label]))
-            )
-            y_label = np.append(y_label, pseudoy, axis=0)
+            pseudoy = class_predicted[to_label]
+            # pseudoy = np.array(
+            #     list(map(lambda x: self.classes_[x], class_predicted[to_label]))
+            # )
+            y_label = np.append(y_label, pseudoy)
             permutation = permutation[list(map(lambda x: x not in index, permutation))]
 
             self.ensemble_estimator.fit(X_label, y_label, **kwards)
@@ -1291,32 +1274,26 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
     def predict(self, X):
         """Predict class value for X.
-
         For a classification model, the predicted class for each sample in X is returned.
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
-
         Returns
         -------
         y: array-like of shape (n_samples,)
             The predicted classes
         """
         check_is_fitted(self.ensemble_estimator)
-        return self.ensemble_estimator.predict(X)
+        return self.label_binarizer_.inverse_transform(self.ensemble_estimator.predict(X))
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
-
         The predicted class probability depends on the ensemble estimator.
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
-
         Returns
         -------
         y: ndarray of shape (n_samples, n_classes) or list of n_outputs such arrays if n_outputs > 1
@@ -1327,9 +1304,7 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
     def score(self, X, y, sample_weight=None):
         """Return the mean accuracy on the given test data and labels.
-
         In multi-label classification, this is the subset accuracy which is a harsh metric since you require for each sample that each label set be correctly predicted.
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1338,12 +1313,12 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
             True labels for X.
         sample_weight : array-like of shape (n_samples,), optional
             Sample weights., by default None
-
         Returns
         -------
         score: float
             Mean accuracy of self.predict(X) wrt. y.
         """
+        y = self.label_binarizer_.transform(y)
         return self.ensemble_estimator.score(X, y, sample_weight)
 
 
@@ -1400,9 +1375,7 @@ class CoForest(_BaseCoTraining):
         """
         random_state = check_random_state(self.random_state)
 
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
+        X_label, y_label, X_unlabel = get_dataset(X, y)
 
         hypothesis = []
         errors = []
