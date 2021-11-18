@@ -5,18 +5,19 @@ from ._co import TriTraining
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
+
 # Done and tested
 class DeTriTraining(TriTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(), k_neighbors=3,
-                n_samples=None, mode="seeded", n_jobs=None, random_state=None):
+                 n_samples=None, mode="seeded", n_jobs=None, random_state=None):
         """DeTriTraining
 
-        Deng C., Guo M.Z. (2006) 
+        Deng C., Guo M.Z. (2006)
         Tri-training and Data Editing Based Semi-supervised Clustering Algorithm. 
         In: Gelbukh A., Reyes-Garcia C.A. (eds) MICAI 2006: Advances in Artificial Intelligence. MICAI 2006. 
-        Lecture Notes in Computer Science, vol 4293. 
-        Springer, Berlin, Heidelberg. 
+        Lecture Notes in Computer Science, vol 4293.
+        Springer, Berlin, Heidelberg.
         https://doi.org/10.1007/11925231_61
 
         Parameters
@@ -60,9 +61,9 @@ class DeTriTraining(TriTraining):
         -------
         tuple (X, y)
             Enlarged dataset with instances where at least k_neighbors/2+1 have the same class.
-        """        
+        """
         # k_neighbors +1 to ignore the own instance.
-        knn = KNeighborsClassifier(n_neighbors=self.k_neighbors+1, n_jobs=self.n_jobs)
+        knn = KNeighborsClassifier(n_neighbors=self.k_neighbors + 1, n_jobs=self.n_jobs)
         valid = knn.fit(*S).predict(S[0]) == S[1]
         return S[0][valid], S[1][valid]
 
@@ -90,14 +91,14 @@ class DeTriTraining(TriTraining):
             min_ = np.inf
             k_min = None
             for k in centroids:
-                candidate = np.linalg.norm(x-centroids[k])
+                candidate = np.linalg.norm(x - centroids[k])
                 if candidate < min_ or k_min is None:
                     min_ = candidate
                     k_min = k
             return k_min
 
         def constrained(x):
-            candidate = S[1][(S[0]==x).sum(axis=1)==X.shape[1]]
+            candidate = S[1][(S[0] == x).sum(axis=1) == X.shape[1]]
             if len(candidate) == 0:
                 return seeded(x)
             else:
@@ -115,8 +116,8 @@ class DeTriTraining(TriTraining):
             new_clusters = np.apply_along_axis(op, 1, X)
             new_centroids = dict()
             for k in clusters:
-                new_centroids[k] = np.mean(X[new_clusters==k], axis=0)
-                if not np.array_equal(new_centroids[k],centroids[k]):
+                new_centroids[k] = np.mean(X[new_clusters == k], axis=0)
+                if not np.array_equal(new_centroids[k], centroids[k]):
                     changes = True
             centroids = new_centroids
         
@@ -153,16 +154,13 @@ class DeTriTraining(TriTraining):
                     X_sampled, y_sampled, **kwards)
             )
             S_.append((X_sampled, y_sampled))
-            # indices = resample(range(X_label.shape[0]), n_samples=int(X_label.shape[0]/self._N_LEARNER))
-            # S_.append((X_label[indices], y_label[indices]))
-            # hypothesis.append(skclone(self.base_estimator).fit(*S_[i], **kwards))
 
         changes = True
         while changes:
             changes = False
 
             # Enlarged
-            L = [[]]*self._N_LEARNER 
+            L = [[]] * self._N_LEARNER
 
             for i in range(self._N_LEARNER):
                 hj, hk = TriTraining._another_hs(hypothesis, i)
@@ -172,7 +170,7 @@ class DeTriTraining(TriTraining):
 
             for i, _ in enumerate(L):
                 if len(L[i][0]) > 0:
-                    S_[i] = np.concatenate((X_label,L[i][0])), np.concatenate((y_label,L[i][1]))
+                    S_[i] = np.concatenate((X_label, L[i][0])), np.concatenate((y_label, L[i][1]))
                     S_[i] = self._depure(S_[i])
 
             for i in range(self._N_LEARNER):
@@ -180,16 +178,17 @@ class DeTriTraining(TriTraining):
                     changes = True
                     hypothesis[i].fit(*S_[i], **kwards)
 
-            S = np.concatenate([x[0] for x in S_]), np.concatenate([x[1] for x in S_])
-            S_0, index_ = np.unique(S[0], axis=0, return_index=True)
-            S_1 = S[1][index_]
-            S = S_0, S_1
-            S = self._depure(S) # Change, is S - L (only new)
+        S = np.concatenate([x[0] for x in S_]), np.concatenate([x[1] for x in S_])
+        S_0, index_ = np.unique(S[0], axis=0, return_index=True)
+        S_1 = S[1][index_]
+        S = S_0, S_1
+        S = self._depure(S)  # Change, is S - L (only new)
 
-            new_y = self._clustering(S, X)
+        new_y = self._clustering(S, X)
 
-            self.h_ = [skclone(self.base_estimator).fit(X, new_y, **kwards)]
-            self.classes_ = self.h_[0].classes_
-            self.columns_ = [list(range(X.shape[1]))]
+        self.h_ = [skclone(self.base_estimator).fit(X, new_y, **kwards)]
+        self.classes_ = self.h_[0].classes_
+        self.columns_ = [list(range(X.shape[1]))]
 
-            return self
+        return self
+
