@@ -17,7 +17,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import softmax
 from sslearn.supervised import rotation as rot
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from statsmodels.stats.proportion import proportion_confint
 import warnings
 from ..base import Ensemble, get_dataset
@@ -1191,6 +1191,7 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
         ensemble_estimator=BaggingClassifier(),
         max_iterations=100,
         poolsize=100,
+        min_instances_for_class=3,
         random_state=None,
     ):
         """Create a committee trained by cotraining based on
@@ -1218,6 +1219,7 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
         self.max_iterations = max_iterations
         self.poolsize = poolsize
         self.random_state = random_state
+        self.min_instances_for_class = min_instances_for_class
 
     def fit(self, X, y, **kwards):
         """Build a CoTrainingByCommittee classifier from the training set (X, y).
@@ -1237,10 +1239,10 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
         X_label, y_prev, X_unlabel = get_dataset(X, y)
 
-        self.label_binarizer_ = LabelBinarizer()
-        y_label = self.label_binarizer_.fit_transform(y_prev)
+        self.label_encoder_ = LabelEncoder()
+        y_label = self.label_encoder_.fit_transform(y_prev)
 
-        self.classes_ = self.label_binarizer_.classes_
+        self.classes_ = self.label_encoder_.classes_
 
         prior = calculate_prior_probability(y_label)
         permutation = random_state.permutation(len(X_unlabel))
@@ -1257,14 +1259,31 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
             predictions = np.max(raw_predictions, axis=1)
             class_predicted = np.argmax(raw_predictions, axis=1)
 
-            to_label = choice_with_proportion(predictions, class_predicted, prior)
+            added = np.zeros(predictions.shape, dtype=bool)
+            # First the n (or less) most confidence instances will be selected
+            for c in self.ensemble_estimator.classes_:
+                condition = (class_predicted == c)
 
-            index = permutation[0:self.poolsize][to_label]
+                candidates = predictions[condition]
+                candidates_bool = np.zeros(predictions.shape, dtype=bool)
+                candidates_sub_set = candidates_bool[condition]
+
+                instances_index_selected = candidates.argsort()[-self.min_instances_for_class:]
+
+                candidates_sub_set[instances_index_selected] = True
+                candidates_bool[condition] += candidates_sub_set
+
+                added[candidates_bool] = True
+
+            # Bajo esta interpretación se garantiza que al menos existen n elemento de cada clase por iteración
+            # Pero si se añaden ya en el proceso de proporción no se duplica.
+            to_label = choice_with_proportion(predictions, class_predicted, prior)
+            added[to_label] = True
+
+            index = permutation[0:self.poolsize][added]
             X_label = np.append(X_label, X_unlabel[index], axis=0)
-            pseudoy = class_predicted[to_label]
-            # pseudoy = np.array(
-            #     list(map(lambda x: self.classes_[x], class_predicted[to_label]))
-            # )
+            pseudoy = class_predicted[added]
+
             y_label = np.append(y_label, pseudoy)
             permutation = permutation[list(map(lambda x: x not in index, permutation))]
 
@@ -1285,7 +1304,7 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
             The predicted classes
         """
         check_is_fitted(self.ensemble_estimator)
-        return self.label_binarizer_.inverse_transform(self.ensemble_estimator.predict(X))
+        return self.label_encoder_.inverse_transform(self.ensemble_estimator.predict(X))
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -1318,7 +1337,13 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
         score: float
             Mean accuracy of self.predict(X) wrt. y.
         """
-        y = self.label_binarizer_.transform(y)
+        try:
+            y = self.label_encoder_.transform(y)
+        except ValueError:
+            if "le_dict_" not in dir(self):
+                self.le_dict_ = dict(zip(self.label_encoder_.classes_, self.label_encoder_.transform(self.label_encoder_.classes_)))
+            y = np.array(list(map(lambda x: self.le_dict_.get(x, -1), y)))
+
         return self.ensemble_estimator.score(X, y, sample_weight)
 
 
