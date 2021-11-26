@@ -8,13 +8,13 @@ def safe_division(dividend, divisor, epsilon):
     return dividend / divisor
 
 
-def choice_with_proportion(predictions, class_predicted, proportion):
+def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
     n = len(predictions)
     for_each_class = {c: int(n * j) for c, j in proportion.items()}
     indices = np.zeros(0)
     for c in proportion:
         instances = class_predicted == c
-        to_add = np.argsort(predictions)[instances][::-1][0:for_each_class[c]]
+        to_add = np.argsort(predictions)[instances][::-1][0:for_each_class[c] + extra]
         indices = np.concatenate((indices, to_add))
 
     return indices.astype(int)

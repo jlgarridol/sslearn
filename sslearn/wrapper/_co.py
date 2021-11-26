@@ -23,6 +23,7 @@ import warnings
 from ..base import Ensemble, get_dataset
 from sslearn.utils import check_n_jobs
 from joblib import Parallel, delayed
+from scipy.stats import mode
 
 
 class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
@@ -86,6 +87,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             for _ in range(n_estimators):
                 estimators.append(skclone(base_estimator))
             self.base_estimator = estimators
+            warnings.warn("The classifier will not be able to converge correctly, there is not enough diversity among the estimators (learners should be different).", ConvergenceWarning)
         elif isinstance(base_estimator, list):
             self.base_estimator = base_estimator
         else:
@@ -95,18 +97,17 @@ class DemocraticCoLearning(_BaseCoTraining):
         self.n_estimators = len(self.base_estimator)
         self.one_hot = OneHotEncoder()
 
-    def __calculate_y(self, X, H):
-        for h in H:
-            yield h.predict(X)
+    def __ponderate_y(self, predictions, weights):
+        # y_complete = None
+        # for c, p in zip(confidence, predictions):
+        #     y_ = self.one_hot.transform(p.reshape(-1, 1)) * c[-1]
+        #     if y_complete is None:
+        #         y_complete = y_
+        #     else:
+        #         y_complete += y_
 
-    def __ponderate_y(self, predictions, confidence):
-        y_complete = None
-        for c, p in zip(confidence, predictions):
-            y_ = self.one_hot.transform(p.reshape(-1, 1)) * c[-1]
-            if y_complete is None:
-                y_complete = y_
-            else:
-                y_complete += y_
+        y_complete = np.sum([self.one_hot.transform(p.reshape(-1, 1)) * wi
+                             for p, wi in zip(predictions, weights)], 0)
 
         y_zeros = np.zeros(y_complete.shape)
         y_zeros[np.arange(y_complete.shape[0]), y_complete.argmax(1)] = 1
@@ -147,16 +148,18 @@ class DemocraticCoLearning(_BaseCoTraining):
         self
             fitted classifier
         """
-        if estimator_kwards is None:
-            estimator_kwards = [{} for _ in range(self.n_estimators)]
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
         self.one_hot.fit(y_label.reshape(-1, 1))
 
         L = [X_label] * self.n_estimators
         Ly = [y_label] * self.n_estimators
+        # This variable prevents duplicate instances.
         L_added = [np.zeros(X_unlabel.shape[0]).astype(bool)] * self.n_estimators
         e = [0] * self.n_estimators
+
+        if estimator_kwards is None:
+            estimator_kwards = [{}] * self.n_estimators
 
         changed = True
         while changed:
@@ -164,51 +167,60 @@ class DemocraticCoLearning(_BaseCoTraining):
             for i in range(self.n_estimators):
                 self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
-            ##################################
-            # Estos pasos parecen sobrar #####
-            # temp = list()
-            # for i in range(self.n_estimators):
-            #     temp.extend(list(self.base_estimator[i].predict(X_unlabel)))
-            # k = np.unique(np.array(temp), return_counts=True)
-            ##################################
+            # Majority Vote
+            predictions = [H.predict(X) for H in self._base_estimator]
+            majority_vote = mode(np.array(predictions), axis=0)[0].flatten()  # K in pseudocode
 
-            L_ = list()
-            Ly_ = list()
-            confidence = list()
-            for i, H in enumerate(self.base_estimator):
-                successes = len(H.predict(X_label) == y_label)
-                trials = len(X_label)
-                li, hi = proportion_confint(successes, trials)
-                wi = (li + hi) / 2
-                confidence.append((li, hi, wi))
+            L_ = [[]] * self.n_estimators
+            Ly_ = [[]] * self.n_estimators
 
-                L_.append([])
-                Ly_.append([])
+            # Calculate confidence interval
+            trials = len(X_label)
+            conf_interval = [proportion_confint(len(H.predict(X_label) == y_label), trials) for H in self.base_estimator]
+            weights = [(li + hi) / 2 for (li, hi) in conf_interval]
 
-            predictions = list(self.__calculate_y(X_unlabel, self.base_estimator))
-            y_predicted = self.__ponderate_y(predictions, confidence)
+            # Ponderate vote
+            ponderate_vote = self.__ponderate_y(predictions, weights)
+
+            # If ponderate_vote is equal as majority_vote then
+            # the sum of classifier's weights of max voted class
+            # is greater than the max sum of classifier's weights
+            # from another classes.
+
+            candidates = ponderate_vote == majority_vote
+            candidates_bool = list()
 
             for i in range(self.n_estimators):
-                to_add_candidates = predictions[i] == y_predicted
+                
+                misspredictions = predictions[i] != ponderate_vote
+                # An instance from U are added to Li' only if:
+                #   It is a missprediction for i
+                #   It is a candidate (ponderate_vote are same majority_vote)
+                #   It's been added yet in Li
                 to_add = (
-                    np.logical_xor(L_added[i], to_add_candidates) * to_add_candidates
+                    np.logical_xor(
+                        L_added[i], np.logical_and(
+                            misspredictions,
+                            candidates
+                        )
+                    ) * misspredictions
                 )
-                L_added[i] += to_add
+                candidates_bool.append(to_add)
                 L_[i] = X_unlabel[to_add, :]
-                Ly_[i] = y_predicted[to_add]
+                Ly_[i] = ponderate_vote[to_add]
 
-            new_confidences = []
+            new_conf_interval = []
             e_factor = 0
             for i, H in enumerate(self.base_estimator):
                 successes = len(H.predict(L[i]) == Ly[i])
                 trials = len(L[i])
-                new_confidences.append(proportion_confint(successes, trials))
-                e_factor += new_confidences[-1][0]
-            e_factor = 1 - e_factor / len(new_confidences)
+                new_conf_interval.append(proportion_confint(successes, trials))
+                e_factor += new_conf_interval[-1][0]
+            e_factor = 1 - e_factor / len(new_conf_interval)
 
             for i, _ in enumerate(self.base_estimator):
                 if len(L_[i]) > 0:
-                    li, hi = new_confidences[i]
+                    li, hi = new_conf_interval[i]
 
                     qi = len(L[i]) * ((1 - 2 * (e[i] / len(L[i]))) ** 2)
                     e_i = e_factor * len(L_[i])
@@ -218,6 +230,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                     )
 
                     if q_i > qi:
+                        L_added[i] += candidates_bool[i]
                         L[i] = np.concatenate((L[i], np.array(L_[i])))
                         Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
                         e[i] = e[i] + e_i
@@ -245,28 +258,37 @@ class DemocraticCoLearning(_BaseCoTraining):
         Need to vectorized
         """
         if "h_" in dir(self):
-            y_ = list()
-            if len(X) == 1:
-                X = [X]
-            for x in X:
-                groups = dict(
-                    zip(self.classes_, [list() for _ in range(len(self.classes_))])
-                )
-                for w, H in zip(self.confidences_, self.h_):
-                    cj = H.predict(x.reshape(1, -1))
-                    if w > 0.5:
-                        groups[cj[0]].append(w)
-                C_G_j = list()
-                for c in self.classes_:
-                    size = len(groups[c])
-                    if size == 0:
-                        cgj = 0.5
-                    else:
-                        cgj = ((size + 0.5) / (size + 1)) * (sum(groups[c]) / size)
+            # Vectorization
 
-                    C_G_j.append(cgj)
-                y_.append(softmax(np.array(C_G_j).reshape(1, -1))[0])
-            return np.array(y_)
+            predictions = [H.predict(X) for H in self.h_]
+            groups = dict(
+                zip(self.classes_, [list() for _ in range(len(self.classes_))])
+            )
+
+            
+
+            # y_ = list()
+            # if len(X) == 1:
+            #     X = [X]
+            # for x in X:
+            #     groups = dict(
+            #         zip(self.classes_, [list() for _ in range(len(self.classes_))])
+            #     )
+            #     for w, H in zip(self.confidences_, self.h_):
+            #         cj = H.predict(x.reshape(1, -1))
+            #         if w > 0.5:
+            #             groups[cj[0]].append(w)
+            #     C_G_j = list()
+            #     for c in self.classes_:
+            #         size = len(groups[c])
+            #         if size == 0:
+            #             cgj = 0.5
+            #         else:
+            #             cgj = ((size + 0.5) / (size + 1)) * (sum(groups[c]) / size)
+
+            #         C_G_j.append(cgj)
+            #     y_.append(softmax(np.array(C_G_j).reshape(1, -1))[0])
+            # return np.array(y_)
         else:
             raise NotFittedError("Classifier not fitted")
 
@@ -1277,7 +1299,9 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
             # Bajo esta interpretación se garantiza que al menos existen n elemento de cada clase por iteración
             # Pero si se añaden ya en el proceso de proporción no se duplica.
-            to_label = choice_with_proportion(predictions, class_predicted, prior)
+
+            # Con esta otra interpretación ignora las n primeras instancias de cada clase
+            to_label = choice_with_proportion(predictions, class_predicted, prior, extra=self.min_instances_for_class)
             added[to_label] = True
 
             index = permutation[0:self.poolsize][added]
