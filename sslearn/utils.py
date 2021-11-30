@@ -1,12 +1,33 @@
 import numpy as np
 import os
 
+from statsmodels.stats.proportion import proportion_confint
+import scipy.stats as st
+
 
 def safe_division(dividend, divisor, epsilon):
     if divisor == 0:
         return dividend / epsilon
     return dividend / divisor
 
+def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95):
+        data = hyp.predict(X)
+        data_proba = np.max(hyp.predict_proba(X), axis=1)
+
+        if mode == "bernoulli":
+            successes = np.count_nonzero(data == y)
+            trials = X.shape[0]
+            li, hi = proportion_confint(successes, trials, alpha=1 - alpha)
+        elif mode == "t-student_depre":  # This method is over classes not over correct predictions
+            li, hi = st.t.interval(alpha=alpha, df=len(data) - 1, loc=np.mean(data), scale=st.sem(data))
+        elif mode == "normal_depre":  # This method is over classes not over correct predictions
+            li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data), scale=st.sem(data))
+        elif mode == "t-student":
+            li, hi = st.t.interval(alpha=alpha, df=len(data_proba) - 1, loc=np.mean(data_proba), scale=st.sem(data_proba))
+        elif mode == "normal":
+            li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data_proba), scale=st.sem(data_proba))
+
+        return li, hi
 
 def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
     n = len(predictions)
