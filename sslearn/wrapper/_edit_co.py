@@ -81,7 +81,7 @@ class DeTriTraining(TriTraining):
         -------
         array-like of shape (n_samples,)
             class predicted for each instance
-        """        
+        """
         centroids = dict()
         clusters = set(S[1])
         for k in clusters:

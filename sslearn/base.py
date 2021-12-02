@@ -5,9 +5,20 @@ from sklearn.multiclass import OneVsRestClassifier, LabelBinarizer, _ConstantPre
 from joblib import Parallel
 from sklearn.utils.fixes import delayed
 from sklearn.base import clone as skclone
+from sklearn.utils import check_X_y
 
 
 import warnings
+
+
+def get_dataset(X, y):
+    X, y = check_X_y(X, y)
+
+    X_label = X[y != y.dtype.type(-1)]
+    y_label = y[y != y.dtype.type(-1)]
+    X_unlabel = X[y == y.dtype.type(-1)]
+
+    return X_label, y_label, X_unlabel
 
 
 class Ensemble(ABC, MetaEstimatorMixin):

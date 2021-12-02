@@ -1,6 +1,24 @@
 import numpy as np
-from sklearn.utils import check_random_state
 import os
+
+
+def safe_division(dividend, divisor, epsilon):
+    if divisor == 0:
+        return dividend / epsilon
+    return dividend / divisor
+
+
+def choice_with_proportion(predictions, class_predicted, proportion):
+    n = len(predictions)
+    for_each_class = {c: int(n * j) for c, j in proportion.items()}
+    indices = np.zeros(0)
+    for c in proportion:
+        instances = class_predicted == c
+        to_add = np.argsort(predictions)[instances][::-1][0:for_each_class[c]]
+        indices = np.concatenate((indices, to_add))
+
+    return indices.astype(int)
+
 
 def calculate_prior_probability(y):
     """Calculate the priori probability of each label
@@ -19,14 +37,16 @@ def calculate_prior_probability(y):
     u_c = dict(zip(unique, counts))
     instances = len(y)
     for u in u_c:
-        u_c[u] = float(u_c[u]/instances)
+        u_c[u] = float(u_c[u] / instances)
     return u_c
+
 
 def is_int(x):
     """Check if x is of integer type, but not boolean"""
     # From sktime: BSD 3-Clause
     # boolean are subclasses of integers in Python, so explicitly exclude them
     return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
+
 
 def check_n_jobs(n_jobs):
     """Check `n_jobs` parameter according to the scikit-learn convention.

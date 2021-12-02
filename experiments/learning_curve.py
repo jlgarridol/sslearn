@@ -2,6 +2,7 @@
 import gc
 import joblib as jl
 import pickle
+from numpy.random import rand
 import pandas as pd
 import numpy as np
 import os
@@ -21,6 +22,10 @@ from sktime.contrib.vector_classifiers._rotation_forest import (
     RotationForest as RotationForestSktime,
 )
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import BaggingClassifier, AdaBoostClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.dummy import DummyClassifier
+from sklearn.naive_bayes import GaussianNB
 from sslearn.supervised.rotation import RotationForestClassifier
 import sslearn.wrapper as wrp
 
@@ -140,24 +145,20 @@ data_it = [
 ]
 
 seed = 100
-n_splits = 10
+# n_splits = 10
 classifier_seed = 0
-repetitions = 5
+repetitions = 100
 global_rs = crs(seed)
-label_rates = [x / 10 for x in range(1, 5)]
-colors = ["red", "blue", "green", "yellow", "cyan", "magenta", "white", "gray"]
+label_rates = [x / 100 for x in range(100, 101)]
+colors = ["red", "blue", "green", "yellow", "cyan", "magenta", "white", "grey"]
 
 classifiers = {
-    # "RandomForest": RandomForestClassifier(random_state=classifier_seed, n_jobs=-1),
-    # "DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
-    # "SelfTraining": wrp.SelfTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
-    # "TriTraining": wrp.TriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    "Rasco": wrp.Rasco(base_estimator=RandomForestClassifier(n_estimators=10, random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
-    "RelRasco": wrp.RelRasco(base_estimator=RandomForestClassifier(n_estimators=10, random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
-    # "CoForest": wrp.CoForest(random_state=classifier_seed),
-    # "DeTriTraining": wrp.DeTriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    # "CoTraining": OneVsRestClassifier(wrp.CoTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)))
+    "NaiveBayes": GaussianNB(),
+    "Dummy": DummyClassifier(),
+    "DecisionTree": DecisionTreeClassifier(random_state=classifier_seed),
+    "RandomForest": RandomForestClassifier(random_state=classifier_seed, n_jobs=-1, n_estimators=100),
+    "Bagging": BaggingClassifier(base_estimator=DecisionTreeClassifier(random_state=classifier_seed), random_state=classifier_seed, n_jobs=-1, n_estimators=100),
+    "AdaBoost": AdaBoostClassifier(base_estimator=DecisionTreeClassifier(random_state=classifier_seed), random_state=classifier_seed, n_estimators=100)
 }
 
 
@@ -185,12 +186,12 @@ def experiment(lr):
             for r in range(repetitions):
                 step += 1
 
-                skf = StratifiedKFold(
-                    n_splits=n_splits, random_state=seed, shuffle=True
-                )
+                # skf = StratifiedKFold(
+                #     n_splits=n_splits, random_state=seed, shuffle=True
+                # )
                 vuelta = 0
                 vuelta += 1
-                vueltas = str(vuelta) + "/" + str(n_splits)
+                # vueltas = str(vuelta) + "/" + str(n_splits)
 
                 # cols = curses.tigetnum('cols')
                 text = "Learning Rate {}, Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(
@@ -198,36 +199,41 @@ def experiment(lr):
                 )
                 # points = cols-len(text)-len(vueltas)
                 final_text = f"{text}"
-                print(colored(final_text, colors[color_index]))
-                for train, test in skf.split(X, y):
+                print(colored(final_text, colors[color_index % len(colors)]))
+                # for train, test in skf.split(X, y):
 
-                    score_trans, score_ind = list(), list()
-                    X_train, y_train = X[train], y[train]
-                    X_test, y_test = X[test], y[test]
+                score_trans, score_ind = list(), list()
+                X_train, y_train = X, y
+                # X_test, y_test = X[test], y[test]
+                # try:
+                #     X_, y_, X_unlabel, y_true = artificial_ssl_dataset(
+                #         X_train,
+                #         y_train,
+                #         label_rate=lr,
+                #         random_state=global_rs.randint(100),
+                #     )
+                # except ValueError:
+                #     print("Ha fallado el dataset", d, file=sys.stderr)
+                #     continue
+                X_, X_unlabel = X, X
+                y_, y_true = y, y
+                learner.random_state = classifier_seed + r
+                learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
 
-                    X_, y_, X_unlabel, y_true = artificial_ssl_dataset(
-                        X_train,
-                        y_train,
-                        label_rate=lr,
-                        random_state=global_rs.randint(100),
-                    )
-                    learner.random_state = classifier_seed + r
-                    learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
+                score_trans = learner.score(X_unlabel, y_true)
+                # score_ind = learner.score(X_test, y_test)
 
-                    score_trans = learner.score(X_unlabel, y_true)
-                    score_ind = learner.score(X_test, y_test)
+                acc_trans[c][d].append(score_trans)
+                acc_ind[c][d].append(score_ind)
 
-                    acc_trans[c][d].append(score_trans)
-                    acc_ind[c][d].append(score_ind)
-
-                    del X_
-                    del y_
-                    del X_unlabel
-                    del y_true
-                    del X_train
-                    del y_train
-                    del X_test
-                    del y_test
+                del X_
+                del y_
+                del X_unlabel
+                del y_true
+                del X_train
+                del y_train
+                # del X_test
+                # del y_test
 
             del learner
             gc.collect()
@@ -235,10 +241,10 @@ def experiment(lr):
     print("Finalizado", lr * 100, file=sys.stderr)
     with open(os.path.join(save_path, "acc_trans_" + str(int(lr * 100)) + ".pkl"), "wb") as f:
         pickle.dump(acc_trans, f)
-    with open(os.path.join(save_path, "acc_ind_" + str(int(lr * 100)) + ".pkl"), "wb") as f:
-        pickle.dump(acc_ind, f)
+    # with open(os.path.join(save_path, "acc_ind_" + str(int(lr * 100)) + ".pkl"), "wb") as f:
+    #     pickle.dump(acc_ind, f)
 
 
 # for lr in label_rates:
 #     experiment(lr)
-jl.Parallel(n_jobs=4)(jl.delayed(experiment)(lr) for lr in label_rates)
+jl.Parallel(n_jobs=6)(jl.delayed(experiment)(lr) for lr in label_rates)

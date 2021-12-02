@@ -1,37 +1,27 @@
-
 import gc
-import joblib as jl
-import pickle
-import pandas as pd
-import numpy as np
 import os
+import pickle
 import sys
+import joblib as jl
+import numpy as np
+import pandas as pd
+import pathlib
+import warnings
+from sklearn.base import clone as skclone
+from sklearn.ensemble import BaggingClassifier
+from sklearn.model_selection import StratifiedKFold
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import check_random_state as crs
+from termcolor import colored
 
 sys.path.insert(1, "..")
-
-import warnings
-from termcolor import colored
-from sklearn.utils import check_random_state as crs
-from sklearn.base import clone as skclone
-from sklearn.model_selection import StratifiedKFold
 from sslearn.model_selection import artificial_ssl_dataset
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.model_selection import cross_validate
-from sktime.contrib.vector_classifiers._rotation_forest import (
-    RotationForest as RotationForestSktime,
-)
-from sklearn.tree import DecisionTreeClassifier
-from sslearn.supervised.rotation import RotationForestClassifier
 import sslearn.wrapper as wrp
 
-from sklearn.ensemble import RandomForestClassifier
-import pathlib
-import curses
-
-
-
 save_path = pathlib.Path(__file__).parent.resolve()
-path = "/home/jlgarridol/Dropbox/UBU/Research/SSRotation/csv"
+path = "/home/jlgarridol/DATA/uci/classification/csv"
 
 datasets = {}
 for file in os.listdir(path):
@@ -70,73 +60,61 @@ for k in to_delete:
         del datasets[k]
 
 data_it = [
-    "vowel",
-    "flare-solar",
-    "banana",
-    "autos",
-    "titanic",
-    "contraceptive",
-    "monks",
-    "thyroid",
-    "appendicitis",
-    "saheart",
-    "kr-vs-k",
-    "movement_libras",
-    "letter",
-    "hepatitis",
-    "segment",
-    "satimage",
-    "nursery",
-    "led7digit",
-    "chess",
-    "pima",
     "abalone",
-    "car",
-    "shuttle",
-    "mammographic",
-    "lymphography",
-    "optdigits",
-    "penbased",
-    "glass",
-    "dermatology",
-    "sonar",
-    "bands",
-    "vehicle",
-    "iris",
-    "spectfheart",
-    "german",
-    "pagebloks",
-    "housevotes",
-    "haberman",
+    "appendicitis",
     "australian",
-    "ecoli",
-    "texture",
-    "yeast",
-    "crx",
-    "balance",
-    "marketing",
-    "bupa",
-    "mushroom",
-    "tae",
+    "autos",
+    "banana",
     "breast",
-    "tic-tac-toe",
-    "coil2000",
-    "spambase",
-    "wine",
-    "ionosphere",
-    "hayes-roth",
-    "phoneme",
-    "wdbc",
-    "splice",
-    "newthyroid",
-    "twonorm",
-    "zoo",
-    "ring",
+    "bupa",
+    "chess",
     "cleveland",
-    "post-operative",
-    "wisconsin",
+    "coil2000",
+    "contraceptive",
+    "crx",
+    "dermatology",
+    "ecoli",
+    "flare-solar",
+    "german",
+    "glass",
+    "haberman",
     "heart",
+    "hepatitis",
+    "housevotes",
+    "iris",
+    "led7digit",
+    "lymphography",
     "magic",
+    "mammographic",
+    "marketing",
+    "monks",
+    "movement_libras",
+    "mushroom",
+    "nursery",
+    "pagebloks",
+    "penbased",
+    "phoneme",
+    "pima",
+    "ring",
+    "saheart",
+    "satimage",
+    "segment",
+    "sonar",
+    "spambase",
+    "spectfheart",
+    "splice",
+    "tae",
+    "texture",
+    "thyroid",
+    "tic-tac-toe",
+    "titanic",
+    "twonorm",
+    "vehicle",
+    "vowel",
+    "wine",
+    "wisconsin",
+    "yeast",
+    "zoo",
 ]
 
 seed = 100
@@ -148,21 +126,18 @@ label_rates = [x / 10 for x in range(1, 5)]
 colors = ["red", "blue", "green", "yellow", "cyan", "magenta", "white", "gray"]
 
 classifiers = {
-    # "RandomForest": RandomForestClassifier(random_state=classifier_seed, n_jobs=-1),
-    # "DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
-    # "SelfTraining": wrp.SelfTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)),
-    # "TriTraining": wrp.TriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    "Rasco": wrp.Rasco(base_estimator=RandomForestClassifier(n_estimators=10, random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
-    "RelRasco": wrp.RelRasco(base_estimator=RandomForestClassifier(n_estimators=10, random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed, n_jobs=-1),
-    # "CoForest": wrp.CoForest(random_state=classifier_seed),
-    # "DeTriTraining": wrp.DeTriTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1), random_state=classifier_seed),
-    # "CoTraining": OneVsRestClassifier(wrp.CoTraining(base_estimator=RandomForestClassifier(random_state=classifier_seed, n_jobs=-1)))
+    #"DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=[DecisionTreeClassifier(random_state=classifier_seed, min_samples_leaf=2),
+    #                                                                 GaussianNB(),
+    #                                                                 KNeighborsClassifier(n_neighbors=3)]),
+    #"TriTraining": wrp.TriTraining(base_estimator=DecisionTreeClassifier(random_state=classifier_seed), random_state=classifier_seed),
+    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=BaggingClassifier(n_estimators=3, random_state=classifier_seed),
+                                                    poolsize=100,
+                                                    max_iterations=40,
+                                                    random_state=classifier_seed),
 }
 
 
 def experiment(lr):
-    # print("\nLabel rate: {}".format(int(lr*100)))
     warnings.filterwarnings("ignore")
     color_index = label_rates.index(lr)
 
@@ -170,11 +145,11 @@ def experiment(lr):
     for c in classifiers:
         acc_trans[c] = dict()
         acc_ind[c] = dict()
-        for d in datasets:
+        for d in data_it:
             acc_trans[c][d] = list()
             acc_ind[c][d] = list()
 
-    steps = len(classifiers) * len(datasets) * repetitions
+    steps = len(classifiers) * len(data_it) * repetitions
     step = 0
     for i, d in enumerate(data_it):
 
@@ -188,9 +163,6 @@ def experiment(lr):
                 skf = StratifiedKFold(
                     n_splits=n_splits, random_state=seed, shuffle=True
                 )
-                vuelta = 0
-                vuelta += 1
-                vueltas = str(vuelta) + "/" + str(n_splits)
 
                 # cols = curses.tigetnum('cols')
                 text = "Learning Rate {}, Classifier {}, Dataset {}, Repetition {}. Steps {}/{}".format(
@@ -212,7 +184,7 @@ def experiment(lr):
                         random_state=global_rs.randint(100),
                     )
                     learner.random_state = classifier_seed + r
-                    learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
+                    learner.fit(X_, y_)
 
                     score_trans = learner.score(X_unlabel, y_true)
                     score_ind = learner.score(X_test, y_test)
