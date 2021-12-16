@@ -47,7 +47,7 @@ class StratifiedKFoldSS():
 
 
 def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
-    """[summary]
+    """Create an artificial Semi-supervised dataset from a supervised dataset.
 
     Parameters
     ----------
