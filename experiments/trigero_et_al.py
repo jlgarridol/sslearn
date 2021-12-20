@@ -20,14 +20,8 @@ sys.path.insert(1, "..")
 from sslearn.model_selection import artificial_ssl_dataset
 import sslearn.wrapper as wrp
 
-<<<<<<< HEAD
 save_path = pathlib.Path(__file__).parent.resolve()
 path = "/home/jlgarridol/DATA/uci/classification/csv"
-=======
-
-save_path = pathlib.Path(__file__).parent.resolve()
-path = "/home/jlgarridol/Dropbox/UBU/Research/SSRotation/csv"
->>>>>>> 34d7b563280293bb5e727ee0acf2a31fc797cdbf
 
 datasets = {}
 for file in os.listdir(path):
@@ -53,21 +47,6 @@ for file in os.listdir(path):
         X = concatenated_data
     datasets[file.split(".")[0]] = (X.to_numpy(), y.to_numpy())
 
-<<<<<<< HEAD
-to_delete = [
-    "census",
-    "kddcup",
-    "fars",
-    "poker",
-    "connect-4",
-    "adult",
-]  # Quito los datasets grandes
-for k in to_delete:
-    if k in datasets:
-        del datasets[k]
-
-=======
->>>>>>> 34d7b563280293bb5e727ee0acf2a31fc797cdbf
 data_it = [
     "abalone",
     "appendicitis",
@@ -120,31 +99,11 @@ data_it = [
     "twonorm",
     "vehicle",
     "vowel",
-    "wine",
-    "wisconsin",
-    "yeast",
-    "zoo",
-]
-
-seed = 100
-n_splits = 10
-classifier_seed = 0
-repetitions = 5
 global_rs = crs(seed)
 label_rates = [x / 10 for x in range(1, 5)]
 colors = ["red", "blue", "green", "yellow", "cyan", "magenta", "white", "gray"]
 
 classifiers = {
-<<<<<<< HEAD
-    #"DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=[DecisionTreeClassifier(random_state=classifier_seed, min_samples_leaf=2),
-    #                                                                 GaussianNB(),
-    #                                                                 KNeighborsClassifier(n_neighbors=3)]),
-    #"TriTraining": wrp.TriTraining(base_estimator=DecisionTreeClassifier(random_state=classifier_seed), random_state=classifier_seed),
-    "CoTrainingByComitte": wrp.CoTrainingByCommittee(ensemble_estimator=BaggingClassifier(n_estimators=3, random_state=classifier_seed),
-                                                    poolsize=100,
-                                                    max_iterations=40,
-                                                    random_state=classifier_seed),
-=======
     "DemocraticCoLearning": wrp.DemocraticCoLearning(base_estimator=[DecisionTreeClassifier(random_state=classifier_seed, min_samples_leaf=2),
                                                                      GaussianNB(),
                                                                      KNeighborsClassifier(n_neighbors=3)]),
@@ -153,15 +112,10 @@ classifiers = {
                                                      poolsize=100,
                                                      max_iterations=40,
                                                      random_state=classifier_seed),
->>>>>>> 34d7b563280293bb5e727ee0acf2a31fc797cdbf
 }
 
 
 def experiment(lr):
-<<<<<<< HEAD
-=======
-    # print("\nLabel rate: {}".format(int(lr*100)))
->>>>>>> 34d7b563280293bb5e727ee0acf2a31fc797cdbf
     warnings.filterwarnings("ignore")
     color_index = label_rates.index(lr)
 
@@ -169,19 +123,11 @@ def experiment(lr):
     for c in classifiers:
         acc_trans[c] = dict()
         acc_ind[c] = dict()
-<<<<<<< HEAD
-        for d in data_it:
-            acc_trans[c][d] = list()
-            acc_ind[c][d] = list()
-
-    steps = len(classifiers) * len(data_it) * repetitions
-=======
         for d in datasets:
             acc_trans[c][d] = list()
             acc_ind[c][d] = list()
 
     steps = len(classifiers) * len(datasets) * repetitions
->>>>>>> 34d7b563280293bb5e727ee0acf2a31fc797cdbf
     step = 0
     for i, d in enumerate(data_it):
 
@@ -216,11 +162,10 @@ def experiment(lr):
                         random_state=global_rs.randint(100),
                     )
                     learner.random_state = classifier_seed + r
-<<<<<<< HEAD
+
+                    # If allow unlabel examples
                     learner.fit(X_, y_)
-=======
-                    learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
->>>>>>> 34d7b563280293bb5e727ee0acf2a31fc797cdbf
+                    # learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
 
                     score_trans = learner.score(X_unlabel, y_true)
                     score_ind = learner.score(X_test, y_test)
