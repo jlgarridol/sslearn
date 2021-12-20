@@ -20,6 +20,7 @@ from ..utils import (
 import sys
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import softmax
+from sklearn.preprocessing import OneHotEncoder
 from sslearn.supervised import rotation as rot
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
@@ -55,7 +56,6 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
             return y
         else:
             raise NotFittedError("Classifier not fitted")
-
 
 # Done and tested
 class DemocraticCoLearning(_BaseCoTraining):
@@ -160,6 +160,8 @@ class DemocraticCoLearning(_BaseCoTraining):
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
         self.one_hot.fit(y_label.reshape(-1, 1))
+
+        self.one_hot.fit(y_label)
 
         L = [X_label] * self.n_estimators
         Ly = [y_label] * self.n_estimators
@@ -300,7 +302,6 @@ class DemocraticCoLearning(_BaseCoTraining):
             return np.apply_along_axis(self.__combine_probabilities, 1, X)
         else:
             raise NotFittedError("Classifier not fitted")
-
 
 # Done and tested
 class CoTraining(_BaseCoTraining):
@@ -552,7 +553,6 @@ class CoTraining(_BaseCoTraining):
             )
         return self.label_binarize.inverse_transform(result)
 
-
 # Done and tested
 class Rasco(_BaseCoTraining):
     def __init__(
@@ -718,7 +718,6 @@ class Rasco(_BaseCoTraining):
         self.columns_ = idxs
 
         return self
-
 
 # Done and tested
 class RelRasco(Rasco):
@@ -1214,7 +1213,6 @@ class TriTraining(_BaseCoTraining):
 
         return self
 
-
 # Done and tested
 class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
     def __init__(
@@ -1387,7 +1385,6 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
             y = np.array(list(map(lambda x: self.le_dict_.get(x, -1), y)))
 
         return self.ensemble_estimator.score(X, y, sample_weight)
-
 
 # Done and tested
 class CoForest(_BaseCoTraining):
