@@ -68,8 +68,8 @@ class DemocraticCoLearning(_BaseCoTraining):
         ],
         n_estimators=3,
         expand_only_misslabeled=True,
-        confidence_mode="bernoulli",
-        alpha=0.95,
+        confidence_method="wilson",
+        confidence=0.95,
     ):
         """
         Y. Zhou and S. Goldman, "Democratic co-learning,"
@@ -108,8 +108,8 @@ class DemocraticCoLearning(_BaseCoTraining):
         self.one_hot = OneHotEncoder()
         self.expand_only_misslabeled = expand_only_misslabeled
 
-        self.confidence_mode = confidence_mode
-        self.alpha = alpha
+        self.confidence_method = confidence_method
+        self.alpha = confidence
 
     def __ponderate_y(self, predictions, weights):
         y_complete = np.sum(
@@ -136,7 +136,7 @@ class DemocraticCoLearning(_BaseCoTraining):
         """
         w = []
         for H in self.h_:
-            li, hi = confidence_interval(X, H, y, self.confidence_mode, self.alpha)
+            li, hi = confidence_interval(X, H, y, self.confidence_method, self.alpha)
             w.append((li + hi) / 2)
         self.confidences_ = w
 
@@ -188,7 +188,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             # Calculate confidence interval
             conf_interval = [
                 confidence_interval(
-                    X_label, H, y_label, self.confidence_mode, self.alpha
+                    X_label, H, y_label, self.confidence_method, self.alpha
                 )
                 for H in self.base_estimator
             ]
@@ -232,7 +232,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                 Ly_[i] = ponderate_vote[to_add]
 
             new_conf_interval = [
-                confidence_interval(L[i], H, Ly[i], self.confidence_mode, self.alpha)
+                confidence_interval(L[i], H, Ly[i], self.confidence_method, self.alpha)
                 for i, H in enumerate(self.base_estimator)
             ]
             e_factor = (
