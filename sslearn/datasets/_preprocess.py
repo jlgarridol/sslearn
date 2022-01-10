@@ -1,5 +1,5 @@
 
-def secure_dataset(dataset, target_column=-1):
-    pass
+def secure_dataset(X, y):
+    return X, y
 
 

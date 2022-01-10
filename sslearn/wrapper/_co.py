@@ -161,8 +161,6 @@ class DemocraticCoLearning(_BaseCoTraining):
 
         self.one_hot.fit(y_label.reshape(-1, 1))
 
-        self.one_hot.fit(y_label)
-
         L = [X_label] * self.n_estimators
         Ly = [y_label] * self.n_estimators
         # This variable prevents duplicate instances.

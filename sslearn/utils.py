@@ -10,6 +10,7 @@ def safe_division(dividend, divisor, epsilon):
         return dividend / epsilon
     return dividend / divisor
 
+
 def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95):
         data = hyp.predict(X)
         data_proba = np.max(hyp.predict_proba(X), axis=1)
@@ -28,6 +29,7 @@ def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95):
             li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data_proba), scale=st.sem(data_proba))
 
         return li, hi
+        
 
 def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
     n = len(predictions)
