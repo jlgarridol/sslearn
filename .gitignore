@@ -155,4 +155,7 @@ cython_debug/
 *.jpeg
 *.pdf
 csv/
+*.tar.*
+*.tar
+*.zip
 images/

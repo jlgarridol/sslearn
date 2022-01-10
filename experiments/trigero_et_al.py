@@ -20,9 +20,8 @@ sys.path.insert(1, "..")
 from sslearn.model_selection import artificial_ssl_dataset
 import sslearn.wrapper as wrp
 
-
 save_path = pathlib.Path(__file__).parent.resolve()
-path = "/home/jlgarridol/Dropbox/UBU/Research/SSRotation/csv"
+path = "/home/jlgarridol/DATA/uci/classification/csv"
 
 datasets = {}
 for file in os.listdir(path):
@@ -100,16 +99,6 @@ data_it = [
     "twonorm",
     "vehicle",
     "vowel",
-    "wine",
-    "wisconsin",
-    "yeast",
-    "zoo",
-]
-
-seed = 100
-n_splits = 10
-classifier_seed = 0
-repetitions = 5
 global_rs = crs(seed)
 label_rates = [x / 10 for x in range(1, 5)]
 colors = ["red", "blue", "green", "yellow", "cyan", "magenta", "white", "gray"]
@@ -127,7 +116,6 @@ classifiers = {
 
 
 def experiment(lr):
-    # print("\nLabel rate: {}".format(int(lr*100)))
     warnings.filterwarnings("ignore")
     color_index = label_rates.index(lr)
 
@@ -174,7 +162,10 @@ def experiment(lr):
                         random_state=global_rs.randint(100),
                     )
                     learner.random_state = classifier_seed + r
-                    learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
+
+                    # If allow unlabel examples
+                    learner.fit(X_, y_)
+                    # learner.fit(X_[y_ != y_.dtype.type(-1)], y_[y_ != y_.dtype.type(-1)])
 
                     score_trans = learner.score(X_unlabel, y_true)
                     score_ind = learner.score(X_test, y_test)

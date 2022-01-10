@@ -238,7 +238,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                 for i, H in enumerate(self.base_estimator)
             ]
             e_factor = (
-                1 - sum(map(lambda x: x[0], new_conf_interval)) / self.n_estimators
+                1 - sum(map(lambda l: l[0], new_conf_interval)) / self.n_estimators
             )
 
             for i, _ in enumerate(self.base_estimator):
@@ -295,6 +295,8 @@ class DemocraticCoLearning(_BaseCoTraining):
         -------
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
+
+        Need to vectorized
         """
         if "h_" in dir(self):
             if len(X) == 1:
@@ -444,7 +446,7 @@ class CoTraining(_BaseCoTraining):
         U = [i for i, y_i in enumerate(y) if y_i == -1]
         rs.shuffle(U)
 
-        U_ = U[-min(len(U), self.poolsize):]
+        U_ = U[-min(len(U), self.poolsize) :]
         # remove the samples in U_ from U
         U = U[: -len(U_)]
 
@@ -470,17 +472,17 @@ class CoTraining(_BaseCoTraining):
 
             n, p = [], []
 
-            for i in (y1_prob[:, 0].argsort())[-self.negatives:]:
+            for i in (y1_prob[:, 0].argsort())[-self.negatives :]:
                 if y1_prob[i, 0] > 0.5:
                     n.append(i)
-            for i in (y1_prob[:, 1].argsort())[-self.positives:]:
+            for i in (y1_prob[:, 1].argsort())[-self.positives :]:
                 if y1_prob[i, 1] > 0.5:
                     p.append(i)
 
-            for i in (y2_prob[:, 0].argsort())[-self.negatives:]:
+            for i in (y2_prob[:, 0].argsort())[-self.negatives :]:
                 if y2_prob[i, 0] > 0.5:
                     n.append(i)
-            for i in (y2_prob[:, 1].argsort())[-self.positives:]:
+            for i in (y2_prob[:, 1].argsort())[-self.positives :]:
                 if y2_prob[i, 1] > 0.5:
                     p.append(i)
 
