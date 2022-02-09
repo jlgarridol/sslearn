@@ -1,5 +1,5 @@
 from sklearn.base import ClassifierMixin, BaseEstimator
-from sklearn.naive_bayes import ComplementNB
+from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
 import numpy as np
@@ -57,19 +57,20 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
         else:
             raise NotFittedError("Classifier not fitted")
 
+
 # Done and tested
 class DemocraticCoLearning(_BaseCoTraining):
     def __init__(
         self,
         base_estimator=[
             DecisionTreeClassifier(),
-            ComplementNB(),
+            GaussianNB(),
             KNeighborsClassifier(n_neighbors=3),
         ],
         n_estimators=3,
         expand_only_misslabeled=True,
-        confidence_method="wilson",
-        confidence=0.95,
+        confidence_method="bernoulli",
+        alpha=0.95,
     ):
         """
         Y. Zhou and S. Goldman, "Democratic co-learning,"
@@ -105,11 +106,11 @@ class DemocraticCoLearning(_BaseCoTraining):
                 "If `n_estimators` is None then `base_estimator` must be a `list`."
             )
         self.n_estimators = len(self.base_estimator)
-        self.one_hot = OneHotEncoder()
+        self.one_hot = OneHotEncoder(sparse=False)
         self.expand_only_misslabeled = expand_only_misslabeled
 
         self.confidence_method = confidence_method
-        self.alpha = confidence
+        self.alpha = alpha
 
     def __ponderate_y(self, predictions, weights):
         y_complete = np.sum(
@@ -117,9 +118,8 @@ class DemocraticCoLearning(_BaseCoTraining):
                 self.one_hot.transform(p.reshape(-1, 1)) * wi
                 for p, wi in zip(predictions, weights)
             ],
-            0,
+            0
         )
-
         y_zeros = np.zeros(y_complete.shape)
         y_zeros[np.arange(y_complete.shape[0]), y_complete.argmax(1)] = 1
         return self.one_hot.inverse_transform(y_zeros).flatten()
@@ -158,10 +158,9 @@ class DemocraticCoLearning(_BaseCoTraining):
             fitted classifier
         """
         X_label, y_label, X_unlabel = get_dataset(X, y)
+        print("Starting fit Democratic")
 
         self.one_hot.fit(y_label.reshape(-1, 1))
-
-        self.one_hot.fit(y_label)
 
         L = [X_label] * self.n_estimators
         Ly = [y_label] * self.n_estimators
@@ -173,7 +172,11 @@ class DemocraticCoLearning(_BaseCoTraining):
             estimator_kwards = [{}] * self.n_estimators
 
         changed = True
+        iteration = 0
         while changed:
+            iteration += 1
+            print("------------------------------------------")
+            print("Iteración:",iteration)
             changed = False
             for i in range(self.n_estimators):
                 self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
@@ -196,7 +199,10 @@ class DemocraticCoLearning(_BaseCoTraining):
             ]
 
             weights = [(li + hi) / 2 for (li, hi) in conf_interval]
+            cf_str = "["+",".join(map(lambda x: "({:.3f}, {:.3f})".format(x[0],x[1]), conf_interval))+"]"
+            w_str = "["+",".join(map(lambda x: "{:.3f}".format(x), weights))+"]"
 
+            print("Intervalos de confianza:",cf_str,"Pesos:",w_str)
             # Ponderate vote
             ponderate_vote = self.__ponderate_y(predictions, weights)
 
@@ -250,14 +256,15 @@ class DemocraticCoLearning(_BaseCoTraining):
                     q_i = (len(L[i]) + len(L_[i])) * (
                         1 - (2 * e[i] + e_i) / (len(L[i]) + len(L_[i]))
                     )
-
                     if q_i > qi:
                         L_added[i] += candidates_bool[i]
                         L[i] = np.concatenate((L[i], np.array(L_[i])))
                         Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
                         e[i] = e[i] + e_i
                         changed = True
-
+                    print(f"Para {_} qi = {qi:.3f}, q'i = {q_i:.3f}, se añaden {L_[i].shape[0]} instancias.")
+        print("Finalizado")
+        print("===========================================================")
         self.h_ = self.base_estimator
         self.classes_ = self.h_[0].classes_
         self.__calcule_last_confidences(X_label, y_label)
@@ -760,6 +767,8 @@ class RelRasco(Rasco):
             The number of features for each subspace. If it is None will be the half of the features size., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
+        n_jobs : int, optional
+            The number of jobs to run in parallel. -1 means using all processors., by default None
         """
         super().__init__(
             base_estimator,

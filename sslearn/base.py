@@ -66,9 +66,19 @@ def _fit_binary_ssl(estimator, X_label, y_label, X_unlabel, classes=None):
 class OneVsRestSSLClassifier(OneVsRestClassifier):
 
     def __init__(self, estimator, *, n_jobs=None):
+        """Adapted OneVsRestClassifier for SSL datasets
+
+        Parameters
+        ----------
+        estimator : {ClassifierMixin, list},
+            An estimator object implementing fit and predict_proba or a list of ClassifierMixin
+        n_jobs : n_jobs : int, optional
+            The number of jobs to run in parallel. -1 means using all processors., by default None
+        """
         super().__init__(estimator, n_jobs=n_jobs)
 
     def fit(self, X, y):
+        #
 
         X_label = X[y != y.dtype.type(-1)]
         y_label = y[y != y.dtype.type(-1)]

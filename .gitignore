@@ -159,3 +159,4 @@ csv/
 *.tar
 *.zip
 images/
+data/
