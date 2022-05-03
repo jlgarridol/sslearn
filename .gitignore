@@ -140,6 +140,9 @@ cython_debug/
 
 # Addons
 .vscode/
+.idea/
+Notebooks/
+pickles/
 
 *.ipynb
 *.pkl
@@ -160,3 +163,4 @@ csv/
 *.zip
 images/
 data/
+keel_results/

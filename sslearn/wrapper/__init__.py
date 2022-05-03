@@ -3,4 +3,4 @@ from ._co import CoTraining, CoTrainingByCommittee, DemocraticCoLearning, Rasco,
 from ._edit_co import DeTriTraining
 
 __all__ = ['SelfTraining', 'CoTrainingByCommittee', 'Rasco', 'RelRasco', 'TriTraining',
-           "CoTraining", "DeTriTraining", "DemocraticCoLearning", "Setred", "RotRelRasco", "CoForest"]
+           "CoTraining", "DeTriTraining", "DemocraticCoLearning", "Setred", "CoForest"]

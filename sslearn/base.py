@@ -24,10 +24,10 @@ def get_dataset(X, y):
 class Ensemble(ABC, MetaEstimatorMixin):
 
     @abstractmethod
-    def predict_proba(self, X, **kwards):
+    def predict_proba(self, X):
         pass
 
-    def predict(self, X, **kwards):
+    def predict(self, X):
         """Predict the classes of X.
         Parameters
         ----------
@@ -38,7 +38,7 @@ class Ensemble(ABC, MetaEstimatorMixin):
         y : ndarray of shape (n_samples,)
             Array with predicted labels.
         """
-        predicted_probabilitiy = self.predict_proba(X, **kwards)
+        predicted_probabilitiy = self.predict_proba(X)
         return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
                                   axis=0)
 

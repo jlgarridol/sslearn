@@ -1,8 +1,19 @@
 import numpy as np
 import os
 
+import logging
+import logger
+import json
+
 from statsmodels.stats.proportion import proportion_confint
 import scipy.stats as st
+
+import sslearn
+
+
+def start_logging():
+    logger.create_folders_if_needed()
+    logging.config.dictConfig(json.load(os.path.join(os.path.dirname(sslearn.__file__), "..", "logging_config.json")))
 
 
 def safe_division(dividend, divisor, epsilon):
@@ -11,7 +22,7 @@ def safe_division(dividend, divisor, epsilon):
     return dividend / divisor
 
 
-def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95):
+def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95, logging=False, log_name=None):
     data = hyp.predict(X)
     data_proba = hyp.predict_proba(X)
     successes = np.count_nonzero(data == y)
@@ -31,6 +42,8 @@ def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95):
         li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data_proba), scale=st.sem(data_proba))
     else:
         raise AttributeError(f"`confidence_interval` mode {mode} not allowed")
+    if logging:
+        logging.evolution(log_name, "Confidence intervals", li, hi, (li+hi)/2)
     return np.mean(li), np.mean(hi)
 
 

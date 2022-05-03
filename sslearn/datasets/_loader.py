@@ -118,11 +118,11 @@ def read_csv(path, format="pandas", secure=True, target_col=-1, **kwards):
     elif isinstance(target_col, str):
         target_col = data.columns.index(target_col)
 
-    X = data.loc[:, data.columns != data.columns[target_col]]
-    y = data.loc[:, target_col]
+    X = data.iloc[:, data.columns != data.columns[target_col]]
+    y = data.iloc[:, target_col]
 
     if secure:
-        X, y = secure_dataset(X, y, target_column=target_col)
+        X, y = secure_dataset(X, y)
     if format == "numpy":
         X = X.to_numpy()
         y = y.to_numpy()

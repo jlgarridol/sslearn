@@ -1,3 +1,4 @@
+from collections import defaultdict
 from sklearn.base import ClassifierMixin, BaseEstimator
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
@@ -20,15 +21,13 @@ from ..utils import (
 import sys
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.discriminant_analysis import softmax
-from sklearn.preprocessing import OneHotEncoder
-from sslearn.supervised import rotation as rot
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import warnings
 from ..base import Ensemble, get_dataset
 from sslearn.utils import check_n_jobs
 from joblib import Parallel, delayed
 import scipy.stats as st
+import logging as log
 
 
 class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
@@ -50,8 +49,8 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
         """
         if "h_" in dir(self):
             ys = []
-            for i in range(len(self.h_)):
-                ys.append(self.h_[i].predict_proba(X[:, self.columns_[i]]), **kwards)
+            ys = [h.predict_proba(X[:, c], **kwards)
+                  for h, c in zip(self.h_, self.columns_)]
             y = sum(ys) / len(ys)
             return y
         else:
@@ -68,9 +67,11 @@ class DemocraticCoLearning(_BaseCoTraining):
             KNeighborsClassifier(n_neighbors=3),
         ],
         n_estimators=3,
-        expand_only_misslabeled=True,
+        expand_only_mislabeled=True,
         confidence_method="bernoulli",
         alpha=0.95,
+        random_state=None,
+        logging=False
     ):
         """
         Y. Zhou and S. Goldman, "Democratic co-learning,"
@@ -92,13 +93,20 @@ class DemocraticCoLearning(_BaseCoTraining):
 
         if isinstance(base_estimator, ClassifierMixin) and n_estimators is not None:
             estimators = list()
-            for _ in range(n_estimators):
+            random_available = True
+            rand = check_random_state(random_state)
+            if "random_state" not in dir(base_estimator):
+                warnings.warn(
+                    "The classifier will not be able to converge correctly, there is not enough diversity among the estimators (learners should be different).",
+                    ConvergenceWarning,
+                )
+                random_available = False
+            for i in range(n_estimators):
                 estimators.append(skclone(base_estimator))
+                if random_available:
+                    estimators[i].random_state = rand.randint(0, 1e5)
             self.base_estimator = estimators
-            warnings.warn(
-                "The classifier will not be able to converge correctly, there is not enough diversity among the estimators (learners should be different).",
-                ConvergenceWarning,
-            )
+
         elif isinstance(base_estimator, list):
             self.base_estimator = base_estimator
         else:
@@ -107,10 +115,13 @@ class DemocraticCoLearning(_BaseCoTraining):
             )
         self.n_estimators = len(self.base_estimator)
         self.one_hot = OneHotEncoder(sparse=False)
-        self.expand_only_misslabeled = expand_only_misslabeled
+        self.expand_only_mislabeled = expand_only_mislabeled
 
         self.confidence_method = confidence_method
         self.alpha = alpha
+        self.random_state = random_state
+        self.log_name = "DemocraticCoLearning"
+        self.logging = logging
 
     def __ponderate_y(self, predictions, weights):
         y_complete = np.sum(
@@ -122,6 +133,7 @@ class DemocraticCoLearning(_BaseCoTraining):
         )
         y_zeros = np.zeros(y_complete.shape)
         y_zeros[np.arange(y_complete.shape[0]), y_complete.argmax(1)] = 1
+
         return self.one_hot.inverse_transform(y_zeros).flatten()
 
     def __calcule_last_confidences(self, X, y):
@@ -135,9 +147,12 @@ class DemocraticCoLearning(_BaseCoTraining):
             Set of classes for each instance
         """
         w = []
-        for H in self.h_:
-            li, hi = confidence_interval(X, H, y, self.confidence_method, self.alpha)
-            w.append((li + hi) / 2)
+        # for H in self.h_:
+        #     li, hi = confidence_interval(X, H, y, self.confidence_method, self.alpha)
+        #     w.append((li + hi) / 2)
+        conf_method, alpha = (self.confidence_method, self.alpha)
+        w = [sum(confidence_interval(X, H, y, conf_method, alpha)) / 2
+             for H in self.h_]
         self.confidences_ = w
 
     def fit(self, X, y, estimator_kwards=None):
@@ -157,8 +172,10 @@ class DemocraticCoLearning(_BaseCoTraining):
         self
             fitted classifier
         """
+        if self.logging:
+            log.info("Democratic instance: %s", str(self))
+            log.info("Fitting DemocraticCo with %d estimators (%s)", self.n_estimators, self.base_estimator)
         X_label, y_label, X_unlabel = get_dataset(X, y)
-        print("Starting fit Democratic")
 
         self.one_hot.fit(y_label.reshape(-1, 1))
 
@@ -175,15 +192,17 @@ class DemocraticCoLearning(_BaseCoTraining):
         iteration = 0
         while changed:
             iteration += 1
-            print("------------------------------------------")
-            print("Iteración:",iteration)
+            if self.logging:
+                log.evolution(self.log_name, "Iteration", iteration)
             changed = False
             for i in range(self.n_estimators):
                 self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
             # Majority Vote
+            if self.logging:
+                log.info("Calculate majority class")
             predictions = [H.predict(X_unlabel) for H in self.base_estimator]
-            majority_vote = st.mode(np.array(predictions), axis=0)[
+            majority_class = st.mode(np.array(predictions), axis=0)[
                 0
             ].flatten()  # K in pseudocode
 
@@ -193,28 +212,24 @@ class DemocraticCoLearning(_BaseCoTraining):
             # Calculate confidence interval
             conf_interval = [
                 confidence_interval(
-                    X_label, H, y_label, self.confidence_method, self.alpha
+                    X_label, H, y_label, self.confidence_method, self.alpha, self.logging, self.log_name
                 )
                 for H in self.base_estimator
             ]
 
             weights = [(li + hi) / 2 for (li, hi) in conf_interval]
-            cf_str = "["+",".join(map(lambda x: "({:.3f}, {:.3f})".format(x[0],x[1]), conf_interval))+"]"
-            w_str = "["+",".join(map(lambda x: "{:.3f}".format(x), weights))+"]"
-
-            print("Intervalos de confianza:",cf_str,"Pesos:",w_str)
             # Ponderate vote
-            ponderate_vote = self.__ponderate_y(predictions, weights)
+            ponderate_class = self.__ponderate_y(predictions, weights)
 
-            # If `ponderate_vote` is equal as `majority_vote` then
+            # If `ponderate_class` is equal as `majority_class` then
             # the sum of classifier's weights of max voted class
             # is greater than the max of sum of classifier's weights
             # from another classes.
 
-            candidates = ponderate_vote == majority_vote
+            candidates = ponderate_class == majority_class
             candidates_bool = list()
 
-            if not self.expand_only_misslabeled:
+            if not self.expand_only_mislabeled:
                 all_same_list = list()
                 for i in range(1, self.n_estimators):
                     all_same_list.append(predictions[i] == predictions[i - 1])
@@ -222,29 +237,34 @@ class DemocraticCoLearning(_BaseCoTraining):
 
             for i in range(self.n_estimators):
 
-                misspredictions = predictions[i] != ponderate_vote
+                mispredictions = predictions[i] != ponderate_class
                 # An instance from U are added to Li' only if:
-                #   It is a missprediction for i
-                #   It is a candidate (ponderate_vote are same majority_vote)
-                #   It hasn'tbeen added yet in Li
+                #   It is a misprediction for i
+                #   It is a candidate (ponderate_class are same majority_class)
+                #   It hasn't been added yet in Li
 
-                candidates_temp = np.logical_and(misspredictions, candidates)
+                candidates_temp = np.logical_and(mispredictions, candidates)
 
-                if not self.expand_only_misslabeled:
+                if not self.expand_only_mislabeled:
                     candidates_temp = np.logical_or(candidates_temp, all_same)
 
-                to_add = np.logical_xor(L_added[i], candidates_temp) * candidates_temp
+                to_add = np.logical_and(
+                    np.logical_not(L_added[i]), candidates_temp
+                )
 
                 candidates_bool.append(to_add)
                 L_[i] = X_unlabel[to_add, :]
-                Ly_[i] = ponderate_vote[to_add]
+                Ly_[i] = ponderate_class[to_add]
+
+                if self.logging:
+                    log.evolution(self.log_name, "New instances", i, L_[i].shape[0])
 
             new_conf_interval = [
                 confidence_interval(L[i], H, Ly[i], self.confidence_method, self.alpha)
                 for i, H in enumerate(self.base_estimator)
             ]
             e_factor = (
-                1 - sum(map(lambda l: l[0], new_conf_interval)) / self.n_estimators
+                1 - sum([l_ for l_, _ in new_conf_interval]) / self.n_estimators
             )
 
             for i, _ in enumerate(self.base_estimator):
@@ -252,33 +272,52 @@ class DemocraticCoLearning(_BaseCoTraining):
 
                     qi = len(L[i]) * ((1 - 2 * (e[i] / len(L[i]))) ** 2)
                     e_i = e_factor * len(L_[i])
-                    # Assumption: |Li|+|L'i| == |Li U L'i|
+                    # |Li|+|L'i| == |Li U L'i| because of to_add
                     q_i = (len(L[i]) + len(L_[i])) * (
-                        1 - (2 * e[i] + e_i) / (len(L[i]) + len(L_[i]))
-                    )
-                    if q_i > qi:
-                        L_added[i] += candidates_bool[i]
-                        L[i] = np.concatenate((L[i], np.array(L_[i])))
-                        Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
-                        e[i] = e[i] + e_i
-                        changed = True
-                    print(f"Para {_} qi = {qi:.3f}, q'i = {q_i:.3f}, se añaden {L_[i].shape[0]} instancias.")
-        print("Finalizado")
-        print("===========================================================")
+                        1 - 2 * (e[i] + e_i) / (len(L[i]) + len(L_[i]))
+                    ) ** 2
+                    if q_i <= qi:
+                        continue
+                    L_added[i] = np.logical_or(L_added[i], candidates_bool[i])
+                    L[i] = np.concatenate((L[i], np.array(L_[i])))
+                    Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
+                    e[i] = e[i] + e_i
+                    changed = True
+
         self.h_ = self.base_estimator
         self.classes_ = self.h_[0].classes_
         self.__calcule_last_confidences(X_label, y_label)
+
+        # Ignore hypothesis
+        self.h_ = [H for w, H in zip(self.confidences_, self.h_) if w > 0.5]
+        self.confidences_ = [w for w in self.confidences_ if w > 0.5]
+
         self.columns_ = [list(range(X.shape[1]))] * self.n_estimators
 
         return self
 
-    def __combine_probabilities(self, x):
+    def __combine_probabilities(self, X):
         # TODO: Vectorize
-        groups = dict(zip(self.classes_, [list() for _ in range(len(self.classes_))]))
+
+        # CGO the vectorization assuming models with w<0.5 have been already removed:
+        # n_instances = X.shape[0]  # uppercase X as it will be an np.array
+        # sizes = np.zeros((n_instances,), dtype=int)
+        # C = np.zeros((n_instances,), dtype=float)
+        # Cavg = np.zeros((n_instances,), dtype=float)
+        # for w, H in zip(self.confidences_, self.h_):
+        #     cj = H.predict(X.reshape(1, -1))
+        #     C[cj] += w
+        #     sizes[cj] += 1
+        # Cavg[sizes == 0] = 0.5  # «voting power» of 0.5 for small groups
+        # ne = (sizes != 0)  # non empty groups
+        # Cavg[ne] = (sizes[ne] + 0.5) / (sizes[ne] + 1) * C[ne] / sizes[ne]
+        # return softmax(Cavg)[0]
+
+        groups = defaultdict(list)
 
         for w, H in zip(self.confidences_, self.h_):
             if w > 0.5:
-                cj = H.predict(x.reshape(1, -1))
+                cj = H.predict(X.reshape(1, -1))
                 groups[cj[0]].append(w)
 
         C_G_j = list()
@@ -311,6 +350,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             return np.apply_along_axis(self.__combine_probabilities, 1, X)
         else:
             raise NotFittedError("Classifier not fitted")
+
 
 # Done and tested
 class CoTraining(_BaseCoTraining):
@@ -812,212 +852,212 @@ class RelRasco(Rasco):
         return idxs
 
 
-class RotRelRasco(RelRasco):
-    def __init__(
-        self,
-        base_estimator=DecisionTreeClassifier(),
-        group_weight=0.5,
-        pca=PCA(),
-        pre_rotation=False,
-        max_iterations=10,
-        n_estimators=30,
-        incremental=True,
-        batch_size=None,
-        subspace_size=None,
-        random_state=None,
-    ):
-        """
-        Parameters
-        ----------
-        base_estimator : ClassifierMixin, optional
-            An estimator object implementing fit and predict_proba, by default DecisionTreeClassifier()
-        max_iterations : int, optional
-            Maximum number of iterations allowed. Should be greater than or equal to 0.
-            If is -1 then will be infinite iterations until U be empty, by default 10
-        n_estimators : int, optional
-            The number of base estimators in the ensemble., by default 30
-        incremental : bool, optional
-            If true then it will add the most relevant instance for each class from U in enlarged L,
-            else will be select from U the "batch_size" most confident instances., by default True
-        batch_size : int, optional
-            If "incremental" is false it is the number of instances to add to enlarged L.
-            If it is None then will be the size of L., by default None
-        subspace_size : int, optional
-            The number of features for each subspace. If it is None will be the half of the features size., by default None
-        random_state : int, RandomState instance, optional
-            controls the randomness of the estimator, by default None
-        """
-        super().__init__(
-            base_estimator,
-            max_iterations,
-            n_estimators,
-            incremental,
-            batch_size,
-            subspace_size,
-            random_state,
-        )
-        self.group_weight = group_weight
-        self.pca = pca
-        self.pre_rotation = pre_rotation
+# class RotRelRasco(RelRasco):
+#     def __init__(
+#         self,
+#         base_estimator=DecisionTreeClassifier(),
+#         group_weight=0.5,
+#         pca=PCA(),
+#         pre_rotation=False,
+#         max_iterations=10,
+#         n_estimators=30,
+#         incremental=True,
+#         batch_size=None,
+#         subspace_size=None,
+#         random_state=None,
+#     ):
+#         """
+#         Parameters
+#         ----------
+#         base_estimator : ClassifierMixin, optional
+#             An estimator object implementing fit and predict_proba, by default DecisionTreeClassifier()
+#         max_iterations : int, optional
+#             Maximum number of iterations allowed. Should be greater than or equal to 0.
+#             If is -1 then will be infinite iterations until U be empty, by default 10
+#         n_estimators : int, optional
+#             The number of base estimators in the ensemble., by default 30
+#         incremental : bool, optional
+#             If true then it will add the most relevant instance for each class from U in enlarged L,
+#             else will be select from U the "batch_size" most confident instances., by default True
+#         batch_size : int, optional
+#             If "incremental" is false it is the number of instances to add to enlarged L.
+#             If it is None then will be the size of L., by default None
+#         subspace_size : int, optional
+#             The number of features for each subspace. If it is None will be the half of the features size., by default None
+#         random_state : int, RandomState instance, optional
+#             controls the randomness of the estimator, by default None
+#         """
+#         super().__init__(
+#             base_estimator,
+#             max_iterations,
+#             n_estimators,
+#             incremental,
+#             batch_size,
+#             subspace_size,
+#             random_state,
+#         )
+#         self.group_weight = group_weight
+#         self.pca = pca
+#         self.pre_rotation = pre_rotation
 
-    def fit(self, X, y, **kwards):
-        """Build a RotRelRasco classifier from the training set (X, y).
+#     def fit(self, X, y, **kwards):
+#         """Build a RotRelRasco classifier from the training set (X, y).
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples.
-        y : array-like of shape (n_samples,)
-            The target values (class labels), -1 if unlabel.
+#         Parameters
+#         ----------
+#         X : {array-like, sparse matrix} of shape (n_samples, n_features)
+#             The training input samples.
+#         y : array-like of shape (n_samples,)
+#             The target values (class labels), -1 if unlabel.
 
-        Returns
-        -------
-        self: Rasco
-            Fitted estimator.
-        """
-        self._rotations = dict()
+#         Returns
+#         -------
+#         self: Rasco
+#             Fitted estimator.
+#         """
+#         self._rotations = dict()
 
-        random_state = check_random_state(self.random_state)
+#         random_state = check_random_state(self.random_state)
 
-        X_label, y_label, X_unlabel = get_dataset(X, y)
+#         X_label, y_label, X_unlabel = get_dataset(X, y)
 
-        if not self.incremental and self.batch_size is None:
-            self.batch_size = X_label.shape[0]
+#         if not self.incremental and self.batch_size is None:
+#             self.batch_size = X_label.shape[0]
 
-        if self.subspace_size is None:
-            self.subspace_size = int(X.shape[1] / 2)
+#         if self.subspace_size is None:
+#             self.subspace_size = int(X.shape[1] / 2)
 
-        if self.pre_rotation:
-            self._rotations = rot.Rotation(
-                math.ceil(X.shape[1] / self.subspace_size),
-                self.group_weight,
-                skclone(self.pca),
-                random_state=random_state,
-            )
-            X_unlabel = self._rotations.fit_transform(X_unlabel)
-            X_label = self._rotations.transform(X_label)
+#         if self.pre_rotation:
+#             self._rotations = rot.Rotation(
+#                 math.ceil(X.shape[1] / self.subspace_size),
+#                 self.group_weight,
+#                 skclone(self.pca),
+#                 random_state=random_state,
+#             )
+#             X_unlabel = self._rotations.fit_transform(X_unlabel)
+#             X_label = self._rotations.transform(X_label)
 
-        idxs = self._generate_random_subspaces(
-            X_label, y_label, random_state=random_state
-        )
+#         idxs = self._generate_random_subspaces(
+#             X_label, y_label, random_state=random_state
+#         )
 
-        if not self.pre_rotation:
-            for idx in idxs:
-                self.__rotate(X_unlabel, idx, fit=True, random_state=random_state)
+#         if not self.pre_rotation:
+#             for idx in idxs:
+#                 self.__rotate(X_unlabel, idx, fit=True, random_state=random_state)
 
-        cfs = []
+#         cfs = []
 
-        for i in range(self.n_estimators):
-            if self.pre_rotation:
-                r = X_label[:, idxs[i]]
-            else:
-                r = self.__rotate(X_label, idxs[i])
+#         for i in range(self.n_estimators):
+#             if self.pre_rotation:
+#                 r = X_label[:, idxs[i]]
+#             else:
+#                 r = self.__rotate(X_label, idxs[i])
 
-            cfs.append(skclone(self.base_estimator).fit(r, y_label, **kwards))
+#             cfs.append(skclone(self.base_estimator).fit(r, y_label, **kwards))
 
-        it = 0
-        while True:
-            if (self.max_iterations != -1 and it >= self.max_iterations) or len(
-                X_unlabel
-            ) == 0:
-                break
+#         it = 0
+#         while True:
+#             if (self.max_iterations != -1 and it >= self.max_iterations) or len(
+#                 X_unlabel
+#             ) == 0:
+#                 break
 
-            raw_predicions = []
-            for i in range(self.n_estimators):
-                if self.pre_rotation:
-                    r = X_unlabel[:, idxs[i]]
-                else:
-                    r = self.__rotate(X_unlabel, idxs[i])
-                rp = cfs[i].predict_proba(r)
-                raw_predicions.append(rp)
-            raw_predicions = sum(raw_predicions) / self.n_estimators
-            predictions = np.max(raw_predicions, axis=1)
-            class_predicted = np.argmax(raw_predicions, axis=1)
-            pseudoy = np.array(list(map(lambda x: cfs[0].classes_[x], class_predicted)))
+#             raw_predicions = []
+#             for i in range(self.n_estimators):
+#                 if self.pre_rotation:
+#                     r = X_unlabel[:, idxs[i]]
+#                 else:
+#                     r = self.__rotate(X_unlabel, idxs[i])
+#                 rp = cfs[i].predict_proba(r)
+#                 raw_predicions.append(rp)
+#             raw_predicions = sum(raw_predicions) / self.n_estimators
+#             predictions = np.max(raw_predicions, axis=1)
+#             class_predicted = np.argmax(raw_predicions, axis=1)
+#             pseudoy = np.array(list(map(lambda x: cfs[0].classes_[x], class_predicted)))
 
-            Lj = []
-            yj = []
+#             Lj = []
+#             yj = []
 
-            sorted_ = np.argsort(predictions)
-            if self.incremental:
-                # One of each class
-                for class_ in cfs[0].classes_:
-                    try:
-                        Lj.append(sorted_[pseudoy == class_][-1])
-                        yj.append(class_)
-                    except IndexError:
-                        warnings.warn(
-                            "RASCO convergence warning, the class "
-                            + str(class_)
-                            + " not predicted",
-                            ConvergenceWarning,
-                        )
+#             sorted_ = np.argsort(predictions)
+#             if self.incremental:
+#                 # One of each class
+#                 for class_ in cfs[0].classes_:
+#                     try:
+#                         Lj.append(sorted_[pseudoy == class_][-1])
+#                         yj.append(class_)
+#                     except IndexError:
+#                         warnings.warn(
+#                             "RASCO convergence warning, the class "
+#                             + str(class_)
+#                             + " not predicted",
+#                             ConvergenceWarning,
+#                         )
 
-                Lj = np.array(Lj)
-            else:
-                Lj = sorted_[-self.batch_size :]
-                yj = pseudoy[Lj]
+#                 Lj = np.array(Lj)
+#             else:
+#                 Lj = sorted_[-self.batch_size :]
+#                 yj = pseudoy[Lj]
 
-            X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
-            y_label = np.append(y_label, yj)
-            X_unlabel = np.delete(X_unlabel, Lj, axis=0)
+#             X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
+#             y_label = np.append(y_label, yj)
+#             X_unlabel = np.delete(X_unlabel, Lj, axis=0)
 
-            for i in range(self.n_estimators):
-                if self.pre_rotation:
-                    r = X_label[:, idxs[i]]
-                else:
-                    r = self.__rotate(X_label, idxs[i])
-                cfs[i].fit(r, y_label, **kwards)
+#             for i in range(self.n_estimators):
+#                 if self.pre_rotation:
+#                     r = X_label[:, idxs[i]]
+#                 else:
+#                     r = self.__rotate(X_label, idxs[i])
+#                 cfs[i].fit(r, y_label, **kwards)
 
-            it += 1
+#             it += 1
 
-        self.h_ = cfs
-        self.classes_ = self.h_[0].classes_
-        self.columns_ = idxs
+#         self.h_ = cfs
+#         self.classes_ = self.h_[0].classes_
+#         self.columns_ = idxs
 
-        return self
+#         return self
 
-    def __rotate(self, X, idx, fit=False, random_state=None):
-        if fit:
-            rt = rot.Rotation(
-                len(idx),
-                self.group_weight,
-                skclone(self.pca),
-                random_state=random_state,
-            )
-            self._rotations[tuple(idx)] = rt
-            rt.fit(X[:, idx])
-        else:
-            rt = self._rotations[tuple(idx)]
-        X_rotated = rt.transform(X[:, idx])
-        return X_rotated
+#     def __rotate(self, X, idx, fit=False, random_state=None):
+#         if fit:
+#             rt = rot.Rotation(
+#                 len(idx),
+#                 self.group_weight,
+#                 skclone(self.pca),
+#                 random_state=random_state,
+#             )
+#             self._rotations[tuple(idx)] = rt
+#             rt.fit(X[:, idx])
+#         else:
+#             rt = self._rotations[tuple(idx)]
+#         X_rotated = rt.transform(X[:, idx])
+#         return X_rotated
 
-    def predict_proba(self, X, **kwards):
-        """Predict probability for each possible outcome.
+#     def predict_proba(self, X, **kwards):
+#         """Predict probability for each possible outcome.
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Array representing the data.
-        Returns
-        -------
-        ndarray of shape (n_samples, n_features)
-            Array with prediction probabilities.
-        """
-        if "h_" in dir(self):
-            ys = []
-            if self.pre_rotation:
-                X = self._rotations.transform(X)
-            for i in range(len(self.h_)):
-                if self.pre_rotation:
-                    r = X[:, self.columns_[i]]
-                else:
-                    r = self.__rotate(X, self.columns_[i])
-                ys.append(self.h_[i].predict_proba(r, **kwards))
-            y = sum(ys) / len(ys)
-            return y
-        else:
-            raise NotFittedError("Classifier not fitted")
+#         Parameters
+#         ----------
+#         X : {array-like, sparse matrix} of shape (n_samples, n_features)
+#             Array representing the data.
+#         Returns
+#         -------
+#         ndarray of shape (n_samples, n_features)
+#             Array with prediction probabilities.
+#         """
+#         if "h_" in dir(self):
+#             ys = []
+#             if self.pre_rotation:
+#                 X = self._rotations.transform(X)
+#             for i in range(len(self.h_)):
+#                 if self.pre_rotation:
+#                     r = X[:, self.columns_[i]]
+#                 else:
+#                     r = self.__rotate(X, self.columns_[i])
+#                 ys.append(self.h_[i].predict_proba(r, **kwards))
+#             y = sum(ys) / len(ys)
+#             return y
+#         else:
+#             raise NotFittedError("Classifier not fitted")
 
 
 # Done and tested
@@ -1028,6 +1068,7 @@ class TriTraining(_BaseCoTraining):
         n_samples=None,
         epsilon=1e-07,
         random_state=None,
+        n_jobs=None
     ):
         """TriTraining
         Zhi-Hua Zhou and Ming Li,
@@ -1050,9 +1091,10 @@ class TriTraining(_BaseCoTraining):
         self._N_LEARNER = 3
         self.epsilon = epsilon
         self.random_state = random_state
+        self.n_jobs = check_n_jobs(n_jobs)
 
     @staticmethod
-    def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon):
+    def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=1e-7):
         """Calculate the error between two hypothesis
         Parameters
         ----------
@@ -1073,12 +1115,8 @@ class TriTraining(_BaseCoTraining):
         y1 = h1.predict(X)
         y2 = h2.predict(X)
 
-        y1_fail = np.logical_not(y1 == y)
-        y2_fail = np.logical_not(y2 == y)
-
-        error = np.count_nonzero(np.logical_and(y1_fail, y2_fail))
+        error = np.count_nonzero(np.logical_and(y1 == y2, y2 != y))
         coincidence = np.count_nonzero(y1 == y2)
-
         return safe_division(error, coincidence, epsilon)
 
     @staticmethod
@@ -1087,7 +1125,7 @@ class TriTraining(_BaseCoTraining):
         Parameters
         ----------
         hs : list
-            hypothesis collection
+            hypotheses collection
         index : int
             base hypothesis  index
         Returns
@@ -1121,6 +1159,13 @@ class TriTraining(_BaseCoTraining):
 
         return resample(*L, replace=False, n_samples=select, random_state=random_state)
 
+    def __fit_estimator(self, hyp, X_label, y_label, L, Ly, update, **kwards):
+        if update:
+            _tempL = np.concatenate((X_label, L))
+            _tempY = np.concatenate((y_label, Ly))
+            return hyp.fit(_tempL, _tempY, **kwards)
+        return hyp
+
     def fit(self, X, y, **kwards):
         """Build a TriTraining classifier from the training set (X, y).
         Parameters
@@ -1128,7 +1173,7 @@ class TriTraining(_BaseCoTraining):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
         y : array-like of shape (n_samples,)
-            The target values (class labels), -1 if unlabel.
+            The target values (class labels), -1 if unlabeled.
         Returns
         -------
         self: TriTraining
@@ -1136,11 +1181,9 @@ class TriTraining(_BaseCoTraining):
         """
         random_state = check_random_state(self.random_state)
 
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
+        X_label, y_label, X_unlabel = get_dataset(X, y)
 
-        hypothesis = []
+        hypotheses = []
         e_ = [0.5] * self._N_LEARNER
         l_ = [0] * self._N_LEARNER
 
@@ -1168,7 +1211,7 @@ class TriTraining(_BaseCoTraining):
             X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
             y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
 
-            hypothesis.append(
+            hypotheses.append(
                 skclone(self.base_estimator).fit(X_sampled, y_sampled, **kwards)
             )
 
@@ -1182,43 +1225,47 @@ class TriTraining(_BaseCoTraining):
             updates = [False] * 3
 
             for i in range(self._N_LEARNER):
-                hj, hk = TriTraining._another_hs(hypothesis, i)
+                hj, hk = TriTraining._another_hs(hypotheses, i)
                 e.append(
-                    TriTraining._measure_error(X_label, y_label, hj, hk, self.epsilon)
+                    TriTraining._measure_error(X_label, y_label, hj, hk, self.epsilon, self.mode)
                 )
-                if e_[i] > e[i]:
-                    y_p = hj.predict(X_unlabel)
-                    validx = y_p == hk.predict(X_unlabel)
-                    L[i] = X_unlabel[validx]
-                    Ly[i] = y_p[validx]
+                if e_[i] <= e[i]:
+                    continue
+                y_p = hj.predict(X_unlabel)
+                validx = y_p == hk.predict(X_unlabel)
+                L[i] = X_unlabel[validx]
+                Ly[i] = y_p[validx]
 
-                    if l_[i] == 0:
-                        l_[i] = math.floor(
-                            safe_division(e[i], (e_[i] - e[i]), self.epsilon) + 1
-                        )
-                    if l_[i] < len(L[i]):
-                        if e[i] * len(L[i]) < e_[i] * l_[i]:
-                            updates[i] = True
-                        elif l_[i] > (e[i] / (e_[i] - e[i])):
-                            L[i], Ly[i] = TriTraining._subsample(
-                                (L[i], Ly[i]),
-                                math.ceil(
-                                    safe_division(e_[i] * l_[i], e[i], self.epsilon) - 1
-                                ),
-                                random_state,
-                            )
-                            updates[i] = True
+                if l_[i] == 0:
+                    l_[i] = math.floor(
+                        safe_division(e[i], (e_[i] - e[i]), self.epsilon) + 1
+                    )
+                if l_[i] >= len(L[i]):
+                    continue
+                if e[i] * len(L[i]) < e_[i] * l_[i]:
+                    updates[i] = True
+                elif l_[i] > safe_division(e[i], e_[i] - e[i], self.epsilon):
+                    L[i], Ly[i] = TriTraining._subsample(
+                        (L[i], Ly[i]),
+                        math.ceil(
+                            safe_division(e_[i] * l_[i], e[i], self.epsilon) - 1
+                        ),
+                        random_state,
+                    )
+                    updates[i] = True
+
+            hypotheses = Parallel(n_jobs=self.n_jobs)(
+                delayed(self.__fit_estimator)(hypotheses[i], X_label, y_label, L[i], Ly[i], updates[i], **kwards)
+                for i in range(self._N_LEARNER)
+            )
 
             for i in range(self._N_LEARNER):
                 if updates[i]:
-                    _tempL = np.concatenate((X_label, L[i]))
-                    _tempY = np.concatenate((y_label, Ly[i]))
-                    hypothesis[i].fit(_tempL, _tempY, **kwards)
                     e_[i] = e[i]
                     l_[i] = len(L[i])
                     something_has_changed = True
 
-        self.h_ = hypothesis
+        self.h_ = hypotheses
         self.classes_ = self.h_[0].classes_
         self.columns_ = [list(range(X.shape[1]))] * self._N_LEARNER
 
@@ -1452,19 +1499,19 @@ class CoForest(_BaseCoTraining):
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
-        hypothesis = []
+        hypotheses = []
         errors = []
         weights = []
         for i in range(self.n_estimators):
-            hypothesis.append(skclone(self._base).fit(X_label, y_label, **kwards))
+            hypotheses.append(skclone(self._base).fit(X_label, y_label, **kwards))
             errors.append(0.5)
-            weights.append(np.max(hypothesis[i].predict_proba(X_label), axis=1).sum())
+            weights.append(np.max(hypotheses[i].predict_proba(X_label), axis=1).sum())
 
         changing = True
         while changing:
             changing = False
             for i in range(self.n_estimators):
-                hi, ei, wi = hypothesis[i], errors[i], weights[i]
+                hi, ei, wi = hypotheses[i], errors[i], weights[i]
 
                 ei_t = self.__estimate_error(hi, X_label, y_label)
 
@@ -1500,7 +1547,7 @@ class CoForest(_BaseCoTraining):
                 errors[i] = ei_t
                 weights[i] = wi_t
 
-        self.h_ = hypothesis
+        self.h_ = hypotheses
         self.classes_ = self.h_[0].classes_
         self.columns_ = [list(range(X.shape[1]))] * self.n_estimators
 
