@@ -26,8 +26,11 @@ import warnings
 from ..base import Ensemble, get_dataset
 from sslearn.utils import check_n_jobs
 from joblib import Parallel, delayed
-import scipy.stats as st
-import logging as log
+import scipy.stats as st 
+try:
+    from loguru import logger as log
+except ImportError:
+    print("No logger available. Install loguru.", file=sys.stderr)
 
 
 class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
@@ -71,7 +74,9 @@ class DemocraticCoLearning(_BaseCoTraining):
         confidence_method="bernoulli",
         alpha=0.95,
         random_state=None,
-        logging=False
+        logging=False,
+        log_name="",
+        save_dict=None
     ):
         """
         Y. Zhou and S. Goldman, "Democratic co-learning,"
@@ -120,8 +125,11 @@ class DemocraticCoLearning(_BaseCoTraining):
         self.confidence_method = confidence_method
         self.alpha = alpha
         self.random_state = random_state
-        self.log_name = "DemocraticCoLearning"
         self.logging = logging
+        self.log_name = log_name
+        if save_dict is not None:
+            save_dict[log_name] = list()
+        self.save_dict = save_dict
 
     def __ponderate_y(self, predictions, weights):
         y_complete = np.sum(
@@ -173,8 +181,8 @@ class DemocraticCoLearning(_BaseCoTraining):
             fitted classifier
         """
         if self.logging:
-            log.info("Democratic instance: %s", str(self))
-            log.info("Fitting DemocraticCo with %d estimators (%s)", self.n_estimators, self.base_estimator)
+            log.info("Democratic for {}", self.log_name)
+            log.info("Fitting DemocraticCo with {} estimators {}", self.n_estimators, self.base_estimator)
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
         self.one_hot.fit(y_label.reshape(-1, 1))
@@ -191,10 +199,12 @@ class DemocraticCoLearning(_BaseCoTraining):
         changed = True
         iteration = 0
         while changed:
+            changed = False
+            iteration_dict = {}
             iteration += 1
             if self.logging:
-                log.evolution(self.log_name, "Iteration", iteration)
-            changed = False
+                log.log("EVO", "Iteration: {}", iteration)
+
             for i in range(self.n_estimators):
                 self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
 
@@ -212,12 +222,13 @@ class DemocraticCoLearning(_BaseCoTraining):
             # Calculate confidence interval
             conf_interval = [
                 confidence_interval(
-                    X_label, H, y_label, self.confidence_method, self.alpha, self.logging, self.log_name
+                    X_label, H, y_label, self.confidence_method, self.alpha, self.logging
                 )
                 for H in self.base_estimator
             ]
 
             weights = [(li + hi) / 2 for (li, hi) in conf_interval]
+            iteration_dict["weights"] = {"cl" + str(i): (l, h, w) for i, ((l, h), w) in enumerate(zip(conf_interval, weights))}
             # Ponderate vote
             ponderate_class = self.__ponderate_y(predictions, weights)
 
@@ -234,7 +245,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                 for i in range(1, self.n_estimators):
                     all_same_list.append(predictions[i] == predictions[i - 1])
                 all_same = np.logical_and(*all_same_list)
-
+            new_instances = []
             for i in range(self.n_estimators):
 
                 mispredictions = predictions[i] != ponderate_class
@@ -257,7 +268,9 @@ class DemocraticCoLearning(_BaseCoTraining):
                 Ly_[i] = ponderate_class[to_add]
 
                 if self.logging:
-                    log.evolution(self.log_name, "New instances", i, L_[i].shape[0])
+                    log.log("EVO", "New instances for classifier {}: {}", i, L_[i].shape[0])
+                new_instances.append(L_[i].shape[0])
+            iteration_dict["new_instances"] = new_instances
 
             new_conf_interval = [
                 confidence_interval(L[i], H, Ly[i], self.confidence_method, self.alpha)
@@ -266,7 +279,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             e_factor = (
                 1 - sum([l_ for l_, _ in new_conf_interval]) / self.n_estimators
             )
-
+            evolution = {}
             for i, _ in enumerate(self.base_estimator):
                 if len(L_[i]) > 0:
 
@@ -276,13 +289,25 @@ class DemocraticCoLearning(_BaseCoTraining):
                     q_i = (len(L[i]) + len(L_[i])) * (
                         1 - 2 * (e[i] + e_i) / (len(L[i]) + len(L_[i]))
                     ) ** 2
+                    if self.logging:
+                        log.log("EVO", "Values: qi:{:.2f}, q'i: {:.2f}, e'i:{:.2f}", qi, q_i, e_i)
+                    evolution["cl" + str(i)] = [qi, q_i, e_i]
                     if q_i <= qi:
                         continue
                     L_added[i] = np.logical_or(L_added[i], candidates_bool[i])
                     L[i] = np.concatenate((L[i], np.array(L_[i])))
                     Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
+
                     e[i] = e[i] + e_i
+                    if self.logging:
+                        log.log("EVO", "New ei: {:.2f}. L{} will be increased", e[i], i)
+                    evolution["cl" + str(i)].append(e[i])
                     changed = True
+                else:
+                    evolution["cl" + str(i)] = "No new instances"
+            iteration_dict["evolution"] = evolution
+            self.save_dict[self.log_name].append(iteration_dict)
+        log.info("Finished fitting")
 
         self.h_ = self.base_estimator
         self.classes_ = self.h_[0].classes_
@@ -1066,7 +1091,6 @@ class TriTraining(_BaseCoTraining):
         self,
         base_estimator=DecisionTreeClassifier(),
         n_samples=None,
-        epsilon=1e-07,
         random_state=None,
         n_jobs=None
     ):
@@ -1089,12 +1113,12 @@ class TriTraining(_BaseCoTraining):
         self.base_estimator = base_estimator
         self.n_samples = n_samples
         self._N_LEARNER = 3
-        self.epsilon = epsilon
+        self._epsilon = sys.sys.float_info.epsilon
         self.random_state = random_state
         self.n_jobs = check_n_jobs(n_jobs)
 
     @staticmethod
-    def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=1e-7):
+    def _measure_error(X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=sys.float_info.epsilon):
         """Calculate the error between two hypothesis
         Parameters
         ----------
@@ -1227,7 +1251,7 @@ class TriTraining(_BaseCoTraining):
             for i in range(self._N_LEARNER):
                 hj, hk = TriTraining._another_hs(hypotheses, i)
                 e.append(
-                    TriTraining._measure_error(X_label, y_label, hj, hk, self.epsilon, self.mode)
+                    TriTraining._measure_error(X_label, y_label, hj, hk, self._epsilon)
                 )
                 if e_[i] <= e[i]:
                     continue
@@ -1238,17 +1262,17 @@ class TriTraining(_BaseCoTraining):
 
                 if l_[i] == 0:
                     l_[i] = math.floor(
-                        safe_division(e[i], (e_[i] - e[i]), self.epsilon) + 1
+                        safe_division(e[i], (e_[i] - e[i]), self._epsilon) + 1
                     )
                 if l_[i] >= len(L[i]):
                     continue
                 if e[i] * len(L[i]) < e_[i] * l_[i]:
                     updates[i] = True
-                elif l_[i] > safe_division(e[i], e_[i] - e[i], self.epsilon):
+                elif l_[i] > safe_division(e[i], e_[i] - e[i], self._epsilon):
                     L[i], Ly[i] = TriTraining._subsample(
                         (L[i], Ly[i]),
                         math.ceil(
-                            safe_division(e_[i] * l_[i], e[i], self.epsilon) - 1
+                            safe_division(e_[i] * l_[i], e[i], self._epsilon) - 1
                         ),
                         random_state,
                     )
@@ -1270,6 +1294,7 @@ class TriTraining(_BaseCoTraining):
         self.columns_ = [list(range(X.shape[1]))] * self._N_LEARNER
 
         return self
+
 
 # Done and tested
 class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
@@ -1443,6 +1468,7 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
             y = np.array(list(map(lambda x: self.le_dict_.get(x, -1), y)))
 
         return self.ensemble_estimator.score(X, y, sample_weight)
+
 
 # Done and tested
 class CoForest(_BaseCoTraining):
