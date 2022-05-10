@@ -1113,7 +1113,7 @@ class TriTraining(_BaseCoTraining):
         self.base_estimator = base_estimator
         self.n_samples = n_samples
         self._N_LEARNER = 3
-        self._epsilon = sys.sys.float_info.epsilon
+        self._epsilon = sys.float_info.epsilon
         self.random_state = random_state
         self.n_jobs = check_n_jobs(n_jobs)
 
