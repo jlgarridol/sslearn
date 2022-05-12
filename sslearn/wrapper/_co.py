@@ -89,7 +89,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             An estimator object implementing fit and predict_proba or a list of ClassifierMixin, by default DecisionTreeClassifier()
         n_estimators : int, optional
             number of base_estimators to use. None if base_estimator is a list, by default 3
-
+        TODO: Finished it
         Raises
         ------
         AttributeError
