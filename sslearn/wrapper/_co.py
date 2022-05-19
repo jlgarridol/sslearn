@@ -308,7 +308,8 @@ class DemocraticCoLearning(_BaseCoTraining):
                     if self.logging:
                         log.log("EVO", "New ei: {:.2f}. L{} will be increased", e[i], i)
                     changed = True
-        log.info("Finished fitting")
+        if self.logging:
+            log.info("Finished fitting")
 
         self.h_ = self.base_estimator
         self.classes_ = self.h_[0].classes_
