@@ -281,7 +281,6 @@ class DemocraticCoLearning(_BaseCoTraining):
                 for i, H in enumerate(self.base_estimator)
             ]
             e_factor = 1 - sum([l_ for l_, _ in new_conf_interval]) / self.n_estimators
-            evolution = {}
             for i, _ in enumerate(self.base_estimator):
                 if len(L_[i]) > 0:
 
@@ -290,7 +289,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                     # |Li|+|L'i| == |Li U L'i| because of to_add
                     q_i = (len(L[i]) + len(L_[i])) * (
                         1 - 2 * (e[i] + e_i) / (len(L[i]) + len(L_[i]))
-                    )  # ** 2
+                    ) ** 2
                     if self.logging:
                         log.log(
                             "EVO",
@@ -299,7 +298,6 @@ class DemocraticCoLearning(_BaseCoTraining):
                             q_i,
                             e_i,
                         )
-                    evolution["cl" + str(i)] = [qi, q_i, e_i]
                     if q_i <= qi:
                         continue
                     L_added[i] = np.logical_or(L_added[i], candidates_bool[i])
@@ -309,10 +307,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                     e[i] = e[i] + e_i
                     if self.logging:
                         log.log("EVO", "New ei: {:.2f}. L{} will be increased", e[i], i)
-                    evolution["cl" + str(i)].append(e[i])
                     changed = True
-                else:
-                    evolution["cl" + str(i)] = "No new instances"
         log.info("Finished fitting")
 
         self.h_ = self.base_estimator
