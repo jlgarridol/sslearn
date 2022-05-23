@@ -489,7 +489,7 @@ class CoTraining(_BaseCoTraining):
         y = np.asarray(y)
         assert (
             X2 is None or features is None
-        ), "The list of features and x2 cannot be defined at the same time" 
+        ), "The list of features and X2 cannot be defined at the same time" 
         X1 = X
         if X2 is None and features is None:
             if self.force_second_view:
@@ -517,7 +517,7 @@ class CoTraining(_BaseCoTraining):
                 self.negatives = 1
                 self.positives = round(self.negatives / n_p_ratio)
 
-        if (
+        if not (
             self.positives > 0
             and self.negatives > 0
             and self.max_iterations > 0
