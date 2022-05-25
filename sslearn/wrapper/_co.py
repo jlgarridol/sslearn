@@ -1588,8 +1588,9 @@ class CoForest(_BaseCoTraining):
                             np.concatenate((y_label, class_predicted[to_label])),
                             **kwards
                         )
-                errors[i] = ei_t
-                weights[i] = wi_t
+                        
+                    errors[i] = ei_t
+                    weights[i] = wi_t
 
         self.h_ = hypotheses
         self.classes_ = self.h_[0].classes_
