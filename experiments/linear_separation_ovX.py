@@ -111,35 +111,28 @@ def experiment():
     warnings.filterwarnings("ignore")
 
     acc_ovo = dict()
-    acc_ovr = dict()
     for d in datasets:
         acc_ovo[d] = list()
-        acc_ovr[d] = list()
 
     for d in data_it:
         print("Processing with", d)
 
         X, y = datasets[d]
-        learner = OneVsOneClassifier(LinearSVC(C=1e6, max_iter=10000), n_jobs=-1)
-        learner.fit(X, y)
+        classes = list(np.unique(y))
+        for i in range(len(classes)):
+            for j in range(i + 1, len(classes)):
+                learner = LinearSVC(C=1e6, max_iter=10000)
+                cond = (y == classes[i]) | (y == classes[j])
+                learner.fit(X[cond], y[cond])
+                score = learner.score(X[cond], y[cond])
+                acc_ovo[d].append(score)
+                del learner
 
-        acc_ovo[d].append(learner.score(X, y))
-
-        learner2 = OneVsRestClassifier(LinearSVC(C=1e6, max_iter=10000), n_jobs=-1)
-        learner2.fit(X, y)
-
-        acc_ovr[d].append(learner2.score(X, y))
-
-        del learner
-        del learner2
     print("End experiment")
-    return acc_ovo, acc_ovr
+    return acc_ovo
 
 
-acc_ovo, acc_ovr = experiment()
+acc_ovo = experiment()
 
-with open("linear_separation_ovo.pkl", "wb") as f:
+with open("linear_separation_true_ovo.pkl", "wb") as f:
     pk.dump(acc_ovo, f)
-
-with open("linear_separation_ovr.pkl", "wb") as f:
-    pk.dump(acc_ovr, f)

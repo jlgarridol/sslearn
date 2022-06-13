@@ -11,6 +11,7 @@ from sklearn.base import clone as skclone
 import math
 from abc import abstractmethod
 from sklearn.multiclass import LabelBinarizer
+from sklearn.metrics import accuracy_score
 from sklearn.feature_selection import mutual_info_classif
 from ..utils import (
     calculate_prior_probability,
@@ -75,6 +76,7 @@ class DemocraticCoLearning(_BaseCoTraining):
         expand_only_mislabeled=True,
         confidence_method="bernoulli",
         alpha=0.95,
+        q_exp=2,
         random_state=None,
         logging=False,
         log_name="",
@@ -125,6 +127,7 @@ class DemocraticCoLearning(_BaseCoTraining):
 
         self.confidence_method = confidence_method
         self.alpha = alpha
+        self.q_exp = q_exp
         self.random_state = random_state
         self.logging = logging
         self.log_name = log_name
@@ -289,7 +292,7 @@ class DemocraticCoLearning(_BaseCoTraining):
                     # |Li|+|L'i| == |Li U L'i| because of to_add
                     q_i = (len(L[i]) + len(L_[i])) * (
                         1 - 2 * (e[i] + e_i) / (len(L[i]) + len(L_[i]))
-                    ) ** 2
+                    ) ** self.q_exp
                     if self.logging:
                         log.log(
                             "EVO",
@@ -640,6 +643,32 @@ class CoTraining(_BaseCoTraining):
                 (np.argmax(predicted_probabilitiy, axis=1)), axis=0
             )
         return self.label_binarize.inverse_transform(result)
+
+    def score(self, X, y, sample_weight=None, **kwards):
+        """
+        Return the mean accuracy on the given test data and labels.
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Test samples.
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            True labels for `X`.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+        X2 : {array-like, sparse matrix} of shape (n_samples, n_features), optional
+            Array representing the data from another view, by default None
+        Returns
+        -------
+        score : float
+            Mean accuracy of ``self.predict(X)`` wrt. `y`.
+        """
+        if "X2" in kwards:
+            return accuracy_score(y, self.predict(X, kwards["X2"]), sample_weight=sample_weight)
+        else:
+            return super().score(X, y, sample_weight=sample_weight)
 
 
 class Rasco(_BaseCoTraining):

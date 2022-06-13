@@ -39,7 +39,7 @@ class StratifiedKFoldSS():
             unlabel = train
 
             X_label, y_label, X_unlabel, y_unlabel = X[label], y[label],\
-                X[unlabel], np.array([-1]*len(unlabel))
+                X[unlabel], np.array([-1] * len(unlabel))
             X_ = np.concatenate((X_label, X_unlabel), axis=0)
             y_ = np.concatenate((y_label, y_unlabel), axis=0)
 
