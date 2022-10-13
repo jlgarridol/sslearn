@@ -85,6 +85,6 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
                             train_size=label_rate,
                             random_state=random_state, **kwards)
     X = np.concatenate((X_label, X_unlabel), axis=0)
-    y = np.concatenate((y_label, np.array([-1]*len(true_label))), axis=0)
+    y = np.concatenate((y_label, np.array([-1] * len(true_label))), axis=0)
 
     return X, y, X_unlabel, true_label

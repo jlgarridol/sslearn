@@ -12,7 +12,6 @@ sys.path.insert(1, "..")
 from sslearn.datasets import read_keel
 import sslearn.wrapper as wrp
 from sklearn.svm import LinearSVC
-from loguru import logger as log
 import pickle as pk
 
 data_it = [

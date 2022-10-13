@@ -1,7 +1,7 @@
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import resample
 from sklearn.base import clone as skclone
-from ._co import TriTraining
+from ._tritraining import TriTraining
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 

@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-from loguru import logger
+import pandas as pd
 import json
 
 from statsmodels.stats.proportion import proportion_confint
@@ -16,9 +16,10 @@ def safe_division(dividend, divisor, epsilon):
     return dividend / divisor
 
 
-def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95, logging=False):
+def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95 ):
     data = hyp.predict(X)
-    data_proba = hyp.predict_proba(X)
+    if mode != "bernoulli":
+        data_proba = hyp.predict_proba(X)
     successes = np.count_nonzero(data == y)
     trials = X.shape[0]
 
@@ -36,8 +37,6 @@ def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95, logging=Fal
         li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data_proba), scale=st.sem(data_proba))
     else:
         raise AttributeError(f"`confidence_interval` mode {mode} not allowed")
-    if logging:
-        logger.log("EVO", "Confidence intervals: ({:.2f} - {:.2f}). w = {:.2f}", li, hi, (li + hi) / 2)
     return np.mean(li), np.mean(hi)
 
 
@@ -104,3 +103,4 @@ def check_n_jobs(n_jobs):
         return os.cpu_count() - n_jobs + 1
     else:
         return n_jobs
+

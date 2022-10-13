@@ -83,7 +83,7 @@ def read_keel(path, format="pandas", secure=True, target_col=None, encoding="utf
             X, y = secure_dataset(X, y)
 
     if format == "numpy":
-        X = X.to_numpy()
+        X = X.to_numpy().astype(float)
         y = y.to_numpy()
         if y.dtype == object:
             y = y.astype("str")

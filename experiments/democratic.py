@@ -11,7 +11,6 @@ import sslearn.wrapper as wrp
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from loguru import logger as log
 import pickle as pk
 
 data_it = [
@@ -104,15 +103,6 @@ for d in data_it:
 seed = 100
 classifier_seed = 0
 
-# log.add(sys.stderr, format="{time} {level} {message}", filter="my_module", level="INFO")
-# log.level("EVO", no=15)
-# log.add(
-#     "DemocraticCoLearning.log",
-#     format="{time} | {level} | {message}",
-#     filter="sslearn",
-#     level="EVO",
-# )
-
 def experiment():
     print("Start experiments")
     warnings.filterwarnings("ignore")
@@ -146,8 +136,6 @@ def experiment():
                     ],
                     confidence_method="bernoulli",
                     q_exp=ex,
-                    # logging=True,
-                    # log_name=f"{d}-ssl10-k{i}"
                 )
 
                 learner.fit(X_train, y_train)
