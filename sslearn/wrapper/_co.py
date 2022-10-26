@@ -508,12 +508,12 @@ class CoTraining(_BaseCoTraining):
 
         L = [i for i, y_i in enumerate(y) if y_i != y.dtype.type(-1)]
 
-        y = y.reshape((y.shape[0], 1))
+        y = y.flatten()
 
         self.classes_ = np.unique(y[L])
 
-        self.label_binarize = LabelBinarizer().fit(y[L])
-        y[L] = self.label_binarize.transform(y[L])
+        self.label_encoder = LabelEncoder()
+        y[L] = self.label_encoder.fit_transform(y[L])
 
         it = 0
         if len(np.unique(y[L])) > 2:
@@ -615,7 +615,7 @@ class CoTraining(_BaseCoTraining):
             result = self.classes_.take(
                 (np.argmax(predicted_probabilitiy, axis=1)), axis=0
             )
-        return self.label_binarize.inverse_transform(result)
+        return self.label_encoder.inverse_transform(result)
 
     def score(self, X, y, sample_weight=None, **kwards):
         """
