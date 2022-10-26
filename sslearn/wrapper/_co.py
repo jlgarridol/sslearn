@@ -449,11 +449,10 @@ class CoTraining(_BaseCoTraining):
         """
         rs = check_random_state(self.random_state)
 
-        self.h = [skclone(self.base_estimator)]
-        if self.second_base_estimator is not None:
-            self.h.append(skclone(self.second_base_estimator))
-        else:
-            self.h.append(skclone(self.base_estimator))
+        self.h = [
+            skclone(self.base_estimator), 
+            skclone(self.base_estimator) if self.second_base_estimator is None else skclone(self.second_base_estimator)
+        ]
 
         y = y.copy()
         X = X.copy()
@@ -498,7 +497,7 @@ class CoTraining(_BaseCoTraining):
             raise AttributeError("Parameters are inconsistent.")
 
         # Set of unlabeled samples
-        U = [i for i, y_i in enumerate(y) if y_i == -1]
+        U = [i for i, y_i in enumerate(y) if y_i == y.dtype.type(-1)]
         rs.shuffle(U)
 
         U_ = U[-min(len(U), self.poolsize):]
@@ -507,9 +506,11 @@ class CoTraining(_BaseCoTraining):
         if len(U) < self.poolsize:
             warnings.warn(f"Poolsize ({self.poolsize}) is bigger than U ({len(U)})")
 
-        L = [i for i, y_i in enumerate(y) if y_i != -1]
+        L = [i for i, y_i in enumerate(y) if y_i != y.dtype.type(-1)]
 
         y = y.reshape((y.shape[0], 1))
+
+        self.classes_ = np.unique(y[L])
 
         self.label_binarize = LabelBinarizer().fit(y[L])
         y[L] = self.label_binarize.transform(y[L])
@@ -517,8 +518,8 @@ class CoTraining(_BaseCoTraining):
         it = 0
         if len(np.unique(y[L])) > 2:
             raise Exception("CoTraining does not support multiclass, use `sslearn.base.OneVsRestSSLClassifier`")
-        while it != self.max_iterations and U_:
-            it += 1
+        while (it < self.max_iterations and U and U_ ) or (it < self.max_iterations and U_ and not self.experimental ):
+            it += 1            
 
             self.h[0].fit(X1[L], y[L], **kwards)
             self.h[1].fit(X2[L], y[L], **kwards)
@@ -526,26 +527,29 @@ class CoTraining(_BaseCoTraining):
             y1_prob = self.h[0].predict_proba(X1[U_])
             y2_prob = self.h[1].predict_proba(X2[U_])
 
-            n, p = [], []
+            n, p = set(), set()
 
-            for i in (y1_prob[:, 0].argsort())[-self.negatives:]:
+            for i in (y1_prob[:, 0].argsort(kind="stable"))[-self.negatives:]:
                 if y1_prob[i, 0] > 0.5:
-                    n.append(i)
-            for i in (y1_prob[:, 1].argsort())[-self.positives:]:
+                    n.add(i)
+            for i in (y1_prob[:, 1].argsort(kind="stable"))[-self.positives:]:
                 if y1_prob[i, 1] > 0.5:
-                    p.append(i)
-            for i in (y2_prob[:, 0].argsort())[-self.negatives:]:
+                    p.add(i)
+            for i in (y2_prob[:, 0].argsort(kind="stable"))[-self.negatives:]:
                 if y2_prob[i, 0] > 0.5:
-                    n.append(i)
-            for i in (y2_prob[:, 1].argsort())[-self.positives:]:
+                    n.add(i)
+            for i in (y2_prob[:, 1].argsort(kind="stable"))[-self.positives:]:
                 if y2_prob[i, 1] > 0.5:
-                    p.append(i)
+                    p.add(i)
 
-            y[[U_[x] for x in p]] = 1
-            y[[U_[x] for x in n]] = 0
+            p = [U_[x] for x in p]
+            n = [U_[x] for x in n]
 
-            L.extend([U_[x] for x in p])
-            L.extend([U_[x] for x in n])
+            y[p] = 1
+            y[n] = 0
+
+            L.extend(p)
+            L.extend(n)
 
             if not self.experimental:
                 all_indices = set(range(0, len(U_)))
@@ -561,8 +565,7 @@ class CoTraining(_BaseCoTraining):
 
         self.h[0].fit(X1[L], y[L], **kwards)
         self.h[1].fit(X2[L], y[L], **kwards)
-        self.h_ = self.h
-        self.classes_ = self.h_[0].classes_
+        self.h_ = self.h       
 
         return self
 

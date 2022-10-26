@@ -15,6 +15,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import check_X_y
 from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.metaestimators import available_if
+
 
 
 def get_dataset(X, y):
@@ -70,10 +72,11 @@ class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             return self.one_hot.transform(self.base_estimator.predict(X).reshape(-1, 1)).toarray()
 
 
-def _fit_binary_ssl(estimator, X_label, y_label, X_unlabel, classes=None, **fit_params):
+def _fit_binary_ssl(estimator, X, y_label, size, classes=None, **fit_params):
+    # unique_y = np.unique(y_label)
+    # X = np.concatenate((X_label, X_unlabel), axis=0)
+    y = np.concatenate((y_label, np.array([y_label.dtype.type(-1)] * size)))
     unique_y = np.unique(y_label)
-    X = np.concatenate((X_label, X_unlabel), axis=0)
-    y = np.concatenate((y_label, np.array([y_label.dtype.type(-1)] * X_unlabel.shape[0])))
     if len(unique_y) == 1:
         if classes is not None:
             if y_label[0] == -1:
@@ -83,7 +86,7 @@ def _fit_binary_ssl(estimator, X_label, y_label, X_unlabel, classes=None, **fit_
             warnings.warn(
                 "Label %s is present in all training examples." % str(classes[c])
             )
-        estimator = _ConstantPredictor().fit(X_label, unique_y)
+        estimator = _ConstantPredictor().fit(None, unique_y)
     else:
         estimator = skclone(estimator)
         estimator.fit(X, y, **fit_params)
@@ -115,7 +118,8 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
 
     def fit(self, X, y, **fit_params):
         #
-        X_label, y_label, X_unlabel = get_dataset(X, y)
+        y_label = y[y != y.dtype.type(-1)]
+        size = len(y) - len(y_label)
 
         self.label_binarizer_ = LabelBinarizer(sparse_output=True)
         Y = self.label_binarizer_.fit_transform(y_label)
@@ -126,9 +130,9 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary_ssl)(
                 self.estimator,
-                X_label,
+                X,
                 column,
-                X_unlabel,
+                size,
                 classes=[
                     "not %s" % self.label_binarizer_.classes_[i],
                     self.label_binarizer_.classes_[i],
@@ -173,3 +177,19 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
             indicator = sp.csc_matrix((data, indices, indptr),
                                       shape=(n_samples, len(self.estimators_)))
             return self.label_binarizer_.inverse_transform(indicator)
+
+    def predict_proba(self, X, **kwards):
+        check_is_fitted(self)
+        # Y[i, j] gives the probability that sample i has the label j.
+        # In the multi-label case, these are not disjoint.
+        Y = np.array([e.predict_proba(X, **kwards)[:, 1] for e in self.estimators_]).T
+
+        if len(self.estimators_) == 1:
+            # Only one estimator, but we still want to return probabilities
+            # for two classes.
+            Y = np.concatenate(((1 - Y), Y), axis=1)
+
+        if not self.multilabel_:
+            # Then, probabilities should be normalized to 1.
+            Y /= np.sum(Y, axis=1)[:, np.newaxis]
+        return Y
