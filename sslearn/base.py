@@ -16,6 +16,9 @@ from sklearn.utils import check_X_y
 from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metaestimators import available_if
+from sklearn.ensemble._base import _set_random_states
+from sklearn.utils import check_random_state
+
 
 
 
@@ -29,7 +32,7 @@ def get_dataset(X, y):
     return X_label, y_label, X_unlabel
 
 
-class Ensemble(ABC, MetaEstimatorMixin):
+class BaseEnsemble(ABC, MetaEstimatorMixin):
 
     @abstractmethod
     def predict_proba(self, X):
@@ -127,9 +130,14 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
         self.classes_ = self.label_binarizer_.classes_
         columns = (col.toarray().ravel() for col in Y.T)
 
+        estimators = [skclone(self.estimator) for _ in range(len(self.classes_))]
+        rs = check_random_state(estimators[0].get_params(deep=False).get("random_state", None))
+        for e in estimators:
+            _set_random_states(e, rs)
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary_ssl)(
-                self.estimator,
+                estimators[i],
                 X,
                 column,
                 size,

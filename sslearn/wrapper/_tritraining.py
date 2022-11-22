@@ -11,10 +11,10 @@ from sklearn.utils import check_random_state, resample
 from ..base import get_dataset
 from ..restricted import WhoIsWhoClassifier, combine_predictions
 from ..utils import check_n_jobs, safe_division
-from ._co import _BaseCoTraining
+from ._co import BaseCoTraining
 
 
-class TriTraining(_BaseCoTraining):
+class TriTraining(BaseCoTraining):
 
     def __init__(
         self,

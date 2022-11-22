@@ -36,7 +36,7 @@ def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95 ):
     elif mode == "normal":
         li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data_proba), scale=st.sem(data_proba))
     else:
-        raise AttributeError(f"`confidence_interval` mode {mode} not allowed")
+        raise AttributeError(f"`confidence_interval` mode {mode} not allowed, must be one of: 'bernoulli', 't-student', 'normal'")
     return np.mean(li), np.mean(hi)
 
 

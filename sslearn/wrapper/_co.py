@@ -1,3 +1,4 @@
+import math
 import sys
 import warnings
 from abc import abstractmethod
@@ -8,12 +9,11 @@ import scipy.stats as st
 from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone as skclone
-from sklearn.discriminant_analysis import softmax
+from scipy.special import softmax
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.metrics import accuracy_score
-from sklearn.multiclass import LabelBinarizer
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -22,12 +22,12 @@ from sklearn.utils import check_random_state, check_array
 from sklearn.utils.validation import check_is_fitted
 from sslearn.utils import check_n_jobs
 
-from ..base import Ensemble, get_dataset
+from ..base import BaseEnsemble, get_dataset
 from ..utils import (calculate_prior_probability, choice_with_proportion,
                      confidence_interval)
 
 
-class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
+class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
     @abstractmethod
     def fit(self, X, y, **kwards):
         pass
@@ -65,7 +65,7 @@ class _BaseCoTraining(BaseEstimator, ClassifierMixin, Ensemble):
             raise NotFittedError("Classifier not fitted")
 
 
-class DemocraticCoLearning(_BaseCoTraining):
+class DemocraticCoLearning(BaseCoTraining):
     def __init__(
         self,
         base_estimator=[
@@ -73,7 +73,7 @@ class DemocraticCoLearning(_BaseCoTraining):
             GaussianNB(),
             KNeighborsClassifier(n_neighbors=3),
         ],
-        n_estimators=3,
+        n_estimators=None,
         expand_only_mislabeled=True,
         confidence_method="bernoulli",
         alpha=0.95,
@@ -90,8 +90,17 @@ class DemocraticCoLearning(_BaseCoTraining):
         base_estimator : {ClassifierMixin, list}, optional
             An estimator object implementing fit and predict_proba or a list of ClassifierMixin, by default DecisionTreeClassifier()
         n_estimators : int, optional
-            number of base_estimators to use. None if base_estimator is a list, by default 3
-        TODO: Finished it
+            number of base_estimators to use. None if base_estimator is a list, by default None
+        expand_only_mislabeled : bool, optional
+            expand only mislabeled instances by itself, by default True
+        confidence_method : str, optional
+            method to calculate the confidence of each learner, by default "bernoulli"
+        alpha : float, optional
+            confidence level, by default 0.95
+        q_exp : int, optional
+            exponent for the estimation for error rate, by default 2
+        random_state : int, RandomState instance, optional
+            controls the randomness of the estimator, by default None
         Raises
         ------
         AttributeError
@@ -177,6 +186,10 @@ class DemocraticCoLearning(_BaseCoTraining):
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
+        self.classes_ = np.unique(y_label)
+        self.encoder = LabelEncoder().fit(y_label)
+        y_label = self.encoder.transform(y_label)
+
         self.one_hot.fit(y_label.reshape(-1, 1))
 
         L = [X_label] * self.n_estimators
@@ -200,7 +213,7 @@ class DemocraticCoLearning(_BaseCoTraining):
 
             # Majority Vote
             predictions = [H.predict(X_unlabel) for H in self.base_estimator]
-            majority_class = st.mode(np.array(predictions), axis=0)[
+            majority_class = st.mode(np.array(predictions), axis=0, keepdims=True)[
                 0
             ].flatten()  # K in pseudocode
 
@@ -284,7 +297,6 @@ class DemocraticCoLearning(_BaseCoTraining):
                     changed = True
 
         self.h_ = self.base_estimator
-        self.classes_ = self.h_[0].classes_
         self.__calcule_last_confidences(X_label, y_label)
 
         # Ignore hypothesis
@@ -296,38 +308,23 @@ class DemocraticCoLearning(_BaseCoTraining):
         return self
 
     def __combine_probabilities(self, X):
-        # TODO: Vectorize
 
-        # CGO the vectorization assuming models with w<0.5 have been already removed:
-        # n_instances = X.shape[0]  # uppercase X as it will be an np.array
-        # sizes = np.zeros((n_instances,), dtype=int)
-        # C = np.zeros((n_instances,), dtype=float)
-        # Cavg = np.zeros((n_instances,), dtype=float)
-        # for w, H in zip(self.confidences_, self.h_):
-        #     cj = H.predict(X.reshape(1, -1))
-        #     C[cj] += w
-        #     sizes[cj] += 1
-        # Cavg[sizes == 0] = 0.5  # «voting power» of 0.5 for small groups
-        # ne = (sizes != 0)  # non empty groups
-        # Cavg[ne] = (sizes[ne] + 0.5) / (sizes[ne] + 1) * C[ne] / sizes[ne]
-        # return softmax(Cavg)[0]
-
-        groups = defaultdict(list)
+        n_instances = X.shape[0]  # uppercase X as it will be an np.array
+        sizes = np.zeros((n_instances, len(self.classes_)), dtype=int)
+        C = np.zeros((n_instances,len(self.classes_)), dtype=float)
+        Cavg = np.zeros((n_instances,len(self.classes_)), dtype=float)
 
         for w, H in zip(self.confidences_, self.h_):
-            if w > 0.5:
-                cj = H.predict(X.reshape(1, -1))
-                groups[cj[0]].append(w)
+            cj = H.predict(X)
+            factor = self.one_hot.transform(cj.reshape(-1, 1)).astype(int)
+            C += w*factor
+            sizes += factor
 
-        C_G_j = list()
-        for c in self.classes_:
-            size = len(groups[c])
-            if size == 0:
-                cgj = 0.5
-            else:
-                cgj = ((size + 0.5) / (size + 1)) * (sum(groups[c]) / size)
-            C_G_j.append(cgj)
-        return softmax(np.array(C_G_j).reshape(1, -1))[0]
+        Cavg[sizes == 0] = 0.5  # «voting power» of 0.5 for small groups
+        ne = (sizes != 0)  # non empty groups
+        Cavg[ne] = (sizes[ne] + 0.5) / (sizes[ne] + 1) * C[ne] / sizes[ne]
+
+        return softmax(Cavg, axis=1)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -340,26 +337,26 @@ class DemocraticCoLearning(_BaseCoTraining):
         -------
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
-
-        Need to vectorized
         """
         if "h_" in dir(self):
             if len(X) == 1:
                 X = [X]
-            return np.apply_along_axis(self.__combine_probabilities, 1, X)
+            return self.__combine_probabilities(X)
         else:
             raise NotFittedError("Classifier not fitted")
 
 
-class CoTraining(_BaseCoTraining):
+class CoTraining(BaseCoTraining):
     """
-    Implementation based on https://github.com/jjrob13/sklearn_cotraining
-
     Avrim Blum and Tom Mitchell. 1998.
     Combining labeled and unlabeled data with co-training.
     In Proceedings of the eleventh annual conference on Computational learning theory (COLT' 98).
     Association for Computing Machinery, New York, NY, USA, 92–100.
     DOI:https://doi.org/10.1145/279943.279962
+
+    Han, Xian-Hua, Yen-wei Chen, and Xiang Ruan. 2011. 
+    ‘Multi-Class Co-Training Learning for Object and Scene Recognition’.
+    Pp. 67–70 in. Nara, Japan.
     """
 
     def __init__(
@@ -368,11 +365,9 @@ class CoTraining(_BaseCoTraining):
         second_base_estimator=None,
         max_iterations=30,
         poolsize=75,
-        positives=-1,
-        negatives=-1,
-        experimental=False,
+        threshold=0.5,
         force_second_view=True,
-        random_state=None,
+        random_state=None
     ):
         """Create a CoTraining classifier
 
@@ -386,48 +381,22 @@ class CoTraining(_BaseCoTraining):
             The number of iterations, by default 30
         poolsize : int, optional
             The size of the pool of unlabeled samples from which the classifier can choose, by default 75
-        positives : int, optional
-            The number of positive examples that will be 'labeled' by each classifier during each iteration
-            The default is the is determined by the smallest integer ratio of positive to negative samples in L, by default -1
-        negatives : int, optional
-            The number of negative examples that will be 'labeled' by each classifier during each iteration
-            The default is the is determined by the smallest integer ratio of positive to negative samples in L, by default -1
-        experimental : bool, optional
-            If True, the classifier will use the experimental implementation, by default False
+        threshold : float, optional
+            The threshold for label instances, by default 0.5
         force_second_view : bool, optional
             The second classifier needs a different view of the data. If False then a second view will be same as the first, by default True
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
-
-        Raises
-        ------
-        ValueError
-            Current implementation supports either both positives and negatives being specified, or neither
         """
-        assert isinstance(
-            base_estimator, ClassifierMixin
-        ), "This method only support classification"
-
         self.base_estimator = base_estimator
         self.second_base_estimator = second_base_estimator
-
         self.max_iterations = max_iterations
         self.poolsize = poolsize
-        self.random_state = random_state
-
-        if (positives == -1 and negatives != -1) or (
-            positives != -1 and negatives == -1
-        ):
-            raise ValueError(
-                "Current implementation supports either both positives and negatives being specified, or neither"
-            )
-
-        self.positives = positives
-        self.negatives = negatives
-        self.experimental = experimental
+        self.threshold = threshold
         self.force_second_view = force_second_view
+        self.random_state = random_state   
 
-    def fit(self, X, y, X2=None, features: list = None, **kwards):
+    def fit(self, X, y, X2=None, features: list = None, number_per_class: dict = None, **kwards):
         """
         Build a CoTraining classifier from the training set.
 
@@ -441,7 +410,9 @@ class CoTraining(_BaseCoTraining):
             Array representing the data from another view, not compatible with `features`, by default None
         features : {list, tuple}, optional
             list or tuple of two arrays with `feature` index for each subspace view, not compatible with `X2`, by default None
-
+        number_per_class : {dict}, optional
+            dict of class name:integer with the max ammount of instances to label in this class in each iteration, by default None
+        
         Returns
         -------
         self: CoTraining
@@ -449,123 +420,106 @@ class CoTraining(_BaseCoTraining):
         """
         rs = check_random_state(self.random_state)
 
+        X_label, y_label, X_unlabel = get_dataset(X, y)
+        if X2 is not None:
+            X2_label, _, X2_unlabel = get_dataset(X2, y)
+        elif features is not None:
+            X2_label = X_label[:, features[1]]
+            X2_unlabel = X_unlabel[:, features[1]]
+            X_label = X_label[:, features[0]]
+            X_unlabel = X_unlabel[:, features[0]]
+            self.columns_ = features
+        elif self.force_second_view:
+            raise AttributeError("Either X2 or features must be defined. CoTraining need another view to train the second classifier")
+        else:
+            self.columns_ = [list(range(X.shape[1]))] * 2
+
         self.h = [
             skclone(self.base_estimator), 
             skclone(self.base_estimator) if self.second_base_estimator is None else skclone(self.second_base_estimator)
         ]
-
-        y = y.copy()
-        X = X.copy()
-        X = np.asarray(X)
-        y = np.asarray(y)
         assert (
             X2 is None or features is None
         ), "The list of features and X2 cannot be defined at the same time" 
-        X1 = X
-        if X2 is None and features is None:
-            if self.force_second_view:
-                raise AttributeError("Either X2 or features must be defined. CoTraining need another view to train the second classifier")
-            X2 = X.copy()
-            self.columns_ = [list(range(X.shape[1]))] * 2
-        elif X2 is not None:
-            X2 = np.asarray(X2)
-        elif features is not None:
-            X1 = X[:, features[0]]
-            X2 = X[:, features[1]]
-            self.columns_ = features
 
-        if self.positives == -1 and self.negatives == -1:
+        self.classes_ = np.unique(y_label)
+        if number_per_class is None:
+            proportion = calculate_prior_probability(y_label)
+            factor = 1/min(proportion.values())
+            number_per_class = dict()
+            for c in self.classes_:
+                number_per_class[c] = math.ceil(proportion[c] * factor)
 
-            num_pos = sum(1 for y_i in y if y_i == 1)
-            num_neg = sum(1 for y_i in y if y_i == 0)
+        if X_unlabel.shape[0] < self.poolsize:
+            warnings.warn(f"Poolsize ({self.poolsize}) is bigger than U ({X_unlabel.shape[0]})")
 
-            n_p_ratio = num_neg / float(num_pos)
+        permutation = rs.permutation(len(X_unlabel))
+        
 
-            if n_p_ratio > 1:
-                self.positives = 1
-                self.negatives = round(self.positives * n_p_ratio)
-            else:
-                self.negatives = 1
-                self.positives = round(self.negatives / n_p_ratio)
-
-        if not (
-            self.positives > 0
-            and self.negatives > 0
-            and self.max_iterations > 0
-            and self.poolsize > 0
-        ):
-            raise AttributeError("Parameters are inconsistent.")
-
-        # Set of unlabeled samples
-        U = [i for i, y_i in enumerate(y) if y_i == y.dtype.type(-1)]
-        rs.shuffle(U)
-
-        U_ = U[-min(len(U), self.poolsize):]
-        # remove the samples in U_ from U
-        U = U[: -len(U_)]
-        if len(U) < self.poolsize:
-            warnings.warn(f"Poolsize ({self.poolsize}) is bigger than U ({len(U)})")
-
-        L = [i for i, y_i in enumerate(y) if y_i != y.dtype.type(-1)]
-
-        y = y.flatten()
-
-        self.classes_ = np.unique(y[L])
-
-        self.label_encoder = LabelEncoder()
-        y[L] = self.label_encoder.fit_transform(y[L])
+        self.h[0].fit(X_label, y_label)
+        self.h[1].fit(X2_label, y_label)
 
         it = 0
-        if len(np.unique(y[L])) > 2:
-            raise Exception("CoTraining does not support multiclass, use `sslearn.base.OneVsRestSSLClassifier`")
-        while (it < self.max_iterations and U and U_ ) or (it < self.max_iterations and U_ and not self.experimental ):
+        while it < self.max_iterations and any(permutation):
             it += 1            
 
-            self.h[0].fit(X1[L], y[L], **kwards)
-            self.h[1].fit(X2[L], y[L], **kwards)
+            y1_prob = self.h[0].predict_proba(X_unlabel[permutation[:self.poolsize]])
+            y2_prob = self.h[1].predict_proba(X2_unlabel[permutation[:self.poolsize]])
 
-            y1_prob = self.h[0].predict_proba(X1[U_])
-            y2_prob = self.h[1].predict_proba(X2[U_])
+            predictions1 = np.max(y1_prob, axis=1)
+            class_predicted1 = np.argmax(y1_prob, axis=1)
 
-            n, p = set(), set()
+            predictions2 = np.max(y2_prob, axis=1)
+            class_predicted2 = np.argmax(y2_prob, axis=1)
 
-            for i in (y1_prob[:, 0].argsort(kind="stable"))[-self.negatives:]:
-                if y1_prob[i, 0] > 0.5:
-                    n.add(i)
-            for i in (y1_prob[:, 1].argsort(kind="stable"))[-self.positives:]:
-                if y1_prob[i, 1] > 0.5:
-                    p.add(i)
-            for i in (y2_prob[:, 0].argsort(kind="stable"))[-self.negatives:]:
-                if y2_prob[i, 0] > 0.5:
-                    n.add(i)
-            for i in (y2_prob[:, 1].argsort(kind="stable"))[-self.positives:]:
-                if y2_prob[i, 1] > 0.5:
-                    p.add(i)
+            # If two classifier select same instance and bring different predictions then the instance is not labeled
+            candidates1 = predictions1 > self.threshold
+            candidates2 = predictions2 > self.threshold
+            aggreement = class_predicted1 == class_predicted2
 
-            p = [U_[x] for x in p]
-            n = [U_[x] for x in n]
+            full_candidates = candidates1 ^ candidates2
+            medium_candidates = candidates1 & candidates2 & aggreement
+            true_candidates1 = full_candidates & candidates1
+            true_candidates2 = full_candidates & candidates2
 
-            y[p] = 1
-            y[n] = 0
+            # Fill probas and candidate classes.
+            y_probas = np.zeros(predictions1.shape, dtype=predictions1.dtype)
+            y_class = class_predicted1.copy()
 
-            L.extend(p)
-            L.extend(n)
+            temp_probas1 = predictions1[true_candidates1]
+            temp_probas2 = predictions2[true_candidates2]
+            temp_probasB = (predictions1[medium_candidates]+predictions2[medium_candidates])/2
 
-            if not self.experimental:
-                all_indices = set(range(0, len(U_)))
-                selected_indices = set(p).union(set(n))
-                to_keep = all_indices.difference(selected_indices)
-                U_ = [U_[x] for x in to_keep]
+            temp_classes2 = class_predicted2[true_candidates2]
 
-            add_counter = 0  # number we have added from U to U_
-            num_to_add = 2 * (self.positives + self.negatives)
-            while add_counter != num_to_add and U:
-                add_counter += 1
-                U_.append(U.pop())
+            y_probas[true_candidates1] = temp_probas1
+            y_probas[true_candidates2] = temp_probas2
+            y_probas[medium_candidates] = temp_probasB
+            y_class[true_candidates2] = temp_classes2
 
-        self.h[0].fit(X1[L], y[L], **kwards)
-        self.h[1].fit(X2[L], y[L], **kwards)
-        self.h_ = self.h       
+            # Select the best candidates
+            final_instances = list()
+            best_candidates = np.argsort(y_probas, kind="mergesort")[::-1]
+            for c in self.classes_:
+                final_instances += list(best_candidates[y_class[best_candidates] == c])[:number_per_class[c]]
+
+            # Fill the new labeled instances
+            pseudoy = y_class[final_instances]
+            y_label = np.append(y_label, pseudoy)
+            
+            index = permutation[0 : self.poolsize][final_instances]
+            X_label = np.append(X_label, X_unlabel[index], axis=0)
+            X2_label = np.append(X2_label, X2_unlabel[index], axis=0)
+
+            permutation = permutation[list(map(lambda x: x not in index, permutation))]
+
+            # Poolsize increments in order double of max instances candidates:
+            self.poolsize += sum(number_per_class.values()) * 2
+
+            self.h[0].fit(X_label, y_label)
+            self.h[1].fit(X2_label, y_label)
+
+        self.h_ = self.h
 
         return self
 
@@ -615,7 +569,7 @@ class CoTraining(_BaseCoTraining):
             result = self.classes_.take(
                 (np.argmax(predicted_probabilitiy, axis=1)), axis=0
             )
-        return self.label_encoder.inverse_transform(result)
+        return result
 
     def score(self, X, y, sample_weight=None, **kwards):
         """
@@ -642,9 +596,9 @@ class CoTraining(_BaseCoTraining):
             return accuracy_score(y, self.predict(X, kwards["X2"]), sample_weight=sample_weight)
         else:
             return super().score(X, y, sample_weight=sample_weight)
+        
 
-
-class Rasco(_BaseCoTraining):
+class Rasco(BaseCoTraining):
     def __init__(
         self,
         base_estimator=DecisionTreeClassifier(),
@@ -895,7 +849,7 @@ class RelRasco(Rasco):
 
 
 # Done and tested
-class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
+class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
     def __init__(
         self,
         ensemble_estimator=BaggingClassifier(),
@@ -1069,7 +1023,7 @@ class CoTrainingByCommittee(ClassifierMixin, Ensemble, BaseEstimator):
 
 
 # Done and tested
-class CoForest(_BaseCoTraining):
+class CoForest(BaseCoTraining):
     def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, random_state=None, **kwards):
         """
         Li, M., & Zhou, Z.-H. (2007).
