@@ -7,9 +7,9 @@ from collections import defaultdict
 import numpy as np
 import scipy.stats as st
 from joblib import Parallel, delayed
+from scipy.special import softmax
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone as skclone
-from scipy.special import softmax
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.feature_selection import mutual_info_classif
@@ -18,13 +18,14 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import check_random_state, check_array
+from sklearn.utils import check_array, check_random_state
 from sklearn.utils.validation import check_is_fitted
+
 from sslearn.utils import check_n_jobs
 
 from ..base import BaseEnsemble, get_dataset
-from ..utils import (calculate_prior_probability, choice_with_proportion,
-                     confidence_interval)
+from ..utils import (calculate_prior_probability, check_classifier,
+                     choice_with_proportion, confidence_interval)
 
 
 class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
@@ -129,6 +130,7 @@ class DemocraticCoLearning(BaseCoTraining):
             raise AttributeError(
                 "If `n_estimators` is None then `base_estimator` must be a `list`."
             )
+        self.base_estimator = check_classifier(self.base_estimator)
         self.n_estimators = len(self.base_estimator)
         self.one_hot = OneHotEncoder(sparse=False)
         self.expand_only_mislabeled = expand_only_mislabeled
@@ -388,7 +390,9 @@ class CoTraining(BaseCoTraining):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         """
-        self.base_estimator = base_estimator
+        self.base_estimator = check_classifier(base_estimator, False)
+        if second_base_estimator is not None:
+            second_base_estimator = check_classifier(second_base_estimator, False)
         self.second_base_estimator = second_base_estimator
         self.max_iterations = max_iterations
         self.poolsize = poolsize
@@ -639,10 +643,7 @@ class Rasco(BaseCoTraining):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         """
-        assert isinstance(
-            base_estimator, ClassifierMixin
-        ), "This method only support classification"
-        self.base_estimator = base_estimator  # C in paper
+        self.base_estimator = check_classifier(base_estimator, True, n_estimators)  # C in paper
         self.max_iterations = max_iterations  # J in paper
         self.n_estimators = n_estimators  # K in paper
         self.subspace_size = subspace_size  # m in paper
@@ -729,23 +730,24 @@ class Rasco(BaseCoTraining):
 
             sorted_ = np.argsort(predictions)
             # TODO: find way to impose the class ratio as suggested in the Paper.
-            if self.incremental:
-                # One of each class
-                for class_ in cfs[0].classes_:
-                    try:
-                        Lj.append(sorted_[pseudoy == class_][-1])
-                        yj.append(class_)
-                    except IndexError:
-                        warnings.warn(
-                            "RASCO convergence warning, the class "
-                            + str(class_)
-                            + " not predicted",
-                            ConvergenceWarning,
-                        )
-                Lj = np.array(Lj)
-            else:
-                Lj = sorted_[-self.batch_size:]
-                yj = pseudoy[Lj]
+            
+            # if self.incremental:
+            #     # One of each class
+            #     for class_ in cfs[0].classes_:
+            #         try:
+            #             Lj.append(sorted_[pseudoy == class_][-1])
+            #             yj.append(class_)
+            #         except IndexError:
+            #             warnings.warn(
+            #                 "RASCO convergence warning, the class "
+            #                 + str(class_)
+            #                 + " not predicted",
+            #                 ConvergenceWarning,
+            #             )
+            #     Lj = np.array(Lj)
+            # else:
+            #     Lj = sorted_[-self.batch_size:]
+            #     yj = pseudoy[Lj]
 
             X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
             y_label = np.append(y_label, yj)
@@ -876,10 +878,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         """
-        assert isinstance(
-            ensemble_estimator, ClassifierMixin
-        ), "This method only support classification"
-        self.ensemble_estimator = ensemble_estimator
+        self.ensemble_estimator = check_classifier(ensemble_estimator, False)
         self.max_iterations = max_iterations
         self.poolsize = poolsize
         self.random_state = random_state
@@ -1044,7 +1043,7 @@ class CoForest(BaseCoTraining):
         **kwards : dict, optional
             Additional parameters to be passed to base_estimator, by default None.
         """
-        self.base_estimator = base_estimator
+        self.base_estimator = check_classifier(base_estimator, collection_size=n_estimators)
         self._base = skclone(base_estimator)
         self._base.set_params(**kwards)
         if "random_state" in dir(self._base):

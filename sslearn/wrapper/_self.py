@@ -1,13 +1,14 @@
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.base import clone as skclone
-from sklearn.utils import check_random_state, resample
 import numpy as np
-from ..base import get_dataset
-from sklearn.neighbors import kneighbors_graph
-from sslearn.utils import calculate_prior_probability
 from scipy.stats import norm
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import clone as skclone
+from sklearn.neighbors import KNeighborsClassifier, kneighbors_graph
+from sklearn.semi_supervised import SelfTrainingClassifier
+from sklearn.utils import check_random_state, resample
+
+from sslearn.utils import calculate_prior_probability, check_classifier
+
+from ..base import get_dataset
 
 
 class SelfTraining(SelfTrainingClassifier):
@@ -186,7 +187,7 @@ class Setred(ClassifierMixin, BaseEstimator):
         n_jobs : int, optional
             The number of parallel jobs to run for neighbors search. None means 1 unless in a joblib.parallel_backend context. -1 means using all processors, by default None
         """
-        self.base_estimator = base_estimator
+        self.base_estimator = check_classifier(base_estimator, can_be_list=False)
         self.max_iterations = max_iterations
         self.poolsize = poolsize
         self.distance = distance

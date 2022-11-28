@@ -6,6 +6,8 @@ import json
 
 from statsmodels.stats.proportion import proportion_confint
 import scipy.stats as st
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.base import ClassifierMixin
 
 import sslearn
 
@@ -104,3 +106,19 @@ def check_n_jobs(n_jobs):
     else:
         return n_jobs
 
+
+def check_classifier(base_classifier, can_be_list=True, collection_size=None):
+
+    if base_classifier is None:
+        return DecisionTreeClassifier()
+    elif can_be_list and (type(base_classifier) == list or type(base_classifier) == tuple):
+        if collection_size is not None:
+            if len(base_classifier) != collection_size:
+                raise AttributeError(f"base_classifier is a list of classifiers, but its length ({len(base_classifier)}) is different from expected ({collection_size})")
+        for i, bc in enumerate(base_classifier):
+            base_classifier[i] = check_classifier(bc, False)
+        return base_classifier
+    else:
+        if not isinstance(base_classifier, ClassifierMixin):
+            raise AttributeError(f"base_classifier must be a ClassifierMixin, but found {type(base_classifier)}")
+        return base_classifier
