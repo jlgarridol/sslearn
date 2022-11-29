@@ -19,28 +19,14 @@ def safe_division(dividend, divisor, epsilon):
     return dividend / divisor
 
 
-def confidence_interval(X, hyp, y=None, mode="bernoulli", alpha=.95 ):
+def confidence_interval(X, hyp, y, alpha=.95 ):
     data = hyp.predict(X)
-    if mode != "bernoulli":
-        data_proba = hyp.predict_proba(X)
+
     successes = np.count_nonzero(data == y)
     trials = X.shape[0]
-
-    if mode == "bernoulli":
-        successes = np.count_nonzero(data == y)
-        trials = X.shape[0]
-        li, hi = proportion_confint(successes, trials, alpha=1 - alpha, method="wilson")
-    elif mode == "t-student_depre":  # This method is over classes not over correct predictions
-        li, hi = st.t.interval(alpha=alpha, df=len(data) - 1, loc=np.mean(data), scale=st.sem(data))
-    elif mode == "normal_depre":  # This method is over classes not over correct predictions
-        li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data), scale=st.sem(data))
-    elif mode == "t-student":
-        li, hi = st.t.interval(alpha=alpha, df=len(data_proba) - 1, loc=np.mean(data_proba), scale=st.sem(data_proba))
-    elif mode == "normal":
-        li, hi = st.norm.interval(alpha=alpha, loc=np.mean(data_proba), scale=st.sem(data_proba))
-    else:
-        raise AttributeError(f"`confidence_interval` mode {mode} not allowed, must be one of: 'bernoulli', 't-student', 'normal'")
-    return np.mean(li), np.mean(hi)
+    li, hi = proportion_confint(successes, trials, alpha=1 - alpha, method="wilson")
+    return li, hi
+    
 
 
 def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
@@ -103,7 +89,7 @@ def check_n_jobs(n_jobs):
     elif not is_int(n_jobs):
         raise ValueError(f"`n_jobs` must be None or an integer, but found: {n_jobs}")
     elif n_jobs < 0:
-        return os.cpu_count() - n_jobs + 1
+        return os.cpu_count()
     else:
         return n_jobs
 

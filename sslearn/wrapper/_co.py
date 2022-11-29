@@ -76,7 +76,6 @@ class DemocraticCoLearning(BaseCoTraining):
         ],
         n_estimators=None,
         expand_only_mislabeled=True,
-        confidence_method="bernoulli",
         alpha=0.95,
         q_exp=2,
         random_state=None
@@ -94,8 +93,6 @@ class DemocraticCoLearning(BaseCoTraining):
             number of base_estimators to use. None if base_estimator is a list, by default None
         expand_only_mislabeled : bool, optional
             expand only mislabeled instances by itself, by default True
-        confidence_method : str, optional
-            method to calculate the confidence of each learner, by default "bernoulli"
         alpha : float, optional
             confidence level, by default 0.95
         q_exp : int, optional
@@ -135,7 +132,6 @@ class DemocraticCoLearning(BaseCoTraining):
         self.one_hot = OneHotEncoder(sparse=False)
         self.expand_only_mislabeled = expand_only_mislabeled
 
-        self.confidence_method = confidence_method
         self.alpha = alpha
         self.q_exp = q_exp
         self.random_state = random_state
@@ -165,7 +161,7 @@ class DemocraticCoLearning(BaseCoTraining):
         """
         w = []
         conf_method, alpha = (self.confidence_method, self.alpha)
-        w = [sum(confidence_interval(X, H, y, conf_method, alpha)) / 2 for H in self.h_]
+        w = [sum(confidence_interval(X, H, y, alpha)) / 2 for H in self.h_]
         self.confidences_ = w
 
     def fit(self, X, y, estimator_kwards=None):
@@ -228,7 +224,6 @@ class DemocraticCoLearning(BaseCoTraining):
                     X_label,
                     H,
                     y_label,
-                    self.confidence_method,
                     self.alpha
 )
                 for H in self.base_estimator
@@ -276,7 +271,7 @@ class DemocraticCoLearning(BaseCoTraining):
                 Ly_[i] = weighted_class[to_add]
 
             new_conf_interval = [
-                confidence_interval(L[i], H, Ly[i], self.confidence_method, self.alpha)
+                confidence_interval(L[i], H, Ly[i], self.alpha)
                 for i, H in enumerate(self.base_estimator)
             ]
             e_factor = 1 - sum([l_ for l_, _ in new_conf_interval]) / self.n_estimators
