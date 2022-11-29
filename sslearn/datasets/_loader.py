@@ -56,7 +56,7 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
                 break
     if target is None:
         target = attributes[-1]
-    data = pd.read_csv(path, skiprows=counter, header=None, **kwards)
+    data = pd.read_csv(path, skiprows=counter-1, header=None, **kwards)
     if len(data.columns) != len(attributes):
         warnings.warn(f"The dataset's have {len(data.columns)} columns but file declares {len(attributes)}.", RuntimeWarning)
         X = data

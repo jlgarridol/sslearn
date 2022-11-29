@@ -1,11 +1,16 @@
 import os
 import sys
+
+import pytest
+
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from sslearn.datasets import (read_csv, read_keel, secure_dataset, save_keel)
-from sslearn.base import get_dataset
 from sklearn.dummy import DummyClassifier
+
+from sslearn.base import get_dataset
+from sslearn.datasets import read_csv, read_keel, save_keel, secure_dataset
 from sslearn.wrapper import SelfTraining
+
 
 def folder():
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files")
@@ -32,3 +37,20 @@ class TestDataset:
         posterior(X, y)
         X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="numpy")
         posterior(X, y)
+
+    def test_secure_dataset(self):
+        X, y = read_csv(os.path.join(folder(),"abalone.csv"), format="pandas")
+        X_label, y_label, _ = get_dataset(X, y)
+        X1, y1 = secure_dataset(X_label, y_label)
+        with pytest.raises(ValueError):
+            secure_dataset(X, y)
+        assert X1.all() == X_label.all()
+        assert y1.all() == y_label.all()
+
+    def test_save_keel(self):
+        X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="pandas")
+        save_keel(X, y, os.path.join(folder(),"temp_abalone.dat"), name="abalone")
+        X1, y1 = read_keel(os.path.join(folder(),"temp_abalone.dat"), format="pandas")
+        assert (X.columns == X1.columns).all()
+        assert (y == y1).all()
+        assert (X == X1).all().all()

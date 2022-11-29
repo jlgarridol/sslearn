@@ -1,5 +1,5 @@
 def secure_dataset(X, y):
-    """Securize de dataset for semi-supervised learning ensuring that not exists `-1` as valid class.
+    """It guarantees that the dataset has not  `-1` as valid class, in order to make it semi-supervised after
 
     Parameters
     ----------
@@ -13,7 +13,7 @@ def secure_dataset(X, y):
     X, y: array_like
         Dataset securized.
     """
-    if y.dtype.type(-1) in y:
+    if y.dtype.type(-1) in y.tolist():
         raise ValueError("The dataset contains -1 as valid class. Please, change it to another value.")
     return X, y
     # if np.issubdtype(y.dtype, np.number):
