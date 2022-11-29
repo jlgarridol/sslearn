@@ -138,12 +138,12 @@ class SelfTraining(SelfTrainingClassifier):
 
         Returns
         -------
-        self : object
+        self : SelfTrainingClassifier
             Returns an instance of self.
         """
         y_adapted = y.copy()
-        if y_adapted.dtype.type is np.str_:
-            y_adapted = y_adapted.astype(np.object)
+        if y_adapted.dtype.type is str or y_adapted.dtype.type is np.str_:
+            y_adapted = y_adapted.astype(object)
             y_adapted[y_adapted == '-1'] = -1
         return super().fit(X, y_adapted)
 

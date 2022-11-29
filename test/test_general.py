@@ -1,4 +1,5 @@
 import sys
+import os
 
 import joblib as jl
 import numpy as np
@@ -11,8 +12,7 @@ from sklearn.svm import LinearSVC
 from sklearn.semi_supervised import SelfTrainingClassifier
 from statsmodels.stats.proportion import proportion_confint
 
-sys.path.append('..')
-import sslearn
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from sslearn.base import FakedProbaClassifier, OneVsRestSSLClassifier
 from sslearn.restricted import (WhoIsWhoClassifier, combine_predictions,
                                 conflict_rate)

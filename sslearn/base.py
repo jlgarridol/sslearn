@@ -12,7 +12,7 @@ from sklearn.multiclass import (LabelBinarizer, OneVsRestClassifier,
                                 _ConstantPredictor, _num_samples,
                                 _predict_binary)
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.utils import check_X_y
+from sklearn.utils import check_X_y, check_array
 from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metaestimators import available_if
@@ -23,11 +23,15 @@ from sklearn.utils import check_random_state
 
 
 def get_dataset(X, y):
-    X, y = check_X_y(X, y)
 
+    X = check_array(X)
+    y = check_array(y, ensure_2d=False, dtype=y.dtype.type)
+    
     X_label = X[y != y.dtype.type(-1)]
     y_label = y[y != y.dtype.type(-1)]
     X_unlabel = X[y == y.dtype.type(-1)]
+
+    X_label, y_label = check_X_y(X_label, y_label)
 
     return X_label, y_label, X_unlabel
 
