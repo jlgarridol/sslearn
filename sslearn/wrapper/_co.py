@@ -24,7 +24,7 @@ from sklearn.utils.validation import check_is_fitted
 from sslearn.utils import check_n_jobs
 
 from ..base import BaseEnsemble, get_dataset
-from ..utils import (calculate_prior_probability, check_classifier,
+from ..utils import (calc_number_per_class, calculate_prior_probability, check_classifier,
                      choice_with_proportion, confidence_interval)
 
 
@@ -448,11 +448,7 @@ class CoTraining(BaseCoTraining):
 
         self.classes_ = np.unique(y_label)
         if number_per_class is None:
-            proportion = calculate_prior_probability(y_label)
-            factor = 1/min(proportion.values())
-            number_per_class = dict()
-            for c in self.classes_:
-                number_per_class[c] = math.ceil(proportion[c] * factor)
+            number_per_class = calc_number_per_class(y_label)
 
         if X_unlabel.shape[0] < self.poolsize:
             warnings.warn(f"Poolsize ({self.poolsize}) is bigger than U ({X_unlabel.shape[0]})")
@@ -608,8 +604,6 @@ class Rasco(BaseCoTraining):
         base_estimator=DecisionTreeClassifier(),
         max_iterations=10,
         n_estimators=30,
-        incremental=True,
-        batch_size=None,
         subspace_size=None,
         random_state=None,
         n_jobs=None,
@@ -632,12 +626,6 @@ class Rasco(BaseCoTraining):
             If is -1 then will be infinite iterations until U be empty, by default 10
         n_estimators : int, optional
             The number of base estimators in the ensemble., by default 30
-        incremental : bool, optional
-            If true then it will add the most relevant instance for each class from U in enlarged L,
-            else will be select from U the "batch_size" most confident instances., by default True
-        batch_size : int, optional
-            If "incremental" is false it is the number of instances to add to enlarged L.
-            If it is None then will be the size of L., by default None
         subspace_size : int, optional
             The number of features for each subspace. If it is None will be the half of the features size., by default None
         random_state : int, RandomState instance, optional
@@ -647,8 +635,6 @@ class Rasco(BaseCoTraining):
         self.max_iterations = max_iterations  # J in paper
         self.n_estimators = n_estimators  # K in paper
         self.subspace_size = subspace_size  # m in paper
-        self.incremental = incremental
-        self.batch_size = batch_size
         self.n_jobs = check_n_jobs(n_jobs)
 
         self.random_state = random_state
@@ -695,10 +681,11 @@ class Rasco(BaseCoTraining):
         """
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
+
         random_state = check_random_state(self.random_state)
 
-        if not self.incremental and self.batch_size is None:
-            self.batch_size = X_label.shape[0]
+        self.classes_ = np.unique(y_label)
+        number_per_class = calc_number_per_class(y_label)
 
         if self.subspace_size is None:
             self.subspace_size = int(X.shape[1] / 2)
@@ -723,31 +710,16 @@ class Rasco(BaseCoTraining):
             raw_predicions = sum(raw_predicions) / self.n_estimators
             predictions = np.max(raw_predicions, axis=1)
             class_predicted = np.argmax(raw_predicions, axis=1)
-            pseudoy = np.array(list(map(lambda x: cfs[0].classes_[x], class_predicted)))
+            pseudoy = self.classes_.take(class_predicted,axis=0)
 
-            Lj = []
-            yj = []
+            final_instances = list()
+            best_candidates = np.argsort(predictions, kind="mergesort")[::-1]
+            for c in self.classes_:
+                final_instances += list(best_candidates[pseudoy[best_candidates] == c])[:number_per_class[c]]
 
-            sorted_ = np.argsort(predictions)
-            # TODO: find way to impose the class ratio as suggested in the Paper.
-            
-            # if self.incremental:
-            #     # One of each class
-            #     for class_ in cfs[0].classes_:
-            #         try:
-            #             Lj.append(sorted_[pseudoy == class_][-1])
-            #             yj.append(class_)
-            #         except IndexError:
-            #             warnings.warn(
-            #                 "RASCO convergence warning, the class "
-            #                 + str(class_)
-            #                 + " not predicted",
-            #                 ConvergenceWarning,
-            #             )
-            #     Lj = np.array(Lj)
-            # else:
-            #     Lj = sorted_[-self.batch_size:]
-            #     yj = pseudoy[Lj]
+            Lj = X_unlabel[final_instances]
+            yj = pseudoy[final_instances]
+
 
             X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
             y_label = np.append(y_label, yj)
@@ -1109,14 +1081,7 @@ class CoForest(BaseCoTraining):
 
                     raw_predictions = hi.predict_proba(Ui_t)
                     predictions = np.max(raw_predictions, axis=1)
-                    class_predicted = np.array(
-                        list(
-                            map(
-                                lambda x: hi.classes_[x],
-                                np.argmax(raw_predictions, axis=1),
-                            )
-                        )
-                    )
+                    class_predicted = self.classes_.take(np.argmax(raw_predictions, axis=1),axis=0)
 
                     to_label = predictions > self.threshold
                     wi_t = predictions[to_label].sum()

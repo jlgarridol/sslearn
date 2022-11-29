@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import math
 
 import pandas as pd
 import json
@@ -106,6 +107,16 @@ def check_n_jobs(n_jobs):
     else:
         return n_jobs
 
+
+def calc_number_per_class(y_label):
+    classes = np.unique(y_label)
+    proportion = calculate_prior_probability(y_label)
+    factor = 1/min(proportion.values())
+    number_per_class = dict()
+    for c in classes:
+        number_per_class[c] = math.ceil(proportion[c] * factor)
+    
+    return number_per_class
 
 def check_classifier(base_classifier, can_be_list=True, collection_size=None):
 
