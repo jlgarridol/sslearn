@@ -14,7 +14,7 @@ def secure_dataset(X, y):
         Dataset securized.
     """
     if y.dtype.type(-1) in y:
-        raise Exception("El dataset es erróneo")
+        raise ValueError("The dataset contains -1 as valid class. Please, change it to another value.")
     return X, y
     # if np.issubdtype(y.dtype, np.number):
     #     y = y + 2

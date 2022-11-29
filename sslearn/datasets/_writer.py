@@ -1,11 +1,38 @@
-import pandas as pd
+import os
+
 import numpy as np
+import pandas as pd
 
 
-def save_keel(X, y, route, name, attribute_name=None, target_name="Class",  classification=True, unlabeled=True, force_targets=None):
+def save_keel(X, y, route, name=None, attribute_name=None, target_name="Class",  classification=True, unlabeled=True, force_targets=None):
+    """Save a dataset in the KEEL format
+
+    Parameters
+    ----------
+    X : array-like
+        Dataset features
+    y : array-like
+        Dataset targets
+    route : str
+        Path to save the dataset
+    name : str, optional
+        Dataset name, if None the route basename will be selected, by default None
+    attribute_name : list, optional
+        List of attribute names, if None the default names will be used, by default None
+    target_name : str, optional
+        Target name, by default "Class"
+    classification : bool, optional
+        If the dataset is classification or regression, by default True
+    unlabeled : bool, optional
+        If the dataset has unlabeled instances, by default True
+    force_targets : collection, optional
+        Force the targets to be a specific value, by default None
+    """    
     columns = []
     types = []
     min_max = []
+    if name is None:
+        name = os.path.basename(route).split(".")[0]
 
     unlabel_target = y == y.dtype.type(-1)
     if classification:

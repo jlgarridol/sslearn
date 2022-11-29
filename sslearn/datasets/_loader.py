@@ -10,7 +10,7 @@ keel_type_cheat = {
 }
 
 
-def read_keel(path, format="pandas", secure=True, target_col=None, encoding="utf-8", **kwards):
+def read_keel(path, format="pandas", secure=False, target_col=None, encoding="utf-8", **kwards):
     """Read a .dat file from KEEL (http://www.keel.es/)
 
     Parameters
@@ -20,7 +20,7 @@ def read_keel(path, format="pandas", secure=True, target_col=None, encoding="utf
     format : str, optional
         Object that will contain the data, it can be `numpy` or `pandas`, by default "pandas"
     secure : bool, optional
-        Securize de dataset for semi-supervised learning ensuring that not exists `-1` as valid class, by default True
+        It guarantees that the dataset has not  `-1` as valid class, in order to make it semi-supervised after, by default False
     target_col : {str, int, None}, optional
         Column name or index to select class column, if None use the default value stored in the file, by default None
     encoding: str, optional
@@ -90,7 +90,7 @@ def read_keel(path, format="pandas", secure=True, target_col=None, encoding="utf
     return X, y
 
 
-def read_csv(path, format="pandas", secure=True, target_col=-1, **kwards):
+def read_csv(path, format="pandas", secure=False, target_col=-1, **kwards):
     """Read a .csv file
 
     Parameters
@@ -100,7 +100,7 @@ def read_csv(path, format="pandas", secure=True, target_col=-1, **kwards):
     format : str, optional
         Object that will contain the data, it can be `numpy` or `pandas`, by default "pandas"
     secure : bool, optional
-        Securize de dataset for semi-supervised learning ensuring that not exists `-1` as valid class, by default True
+        It guarantees that the dataset has not  `-1` as valid class, in order to make it semi-supervised after, by default False
     target_col : {str, int, None}, optional
         Column name or index to select class column, if None use the default value stored in the file, by default None
 
@@ -123,43 +123,6 @@ def read_csv(path, format="pandas", secure=True, target_col=-1, **kwards):
 
     if secure:
         X, y = secure_dataset(X, y)
-    if format == "numpy":
-        X = X.to_numpy()
-        y = y.to_numpy()
-    return X, y
-
-
-def read_arff(path, format="pandas", secure=True, target_col=-1):
-    """Read .arff file from WEKA. It requires `arff2pandas`
-    Parameters
-    ----------
-    path : string
-        File path
-    format : str, optional
-        The kind of data structure to load the file, may be `pandas` for DataFrame or `numpy` for array , by default "pandas"
-    secure : bool, optional
-        If `secure` is True then if exists a -1 value in target classes the target values will be increased in two values., by default True
-    target_col : int, optional
-        Select the column to mark as target. If is -1 then the last column will be selected. , by default -1
-
-    Returns
-    -------
-    X, y: array_like
-        Dataset loaded.
-    """
-    from arff2pandas import a2p
-
-    if format not in ["pandas", "numpy"]:
-        raise AttributeError("Formats allowed are `pandas` or `numpy`")
-
-    with open(path, "r") as file:
-        data = a2p.load(file)
-
-    X = data.loc[:, data.columns != data.columns[target_col]]
-    y = data.loc[:, target_col]
-
-    if secure:
-        X, y = secure_dataset(X, y, target_column=target_col)
     if format == "numpy":
         X = X.to_numpy()
         y = y.to_numpy()
