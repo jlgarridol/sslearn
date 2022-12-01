@@ -1,13 +1,16 @@
 import math
 import sys
+import warnings as warn
 
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.base import ClassifierMixin
 from sklearn.base import clone as skclone
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils import check_random_state, resample
+from sklearn.exceptions import ConvergenceWarning
 
 from ..base import get_dataset
 from ..restricted import WhoIsWhoClassifier, combine_predictions
@@ -39,6 +42,10 @@ class TriTraining(BaseCoTraining):
             If left to None this is automatically set to the first dimension of the arrays., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
+        n_jobs : int, optional
+            The number of jobs to run in parallel for both `fit` and `predict`.
+            `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+            `-1` means using all processors., by default None
         """
         self._N_LEARNER = 3
         self.base_estimator = check_classifier(base_estimator, collection_size=self._N_LEARNER)
@@ -65,15 +72,21 @@ class TriTraining(BaseCoTraining):
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
+        is_df = isinstance(X_label, pd.DataFrame)
+
         hypotheses = []
         e_ = [0.5] * self._N_LEARNER
         l_ = [0] * self._N_LEARNER
 
         # Get a random instance for each class to keep class index
-        classes = set(np.unique(y_label))
+        self.classes_ = np.unique(y_label)
+        classes = set(self.classes_)
         instances = list()
         labels = list()
-        for x_, y_ in zip(X_label, y_label):
+        iteration = zip(X_label, y_label)
+        if is_df:
+            iteration = zip(X_label.values, y_label)
+        for x_, y_ in iteration:
             if y_ in classes:
                 classes.remove(y_)
                 instances.append(x_)
@@ -81,7 +94,7 @@ class TriTraining(BaseCoTraining):
             if len(classes) == 0:
                 break
 
-        for _ in range(self._N_LEARNER):
+        for i in range(self._N_LEARNER):
             X_sampled, y_sampled = resample(
                 X_label,
                 y_label,
@@ -90,11 +103,15 @@ class TriTraining(BaseCoTraining):
                 random_state=random_state,
             )
 
-            X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
+            if is_df:
+                X_sampled = pd.DataFrame(X_sampled, columns=X_label.columns)
+                X_sampled = pd.concat([pd.DataFrame(instances, columns=X_label.columns), X_sampled])
+            else:
+                X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
             y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
 
             hypotheses.append(
-                skclone(self.base_estimator).fit(X_sampled, y_sampled, **kwards)
+                skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X_sampled, y_sampled, **kwards)
             )
 
         something_has_changed = True
@@ -134,6 +151,8 @@ class TriTraining(BaseCoTraining):
                         ),
                         random_state,
                     )
+                    if is_df:
+                        L[i] = pd.DataFrame(L[i], columns=X_label.columns)
                     updates[i] = True
 
             hypotheses = Parallel(n_jobs=self.n_jobs)(
@@ -150,14 +169,16 @@ class TriTraining(BaseCoTraining):
                     something_has_changed = True
 
         self.h_ = hypotheses
-        self.classes_ = self.h_[0].classes_
         self.columns_ = [list(range(X.shape[1]))] * self._N_LEARNER
 
         return self
 
     def _fit_estimator(self, hyp, X_label, y_label, L, Ly, update, **kwards):
         if update:
-            _tempL = np.concatenate((X_label, L))
+            if isinstance(L, pd.DataFrame):
+                _tempL = pd.concat([X_label, L])
+            else:
+                _tempL = np.concatenate((X_label, L))
             _tempY = np.concatenate((y_label, Ly))
 
             return hyp.fit(_tempL, _tempY, **kwards)
@@ -299,6 +320,9 @@ class WiWTriTraining(TriTraining):
         self.n_jobs = check_n_jobs(self.n_jobs)
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
+
+        is_df = isinstance(X_label, pd.DataFrame)
+
         group_label = instance_group[y != y.dtype.type(-1)]
         group_unlabel = instance_group[y == y.dtype.type(-1)]
 
@@ -307,11 +331,15 @@ class WiWTriTraining(TriTraining):
         l_ = [0] * self._N_LEARNER
 
         # Get a random instance for each class to keep class index
-        classes = set(np.unique(y_label))
+        self.classes_ = np.unique(y_label)
+        classes = set(self.classes_)
         instances = list()
         labels = list()
         groups = list()
-        for x_, y_, g_ in zip(X_label, y_label, group_label):
+        iteration = zip(X_label, y_label, group_label)
+        if is_df:
+            iteration = zip(X_label.values, y_label, group_label)
+        for x_, y_, g_ in iteration:
             if y_ in classes:
                 classes.remove(y_)
                 instances.append(x_)
@@ -320,7 +348,7 @@ class WiWTriTraining(TriTraining):
             if len(classes) == 0:
                 break
 
-        for _ in range(self._N_LEARNER):
+        for i in range(self._N_LEARNER):
             X_sampled, y_sampled, group_sample = resample(
                 X_label,
                 y_label,
@@ -330,12 +358,16 @@ class WiWTriTraining(TriTraining):
                 random_state=random_state,
             )
 
-            X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
+            if is_df:
+                X_sampled = pd.DataFrame(X_sampled, columns=X_label.columns)
+                X_sampled = pd.concat([pd.DataFrame(instances, columns=X_label.columns), X_sampled])
+            else:
+                X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
             y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
             group_sample = np.concatenate((np.array(groups), group_sample), axis=0)
 
             hypotheses.append(
-                WhoIsWhoClassifier(self.base_estimator, method=self.method, conflict_weighted=self.conflict_weighted).
+                WhoIsWhoClassifier(self.base_estimator if not isinstance(self.base_estimator, list) else self.base_estimator[i], method=self.method, conflict_weighted=self.conflict_weighted).
                         fit(X_sampled, y_sampled, instance_group=group_sample, **kwards)
             )
 
@@ -379,6 +411,8 @@ class WiWTriTraining(TriTraining):
                         random_state,
                     )
                     updates[i] = True
+                    if is_df:
+                        L[i] = pd.DataFrame(L[i], columns=X_label.columns)
 
             hypotheses = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._fit_estimator)(
@@ -394,7 +428,6 @@ class WiWTriTraining(TriTraining):
                     something_has_changed = True
 
         self.h_ = hypotheses
-        self.classes_ = self.h_[0].classes_
         self.columns_ = [list(range(X.shape[1]))] * self._N_LEARNER
 
         return self
@@ -443,7 +476,10 @@ class WiWTriTraining(TriTraining):
         group_label = kwards.pop("group_label", None)
         kwards
         if update:
-            _tempL = np.concatenate((X_label, L))
+            if isinstance(X_label, pd.DataFrame):
+                _tempL = pd.concat([X_label, L])
+            else:
+                _tempL = np.concatenate((X_label, L))
             _tempY = np.concatenate((y_label, Ly))
             _tempG = np.concatenate((group_label, Lg))
 
@@ -460,7 +496,7 @@ class WiWTriTraining(TriTraining):
 class DeTriTraining(TriTraining):
 
     def __init__(self, base_estimator=DecisionTreeClassifier(), k_neighbors=3,
-                 n_samples=None, mode="seeded", n_jobs=None, random_state=None):
+                 n_samples=None, mode="seeded", max_iterations=100, n_jobs=None, random_state=None):
         """DeTriTraining
 
         Deng C., Guo M.Z. (2006)
@@ -485,6 +521,8 @@ class DeTriTraining(TriTraining):
             If `seeded` each instance belong to nearest cluster.
             If `constrained` each instance belong to nearest cluster unless the instance is in to enlarged dataset, 
             then the instance belongs to the cluster of its class., by default `seeded`
+        max_iterations : int, optional
+            Maximum number of iterations, by default 100
         n_jobs : int, optional
             The number of parallel jobs to run for neighbors search. 
             None means 1 unless in a joblib.parallel_backend context. -1 means using all processors. 
@@ -495,6 +533,7 @@ class DeTriTraining(TriTraining):
         super().__init__(base_estimator, n_samples, random_state)
         self.k_neighbors = k_neighbors
         self.mode = mode
+        self.max_iterations = max_iterations
         self.n_jobs = n_jobs
         if mode != "seeded" and mode != "constrained":
             raise AttributeError("`mode` must be \"seeded\" or \"constrained\".")
@@ -534,6 +573,13 @@ class DeTriTraining(TriTraining):
         """
         centroids = dict()
         clusters = set(S[1])
+
+        # uses as numpy
+        if isinstance(X, pd.DataFrame):
+            X = X.to_numpy()
+        if isinstance(S[0], pd.DataFrame):
+            S = (S[0].to_numpy(), S[1])
+
         for k in clusters:
             centroids[k] = np.mean(S[0][S[1]==k], axis=0)
 
@@ -560,15 +606,18 @@ class DeTriTraining(TriTraining):
             op = constrained
 
         changes = True
-        while changes:
+        iterations = 0
+        while changes and iterations < self.max_iterations:
             changes = False
-            
+            iterations += 1
+            # Need to vectorize
             new_clusters = np.apply_along_axis(op, 1, X)
             new_centroids = dict()
             for k in clusters:
-                new_centroids[k] = np.mean(X[new_clusters == k], axis=0)
-                if not np.array_equal(new_centroids[k], centroids[k]):
-                    changes = True
+                if np.any(new_clusters == k):
+                    new_centroids[k] = np.mean(X[new_clusters == k], axis=0)
+                    if not np.array_equal(new_centroids[k], centroids[k]):
+                        changes = True
             centroids = new_centroids
         
         return new_clusters
@@ -588,9 +637,25 @@ class DeTriTraining(TriTraining):
         self: DeTriTraining
             Fitted estimator.
         """
-        X_label = X[y != y.dtype.type(-1)]
-        y_label = y[y != y.dtype.type(-1)]
-        X_unlabel = X[y == y.dtype.type(-1)]
+        X_label, y_label, X_unlabel = get_dataset(X, y)
+        
+        is_df = isinstance(X_label, pd.DataFrame)
+
+        self.classes_ = np.unique(y_label)
+
+        classes = set(self.classes_)
+        instances = list()
+        labels = list()
+        iteration = zip(X_label, y_label)
+        if is_df:
+            iteration = zip(X_label.values, y_label)
+        for x_, y_ in iteration:
+            if y_ in classes:
+                classes.remove(y_)
+                instances.append(x_)
+                labels.append(y_)
+            if len(classes) == 0:
+                break
 
         S_ = []
         hypothesis = []
@@ -599,14 +664,28 @@ class DeTriTraining(TriTraining):
                 resample(X_label, y_label, replace=True,
                          n_samples=self.n_samples,
                          random_state=self.random_state)
+            if is_df:
+                X_sampled = pd.DataFrame(X_sampled, columns=X_label.columns)
             hypothesis.append(
-                skclone(self.base_estimator).fit(
+                skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(
                     X_sampled, y_sampled, **kwards)
             )
+
+            # Keep class order
+            if not is_df:
+                X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
+            else:
+                X_sampled = pd.concat([pd.DataFrame(instances, columns=X_label.columns), X_sampled], axis=0)
+
+            y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
+
             S_.append((X_sampled, y_sampled))
 
         changes = True
-        while changes:
+        last_addition = [0] * self._N_LEARNER
+        it = 0
+        while it < self.max_iterations:
+            it += 1
             changes = False
 
             # Enlarged
@@ -616,19 +695,25 @@ class DeTriTraining(TriTraining):
                 hj, hk = TriTraining._another_hs(hypothesis, i)
                 y_p = hj.predict(X_unlabel)
                 validx = y_p == hk.predict(X_unlabel)
-                L[i] = (X_unlabel[validx], y_p[validx])
+                L[i] = (X_unlabel[validx] if not is_df else X_unlabel.iloc[validx, :], y_p[validx])
 
             for i, _ in enumerate(L):
                 if len(L[i][0]) > 0:
-                    S_[i] = np.concatenate((X_label, L[i][0])), np.concatenate((y_label, L[i][1]))
+                    S_[i] = np.concatenate((X_label, L[i][0])) if not is_df else pd.concat([X_label, L[i][0]]), np.concatenate((y_label, L[i][1]))
                     S_[i] = self._depure(S_[i])
 
             for i in range(self._N_LEARNER):
                 if len(S_[i][0]) > len(X_label):
+                    last_addition[i] = len(S_[i][0]) 
                     changes = True
                     hypothesis[i].fit(*S_[i], **kwards)
 
-        S = np.concatenate([x[0] for x in S_]), np.concatenate([x[1] for x in S_])
+            if not changes:
+                break
+        else:
+            warn.warn("Maximum number of iterations reached before convergence. Consider increasing max_iter to improve the fit.", ConvergenceWarning)
+
+        S = np.concatenate([x[0] for x in S_]) if not is_df else pd.concat([x[0] for x in S_]) , np.concatenate([x[1] for x in S_])
         S_0, index_ = np.unique(S[0], axis=0, return_index=True)
         S_1 = S[1][index_]
         S = S_0, S_1
@@ -636,8 +721,7 @@ class DeTriTraining(TriTraining):
 
         new_y = self._clustering(S, X)
 
-        self.h_ = [skclone(self.base_estimator).fit(X, new_y, **kwards)]
-        self.classes_ = self.h_[0].classes_
+        self.h_ = [skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X, new_y, **kwards) for i in range(self._N_LEARNER)]
         self.columns_ = [list(range(X.shape[1]))]
 
         return self

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from scipy.stats import norm
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone as skclone
@@ -220,6 +221,11 @@ class Setred(ClassifierMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
+
+        is_df = isinstance(X_label, pd.DataFrame)
+
+        self.classes_ = np.unique(y_label)
+
         each_iteration_candidates = X_label.shape[0]
 
         pool = int(len(X_unlabel) * self.poolsize)
@@ -238,13 +244,19 @@ class Setred(ClassifierMixin, BaseEstimator):
                 X_unlabel, replace=False, n_samples=pool, random_state=random_state
             )
 
+            if is_df:
+                U_ = pd.DataFrame(U_, columns=X_label.columns)
+
             raw_predictions = self._base_estimator.predict_proba(U_)
             predictions = np.max(raw_predictions, axis=1)
             class_predicted = np.argmax(raw_predictions, axis=1)
             # Unless a better understanding is given, only the size of L will be used as maximal size of the candidate set.
             indexes = predictions.argsort()[-each_iteration_candidates:]
 
-            L_ = U_[indexes]
+            if is_df:
+                L_ = U_.iloc[indexes]
+            else:
+                L_ = U_[indexes]
             y_ = np.array(
                 list(
                     map(
@@ -254,7 +266,10 @@ class Setred(ClassifierMixin, BaseEstimator):
                 )
             )
 
-            pre_L = np.concatenate((X_label, L_), axis=0)
+            if is_df:
+                pre_L = pd.concat([X_label, L_])
+            else:
+                pre_L = np.concatenate((X_label, L_), axis=0)
 
             weights = self.__create_neighborhood(pre_L)
             #  Keep only weights for L_
@@ -278,19 +293,28 @@ class Setred(ClassifierMixin, BaseEstimator):
             
             z_score = np.divide((ji - mu_h0), sigma_h0, out=np.zeros_like(sigma_h0), where=sigma_h0 != 0)
             # z_score = (ji - mu_h0) / sigma_h0
-
+            
             oi = norm.sf(abs(z_score), mu_h0, sigma_h0)
             to_add = (oi < self.rejection_threshold) & (z_score < mu_h0)
 
-            L_filtered = L_[to_add, :]
+            if is_df:
+                L_filtered = L_.iloc[to_add, :]
+            else:
+                L_filtered = L_[to_add, :]
             y_filtered = y_[to_add]
-
-            X_label = np.concatenate((X_label, L_filtered), axis=0)
+            
+            if is_df:
+                X_label = pd.concat([X_label, L_filtered])
+            else:
+                X_label = np.concatenate((X_label, L_filtered), axis=0)
             y_label = np.concatenate((y_label, y_filtered), axis=0)
 
             #  Remove the instances from the unlabeled set.
             to_delete = indexes[to_add]
-            X_unlabel = np.delete(X_unlabel, to_delete, axis=0)
+            if is_df:
+                X_unlabel = X_unlabel.drop(index=X_unlabel.index[to_delete])
+            else:
+                X_unlabel = np.delete(X_unlabel, to_delete, axis=0)
 
         return self
 

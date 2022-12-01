@@ -43,7 +43,6 @@ class TestUtils():
         hyp.fit(X, y)
         proportion = {0: 0.5, 1: 0.5}
 
-
         assert choice_with_proportion(np.max(hyp.predict_proba(X), axis=1), hyp.predict(X), proportion).tolist() == [4, 2, 0, 1]
 
     def test_confidence_interval(self):

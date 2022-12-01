@@ -35,7 +35,7 @@ def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
     indices = np.zeros(0)
     for c in proportion:
         instances = class_predicted == c
-        to_add = np.argsort(predictions)[instances][::-1][0:for_each_class[c] + extra]
+        to_add = np.argsort(predictions, kind="mergesort")[instances][::-1][0:for_each_class[c] + extra]
         indices = np.concatenate((indices, to_add))
 
     return indices.astype(int)
@@ -114,7 +114,7 @@ def check_classifier(base_classifier, can_be_list=True, collection_size=None):
                 raise AttributeError(f"base_classifier is a list of classifiers, but its length ({len(base_classifier)}) is different from expected ({collection_size})")
         for i, bc in enumerate(base_classifier):
             base_classifier[i] = check_classifier(bc, False)
-        return base_classifier
+        return list(base_classifier) # Transform to list
     else:
         if not isinstance(base_classifier, ClassifierMixin):
             raise AttributeError(f"base_classifier must be a ClassifierMixin, but found {type(base_classifier)}")

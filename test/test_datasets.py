@@ -44,8 +44,8 @@ class TestDataset:
         X1, y1 = secure_dataset(X_label, y_label)
         with pytest.raises(ValueError):
             secure_dataset(X, y)
-        assert X1.all() == X_label.all()
-        assert y1.all() == y_label.all()
+        assert (X1.values == X_label.values).all()
+        assert (y1 == y_label).all()
 
     def test_save_keel(self):
         X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="pandas")

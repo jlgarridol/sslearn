@@ -3,6 +3,7 @@ import warnings
 from abc import ABC, abstractmethod
 
 import numpy as np
+import pandas as pd
 import scipy.sparse as sp
 from joblib import Parallel
 from sklearn.base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin
@@ -24,6 +25,12 @@ from sklearn.utils import check_random_state
 
 def get_dataset(X, y):
 
+    is_df = False
+    if isinstance(X, pd.DataFrame):
+        is_df = True
+        columns = X.columns
+
+
     X = check_array(X)
     y = check_array(y, ensure_2d=False, dtype=y.dtype.type)
     
@@ -32,6 +39,10 @@ def get_dataset(X, y):
     X_unlabel = X[y == y.dtype.type(-1)]
 
     X_label, y_label = check_X_y(X_label, y_label)
+
+    if is_df:
+        X_label = pd.DataFrame(X_label, columns=columns)
+        X_unlabel = pd.DataFrame(X_unlabel, columns=columns)
 
     return X_label, y_label, X_unlabel
 

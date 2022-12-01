@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import numpy as np
 import scipy.stats as st
+import pandas as pd
 from joblib import Parallel, delayed
 from scipy.special import softmax
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -45,11 +46,18 @@ class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
         ndarray of shape (n_samples, n_features)
             Array with prediction probabilities.
         """
-        X = check_array(X)
+        is_df = isinstance(X, pd.DataFrame)
+        if is_df:
+            columns = X.columns
+        is_df = isinstance(X, pd.DataFrame)
+        if is_df:
+            X = check_array(X)
+        if is_df:
+            X = pd.DataFrame(X, columns=columns)
         if "h_" in dir(self):
             if hasattr(self.h_[0], "predict_proba"):
                 ys = [
-                    h.predict_proba(X[:, c])
+                    h.predict_proba(X[:, c] if not is_df else X.iloc[:, c])
                     for h, c in zip(self.h_, self.columns_)
                 ]
                 y = sum(ys) / len(ys)
@@ -160,8 +168,7 @@ class DemocraticCoLearning(BaseCoTraining):
             Set of classes for each instance
         """
         w = []
-        conf_method, alpha = (self.confidence_method, self.alpha)
-        w = [sum(confidence_interval(X, H, y, alpha)) / 2 for H in self.h_]
+        w = [sum(confidence_interval(X, H, y, self.alpha)) / 2 for H in self.h_]
         self.confidences_ = w
 
     def fit(self, X, y, estimator_kwards=None):
@@ -183,6 +190,8 @@ class DemocraticCoLearning(BaseCoTraining):
         """
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
+
+        is_df = isinstance(X_label, pd.DataFrame)
 
         self.classes_ = np.unique(y_label)
         self.encoder = LabelEncoder().fit(y_label)
@@ -267,7 +276,10 @@ class DemocraticCoLearning(BaseCoTraining):
                 to_add = np.logical_and(np.logical_not(L_added[i]), candidates_temp)
 
                 candidates_bool.append(to_add)
-                L_[i] = X_unlabel[to_add, :]
+                if is_df:
+                    L_[i] = X_unlabel.iloc[to_add, :]
+                else:
+                    L_[i] = X_unlabel[to_add, :]
                 Ly_[i] = weighted_class[to_add]
 
             new_conf_interval = [
@@ -287,7 +299,10 @@ class DemocraticCoLearning(BaseCoTraining):
                     if q_i <= qi:
                         continue
                     L_added[i] = np.logical_or(L_added[i], candidates_bool[i])
-                    L[i] = np.concatenate((L[i], np.array(L_[i])))
+                    if is_df:
+                        L[i] = pd.concat([L[i], L_[i]])
+                    else:
+                        L[i] = np.concatenate((L[i], np.array(L_[i])))
                     Ly[i] = np.concatenate((Ly[i], np.array(Ly_[i])))
 
                     e[i] = e[i] + e_i
@@ -420,18 +435,32 @@ class CoTraining(BaseCoTraining):
         rs = check_random_state(self.random_state)
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
+
+        is_df = isinstance(X_label, pd.DataFrame)
+        
         if X2 is not None:
             X2_label, _, X2_unlabel = get_dataset(X2, y)
         elif features is not None:
-            X2_label = X_label[:, features[1]]
-            X2_unlabel = X_unlabel[:, features[1]]
-            X_label = X_label[:, features[0]]
-            X_unlabel = X_unlabel[:, features[0]]
+            if is_df:
+                X2_label = X_label.iloc[:, features[1]]
+                X2_unlabel = X_unlabel.iloc[:, features[1]]
+                X_label = X_label.iloc[:, features[0]]
+                X_unlabel = X_unlabel.iloc[:, features[0]]
+            else:
+                X2_label = X_label[:, features[1]]
+                X2_unlabel = X_unlabel[:, features[1]]
+                X_label = X_label[:, features[0]]
+                X_unlabel = X_unlabel[:, features[0]]
             self.columns_ = features
         elif self.force_second_view:
             raise AttributeError("Either X2 or features must be defined. CoTraining need another view to train the second classifier")
         else:
             self.columns_ = [list(range(X.shape[1]))] * 2
+            X2_label = X_label.copy()
+            X2_unlabel = X_unlabel.copy()
+
+        if is_df and X2_label is not None and not isinstance(X2_label, pd.DataFrame):
+            raise AttributeError("X and X2 must be both pandas DataFrame or numpy arrays")
 
         self.h = [
             skclone(self.base_estimator), 
@@ -458,8 +487,9 @@ class CoTraining(BaseCoTraining):
         while it < self.max_iterations and any(permutation):
             it += 1            
 
-            y1_prob = self.h[0].predict_proba(X_unlabel[permutation[:self.poolsize]])
-            y2_prob = self.h[1].predict_proba(X2_unlabel[permutation[:self.poolsize]])
+            get_index = permutation[:self.poolsize]
+            y1_prob = self.h[0].predict_proba(X_unlabel[get_index] if not is_df else X_unlabel.iloc[get_index, :])
+            y2_prob = self.h[1].predict_proba(X2_unlabel[get_index] if not is_df else X2_unlabel.iloc[get_index, :])
 
             predictions1 = np.max(y1_prob, axis=1)
             class_predicted1 = np.argmax(y1_prob, axis=1)
@@ -503,8 +533,12 @@ class CoTraining(BaseCoTraining):
             y_label = np.append(y_label, pseudoy)
             
             index = permutation[0 : self.poolsize][final_instances]
-            X_label = np.append(X_label, X_unlabel[index], axis=0)
-            X2_label = np.append(X2_label, X2_unlabel[index], axis=0)
+            if is_df:
+                X_label = pd.concat([X_label, X_unlabel.iloc[index, :]])
+                X2_label = pd.concat([X2_label, X2_unlabel.iloc[index, :]])
+            else:
+                X_label = np.append(X_label, X_unlabel[index], axis=0)
+                X2_label = np.append(X2_label, X2_unlabel[index], axis=0)
 
             permutation = permutation[list(map(lambda x: x not in index, permutation))]
 
@@ -656,8 +690,11 @@ class Rasco(BaseCoTraining):
             idxs.append(random_state.permutation(features)[: self.subspace_size])
         return idxs
 
-    def _fit_estimator(self, X, y, **kwards):
-        return skclone(self.base_estimator).fit(X, y, **kwards)
+    def _fit_estimator(self, X, y, i, **kwards):
+        estimator = self.base_estimator
+        if type(self.base_estimator) == list:
+            estimator = skclone(self.base_estimator[i])
+        return skclone(estimator).fit(X, y, **kwards)
 
     def fit(self, X, y, **kwards):
         """Build a Rasco classifier from the training set (X, y).
@@ -675,7 +712,9 @@ class Rasco(BaseCoTraining):
             Fitted estimator.
         """
         X_label, y_label, X_unlabel = get_dataset(X, y)
+        self.classes_ = np.unique(y_label)
 
+        is_df = isinstance(X_label, pd.DataFrame)
 
         random_state = check_random_state(self.random_state)
 
@@ -687,7 +726,7 @@ class Rasco(BaseCoTraining):
         idxs = self._generate_random_subspaces(X_label, y_label, random_state)
 
         cfs = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._fit_estimator)(X_label[:, idxs[i]], y_label, **kwards)
+            delayed(self._fit_estimator)(X_label[:, idxs[i]] if not is_df else X_label.iloc[:, idxs[i]] , y_label, i, **kwards)
             for i in range(self.n_estimators)
         )
 
@@ -700,7 +739,7 @@ class Rasco(BaseCoTraining):
 
             raw_predicions = []
             for i in range(self.n_estimators):
-                rp = cfs[i].predict_proba(X_unlabel[:, idxs[i]])
+                rp = cfs[i].predict_proba(X_unlabel[:, idxs[i]] if not is_df else X_unlabel.iloc[:, idxs[i]])
                 raw_predicions.append(rp)
             raw_predicions = sum(raw_predicions) / self.n_estimators
             predictions = np.max(raw_predicions, axis=1)
@@ -712,23 +751,21 @@ class Rasco(BaseCoTraining):
             for c in self.classes_:
                 final_instances += list(best_candidates[pseudoy[best_candidates] == c])[:number_per_class[c]]
 
-            Lj = X_unlabel[final_instances]
+            Lj = X_unlabel[final_instances] if not is_df else X_unlabel.iloc[final_instances]
             yj = pseudoy[final_instances]
 
-
-            X_label = np.append(X_label, X_unlabel[Lj, :], axis=0)
+            X_label = np.append(X_label, Lj, axis=0) if not is_df else pd.concat([X_label, Lj])
             y_label = np.append(y_label, yj)
-            X_unlabel = np.delete(X_unlabel, Lj, axis=0)
+            X_unlabel = np.delete(X_unlabel, final_instances, axis=0) if not is_df else X_unlabel.drop(index=X_unlabel.index[final_instances])
 
             cfs = Parallel(n_jobs=self.n_jobs)(
-                delayed(self._fit_estimator)(X_label[:, idxs[i]], y_label, **kwards)
+                delayed(self._fit_estimator)(X_label[:, idxs[i]] if not is_df else X_label.iloc[:, idxs[i]], y_label, i, **kwards)
                 for i in range(self.n_estimators)
             )
 
             it += 1
 
         self.h_ = cfs
-        self.classes_ = self.h_[0].classes_
         self.columns_ = idxs
 
         return self
@@ -740,8 +777,6 @@ class RelRasco(Rasco):
         base_estimator=DecisionTreeClassifier(),
         max_iterations=10,
         n_estimators=30,
-        incremental=True,
-        batch_size=None,
         subspace_size=None,
         random_state=None,
         n_jobs=None,
@@ -762,12 +797,6 @@ class RelRasco(Rasco):
             If is -1 then will be infinite iterations until U be empty, by default 10
         n_estimators : int, optional
             The number of base estimators in the ensemble., by default 30
-        incremental : bool, optional
-            If true then it will add the most relevant instance for each class from U in enlarged L,
-            else will be select from U the "batch_size" most confident instances., by default True
-        batch_size : int, optional
-            If "incremental" is false it is the number of instances to add to enlarged L.
-            If it is None then will be the size of L., by default None
         subspace_size : int, optional
             The number of features for each subspace. If it is None will be the half of the features size., by default None
         random_state : int, RandomState instance, optional
@@ -779,8 +808,6 @@ class RelRasco(Rasco):
             base_estimator,
             max_iterations,
             n_estimators,
-            incremental,
-            batch_size,
             subspace_size,
             random_state,
             n_jobs,
@@ -869,6 +896,8 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 
         X_label, y_prev, X_unlabel = get_dataset(X, y)
 
+        is_df = isinstance(X_label, pd.DataFrame)
+
         self.label_encoder_ = LabelEncoder()
         y_label = self.label_encoder_.fit_transform(y_prev)
 
@@ -883,7 +912,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             if len(permutation) == 0:
                 break
             raw_predictions = self.ensemble_estimator.predict_proba(
-                X_unlabel[permutation[0 : self.poolsize]]
+                X_unlabel[permutation[0 : self.poolsize]] if not is_df else X_unlabel.iloc[permutation[0 : self.poolsize]]
             )
 
             predictions = np.max(raw_predictions, axis=1)
@@ -898,7 +927,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
                 candidates_bool = np.zeros(predictions.shape, dtype=bool)
                 candidates_sub_set = candidates_bool[condition]
 
-                instances_index_selected = candidates.argsort()[
+                instances_index_selected = candidates.argsort(kind="mergesort")[
                     -self.min_instances_for_class:
                 ]
 
@@ -917,7 +946,9 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             added[to_label] = True
 
             index = permutation[0 : self.poolsize][added]
-            X_label = np.append(X_label, X_unlabel[index], axis=0)
+            X_label = np.append(X_label, X_unlabel[index], axis=0) if not is_df else pd.concat(
+                [X_label, X_unlabel.iloc[index, :]]
+            )
             pseudoy = class_predicted[added]
 
             y_label = np.append(y_label, pseudoy)
@@ -990,7 +1021,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 
 # Done and tested
 class CoForest(BaseCoTraining):
-    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, random_state=None, **kwards):
+    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, n_jobs=1, random_state=None):
         """
         Li, M., & Zhou, Z.-H. (2007).
         Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples.
@@ -1005,19 +1036,18 @@ class CoForest(BaseCoTraining):
             The number of base estimators in the ensemble., by default 7
         threshold : float, optional
             The decision threshold. Should be in [0, 1)., by default 0.5
+        n_jobs : int, optional
+            The number of jobs to run in parallel for both fit and predict., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         **kwards : dict, optional
             Additional parameters to be passed to base_estimator, by default None.
         """
         self.base_estimator = check_classifier(base_estimator, collection_size=n_estimators)
-        self._base = skclone(base_estimator)
-        self._base.set_params(**kwards)
-        if "random_state" in dir(self._base):
-            self._base.set_params(random_state=random_state)
         self.n_estimators = n_estimators
         self.threshold = threshold
         self._epsilon = sys.float_info.epsilon
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
     def __estimate_error(self, hypothesis, X, y):
@@ -1031,6 +1061,12 @@ class CoForest(BaseCoTraining):
         if ei_t == 0:
             ei_t = self._epsilon
         return ei_t
+
+    def _fit_estimator(self, X, y, i, **kwards):
+        estimator = self.base_estimator
+        if type(self.base_estimator) == list:
+            estimator = skclone(self.hypotheses[i])
+        return skclone(estimator).fit(X, y, **kwards)
 
     def fit(self, X, y, **kwards):
         """Build a CoForest classifier from the training set (X, y).
@@ -1048,22 +1084,36 @@ class CoForest(BaseCoTraining):
             Fitted estimator.
         """
         random_state = check_random_state(self.random_state)
+        n_jobs = check_n_jobs(self.n_jobs)
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
-        hypotheses = []
+        is_df = isinstance(X_label, pd.DataFrame)
+
+        self.classes_ = np.unique(y_label)
+
+        self.hypotheses = []
         errors = []
         weights = []
         for i in range(self.n_estimators):
-            hypotheses.append(skclone(self._base).fit(X_label, y_label, **kwards))
+            self.hypotheses.append(skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]))
+            if "random_state" in dir(self.hypotheses[-1]):
+                self.hypotheses[-1].set_params(random_state=random_state.randint(0, 2 ** 32 - 1))
             errors.append(0.5)
-            weights.append(np.max(hypotheses[i].predict_proba(X_label), axis=1).sum())
+
+        self.hypotheses = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._fit_estimator)(X_label, y_label, i, **kwards)
+            for i in range(self.n_estimators)
+        )
+
+        for i in range(self.n_estimators):
+            weights.append(np.max(self.hypotheses[i].predict_proba(X_label), axis=1).sum())
 
         changing = True
         while changing:
             changing = False
             for i in range(self.n_estimators):
-                hi, ei, wi = hypotheses[i], errors[i], weights[i]
+                hi, ei, wi = self.hypotheses[i], errors[i], weights[i]
 
                 ei_t = self.__estimate_error(hi, X_label, y_label)
 
@@ -1072,7 +1122,11 @@ class CoForest(BaseCoTraining):
                     random_index_subsample = random_state.permutation(
                         random_index_subsample
                     )
-                    Ui_t = X_unlabel[random_index_subsample[0:int(ei * wi / ei_t)],:]
+                    cond = random_index_subsample[0:int(ei * wi / ei_t)]
+                    if is_df:
+                        Ui_t = X_unlabel.iloc[cond, :]
+                    else:
+                        Ui_t = X_unlabel[cond,:]
 
                     raw_predictions = hi.predict_proba(Ui_t)
                     predictions = np.max(raw_predictions, axis=1)
@@ -1083,17 +1137,21 @@ class CoForest(BaseCoTraining):
 
                     if ei_t * wi_t < ei * wi:
                         changing = True
+                        if is_df:
+                            x_temp = pd.concat([X_label, Ui_t.iloc[to_label, :]])
+                        else:
+                            x_temp = np.concatenate((X_label, Ui_t[to_label]))
+                        y_temp = np.concatenate((y_label, class_predicted[to_label]))
                         hi.fit(
-                            np.concatenate((X_label, Ui_t[to_label])),
-                            np.concatenate((y_label, class_predicted[to_label])),
+                            x_temp,
+                            y_temp,
                             **kwards
                         )
                         
                     errors[i] = ei_t
                     weights[i] = wi_t
 
-        self.h_ = hypotheses
-        self.classes_ = self.h_[0].classes_
+        self.h_ = self.hypotheses
         self.columns_ = [list(range(X.shape[1]))] * self.n_estimators
 
         return self
