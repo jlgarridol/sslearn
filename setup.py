@@ -13,7 +13,7 @@ setuptools.setup(
         author_email='jlgarrido@ubu.es',
         url='https://github.com/jlgarridol/sslearn',
         download_url='https://github.com/jlgarridol/sslearn/archive/v1_0_0.tar.gz',
-        license='BSD 3-Clause License',
+        license='new BSD',
         install_requires=[
             """joblib==1.1.0
             numpy==1.23.3
@@ -29,7 +29,7 @@ setuptools.setup(
             'Development Status :: 5 - Production/Stable',
             'Intended Audience :: Science/Research',
             'Topic :: Scientific/Engineering',
-            'License :: OSI Approved :: BSD 3-Clause License',
+            'License :: OSI Approved :: BSD License',
             'Programming Language :: Python :: 3',
             'Programming Language :: Python :: 3.8',
             'Programming Language :: Python :: 3.9',
