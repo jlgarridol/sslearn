@@ -1,0 +1,18 @@
+version: "2"
+exclude_patterns:
+- "test/"
+
+checks:
+  argument-count:
+    config:
+      threshold: 10
+  method-complexity:
+    config:
+      threshold: 10
+  method-lines:
+    config:
+      threshold: 35
+  complex-logic:
+    config:
+      threshold: 10
+    
