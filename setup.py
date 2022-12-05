@@ -12,13 +12,8 @@ setuptools.setup(
         author='José Luis Garrido-Labrador',
         author_email='jlgarrido@ubu.es',
         url='https://github.com/jlgarridol/sslearn',
-<<<<<<< HEAD
-        download_url='https://github.com/jlgarridol/sslearn/archive/v1_0_0.tar.gz',
         license='new BSD',
-=======
         download_url='https://github.com/jlgarridol/sslearn/archive/refs/tags/1.0.0.tar.gz',
-        license='BSD 3-Clause License',
->>>>>>> c1299edc6b0a171cb0d76bfd5a4fa41b2878d1bc
         install_requires=[
             """joblib==1.1.0
             numpy==1.23.3
