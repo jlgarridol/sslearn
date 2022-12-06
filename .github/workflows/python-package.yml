@@ -43,9 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Coverage
-      env:
-        CC_TEST_REPORTER_ID: ${{ pypi.CODECLIMATE_API_COVERAGE }}
       run: |
         wget https://s3.amazonaws.com/codeclimate/test-reporter/test-reporter-latest-linux-amd64 -O reporter
         chmod +x reporter
-        ./reporter after-build -r $CC_TEST_REPORTER_ID
+        ./reporter after-build -r ${{ secrets.CODECLIMATE_API_COVERAGE }}
