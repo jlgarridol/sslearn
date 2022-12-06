@@ -23,7 +23,7 @@ It can be installed using *Pypi*:
 
     pip install sslearn
 
-How to
+Code example
 ---
 ```python
 from sslearn.wrapper import TriTraining
