@@ -1,9 +1,9 @@
 Semi-Supervised Learning Library (sslearn)
 ===
 
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) 
+![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jlgarridol/sslearn/Python%20package)
 
-The `sslearn` is a Python package for machine learning over Semi-supervised datasets. It is an extension of [scikit-learn](https://github.com/scikit-learn/scikit-learn).
+The `sslearn` library is a Python package for machine learning over Semi-supervised datasets. It is an extension of [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
 Installation
 ---
@@ -23,7 +23,7 @@ It can be installed using *Pypi*:
 
     pip install sslearn
 
-How to
+Code example
 ---
 ```python
 from sslearn.wrapper import TriTraining
