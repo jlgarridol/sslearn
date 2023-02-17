@@ -9,7 +9,7 @@ Installation
 ---
 ### Dependencies
 
-* scikit_learn = 1.1.2
+* scikit_learn = 1.2.0
 * joblib = 1.2.0
 * numpy = 1.23.3
 * pandas = 1.4.3
