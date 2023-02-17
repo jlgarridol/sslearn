@@ -63,7 +63,7 @@ class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
                 y = sum(ys) / len(ys)
             else:
                 if not hasattr(self, "_one_hot_not_proba"):
-                    self._one_hot_not_proba = OneHotEncoder(sparse=False)
+                    self._one_hot_not_proba = OneHotEncoder(sparse_output=False)
                     self._one_hot_not_proba.fit(np.array(self.classes_).reshape(-1, 1))
                 base = np.zeros((X.shape[0], len(self.classes_)), np.float)
                 for h in self.h_:
@@ -137,7 +137,7 @@ class DemocraticCoLearning(BaseCoTraining):
             )
         self.base_estimator = check_classifier(self.base_estimator)
         self.n_estimators = len(self.base_estimator)
-        self.one_hot = OneHotEncoder(sparse=False)
+        self.one_hot = OneHotEncoder(sparse_output=False)
         self.expand_only_mislabeled = expand_only_mislabeled
 
         self.alpha = alpha
@@ -234,7 +234,7 @@ class DemocraticCoLearning(BaseCoTraining):
                     H,
                     y_label,
                     self.alpha
-)
+                )
                 for H in self.base_estimator
             ]
 
@@ -323,8 +323,8 @@ class DemocraticCoLearning(BaseCoTraining):
 
         n_instances = X.shape[0]  # uppercase X as it will be an np.array
         sizes = np.zeros((n_instances, len(self.classes_)), dtype=int)
-        C = np.zeros((n_instances,len(self.classes_)), dtype=float)
-        Cavg = np.zeros((n_instances,len(self.classes_)), dtype=float)
+        C = np.zeros((n_instances, len(self.classes_)), dtype=float)
+        Cavg = np.zeros((n_instances, len(self.classes_)), dtype=float)
 
         for w, H in zip(self.confidences_, self.h_):
             cj = H.predict(X)
@@ -408,7 +408,7 @@ class CoTraining(BaseCoTraining):
         self.poolsize = poolsize
         self.threshold = threshold
         self.force_second_view = force_second_view
-        self.random_state = random_state   
+        self.random_state = random_state
 
     def fit(self, X, y, X2=None, features: list = None, number_per_class: dict = None, **kwards):
         """
@@ -426,7 +426,7 @@ class CoTraining(BaseCoTraining):
             list or tuple of two arrays with `feature` index for each subspace view, not compatible with `X2`, by default None
         number_per_class : {dict}, optional
             dict of class name:integer with the max ammount of instances to label in this class in each iteration, by default None
-        
+
         Returns
         -------
         self: CoTraining
@@ -437,7 +437,7 @@ class CoTraining(BaseCoTraining):
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
         is_df = isinstance(X_label, pd.DataFrame)
-        
+
         if X2 is not None:
             X2_label, _, X2_unlabel = get_dataset(X2, y)
         elif features is not None:
@@ -463,12 +463,12 @@ class CoTraining(BaseCoTraining):
             raise AttributeError("X and X2 must be both pandas DataFrame or numpy arrays")
 
         self.h = [
-            skclone(self.base_estimator), 
+            skclone(self.base_estimator),
             skclone(self.base_estimator) if self.second_base_estimator is None else skclone(self.second_base_estimator)
         ]
         assert (
             X2 is None or features is None
-        ), "The list of features and X2 cannot be defined at the same time" 
+        ), "The list of features and X2 cannot be defined at the same time"
 
         self.classes_ = np.unique(y_label)
         if number_per_class is None:
@@ -478,14 +478,13 @@ class CoTraining(BaseCoTraining):
             warnings.warn(f"Poolsize ({self.poolsize}) is bigger than U ({X_unlabel.shape[0]})")
 
         permutation = rs.permutation(len(X_unlabel))
-        
 
         self.h[0].fit(X_label, y_label)
         self.h[1].fit(X2_label, y_label)
 
         it = 0
         while it < self.max_iterations and any(permutation):
-            it += 1            
+            it += 1
 
             get_index = permutation[:self.poolsize]
             y1_prob = self.h[0].predict_proba(X_unlabel[get_index] if not is_df else X_unlabel.iloc[get_index, :])
@@ -531,8 +530,8 @@ class CoTraining(BaseCoTraining):
             # Fill the new labeled instances
             pseudoy = y_class[final_instances]
             y_label = np.append(y_label, pseudoy)
-            
-            index = permutation[0 : self.poolsize][final_instances]
+
+            index = permutation[0: self.poolsize][final_instances]
             if is_df:
                 X_label = pd.concat([X_label, X_unlabel.iloc[index, :]])
                 X2_label = pd.concat([X2_label, X2_unlabel.iloc[index, :]])
@@ -625,7 +624,7 @@ class CoTraining(BaseCoTraining):
             return accuracy_score(y, self.predict(X, kwards["X2"]), sample_weight=sample_weight)
         else:
             return super().score(X, y, sample_weight=sample_weight)
-        
+
 
 class Rasco(BaseCoTraining):
     def __init__(
@@ -726,7 +725,7 @@ class Rasco(BaseCoTraining):
         idxs = self._generate_random_subspaces(X_label, y_label, random_state)
 
         cfs = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._fit_estimator)(X_label[:, idxs[i]] if not is_df else X_label.iloc[:, idxs[i]] , y_label, i, **kwards)
+            delayed(self._fit_estimator)(X_label[:, idxs[i]] if not is_df else X_label.iloc[:, idxs[i]], y_label, i, **kwards)
             for i in range(self.n_estimators)
         )
 
@@ -744,7 +743,7 @@ class Rasco(BaseCoTraining):
             raw_predicions = sum(raw_predicions) / self.n_estimators
             predictions = np.max(raw_predicions, axis=1)
             class_predicted = np.argmax(raw_predicions, axis=1)
-            pseudoy = self.classes_.take(class_predicted,axis=0)
+            pseudoy = self.classes_.take(class_predicted, axis=0)
 
             final_instances = list()
             best_candidates = np.argsort(predictions, kind="mergesort")[::-1]
@@ -912,7 +911,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             if len(permutation) == 0:
                 break
             raw_predictions = self.ensemble_estimator.predict_proba(
-                X_unlabel[permutation[0 : self.poolsize]] if not is_df else X_unlabel.iloc[permutation[0 : self.poolsize]]
+                X_unlabel[permutation[0: self.poolsize]] if not is_df else X_unlabel.iloc[permutation[0: self.poolsize]]
             )
 
             predictions = np.max(raw_predictions, axis=1)
@@ -945,7 +944,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             )
             added[to_label] = True
 
-            index = permutation[0 : self.poolsize][added]
+            index = permutation[0: self.poolsize][added]
             X_label = np.append(X_label, X_unlabel[index], axis=0) if not is_df else pd.concat(
                 [X_label, X_unlabel.iloc[index, :]]
             )
@@ -1126,11 +1125,11 @@ class CoForest(BaseCoTraining):
                     if is_df:
                         Ui_t = X_unlabel.iloc[cond, :]
                     else:
-                        Ui_t = X_unlabel[cond,:]
+                        Ui_t = X_unlabel[cond, :]
 
                     raw_predictions = hi.predict_proba(Ui_t)
                     predictions = np.max(raw_predictions, axis=1)
-                    class_predicted = self.classes_.take(np.argmax(raw_predictions, axis=1),axis=0)
+                    class_predicted = self.classes_.take(np.argmax(raw_predictions, axis=1), axis=0)
 
                     to_label = predictions > self.threshold
                     wi_t = predictions[to_label].sum()
@@ -1147,7 +1146,7 @@ class CoForest(BaseCoTraining):
                             y_temp,
                             **kwards
                         )
-                        
+
                     errors[i] = ei_t
                     weights[i] = wi_t
 

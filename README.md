@@ -9,8 +9,8 @@ Installation
 ---
 ### Dependencies
 
-* scikit_learn = 1.1.2
-* joblib = 1.1.0
+* scikit_learn = 1.2.0
+* joblib = 1.2.0
 * numpy = 1.23.3
 * pandas = 1.4.3
 * scipy = 1.9.3
@@ -23,7 +23,7 @@ It can be installed using *Pypi*:
 
     pip install sslearn
 
-How to
+Code example
 ---
 ```python
 from sslearn.wrapper import TriTraining
