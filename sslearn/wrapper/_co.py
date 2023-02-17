@@ -63,7 +63,7 @@ class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
                 y = sum(ys) / len(ys)
             else:
                 if not hasattr(self, "_one_hot_not_proba"):
-                    self._one_hot_not_proba = OneHotEncoder(sparse=False)
+                    self._one_hot_not_proba = OneHotEncoder(sparse_output=False)
                     self._one_hot_not_proba.fit(np.array(self.classes_).reshape(-1, 1))
                 base = np.zeros((X.shape[0], len(self.classes_)), np.float)
                 for h in self.h_:
@@ -137,7 +137,7 @@ class DemocraticCoLearning(BaseCoTraining):
             )
         self.base_estimator = check_classifier(self.base_estimator)
         self.n_estimators = len(self.base_estimator)
-        self.one_hot = OneHotEncoder(sparse=False)
+        self.one_hot = OneHotEncoder(sparse_output=False)
         self.expand_only_mislabeled = expand_only_mislabeled
 
         self.alpha = alpha

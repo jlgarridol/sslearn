@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug in TriTraining when one of the base estimators has not a random_state parameter.
 - Fixed OneVsRestSSL with the random_state parameter.
 - Fixed WiWTriTraining when no `instance_group` parameter is not provided.
+- Fixed a FutureWarning for `sparse` parameter in `OneHotEncoder`. Changed to `sparse_output`.
 
 ## [1.0.1] - 2023-02-10
 
