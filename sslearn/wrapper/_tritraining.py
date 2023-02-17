@@ -301,7 +301,7 @@ class WiWTriTraining(TriTraining):
         self.method=method
         self.conflict_weighted=conflict_weighted
 
-    def fit(self, X, y, instance_group, **kwards):
+    def fit(self, X, y, instance_group=None, **kwards):
         """Build a TriTraining classifier from the training set (X, y).
         Parameters
         ----------
@@ -318,6 +318,12 @@ class WiWTriTraining(TriTraining):
         """
         random_state = check_random_state(self.random_state)
         self.n_jobs = check_n_jobs(self.n_jobs)
+
+        if instance_group is None:
+            warn(
+                "Instance group is not provided. Each instance will belong their own group. Consider using `TriTraining`."
+            )
+            instance_group = np.arange(len(y))
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
