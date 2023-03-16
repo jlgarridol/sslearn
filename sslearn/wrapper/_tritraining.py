@@ -68,7 +68,7 @@ class TriTraining(BaseCoTraining):
             Fitted estimator.
         """
         random_state = check_random_state(self.random_state)
-        self.n_jobs = check_n_jobs(self.n_jobs)
+        self.n_jobs = min(check_n_jobs(self.n_jobs), self._N_LEARNER)
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
 
@@ -115,7 +115,6 @@ class TriTraining(BaseCoTraining):
             )
 
         something_has_changed = True
-
         while something_has_changed:
             something_has_changed = False
             L = [[]] * self._N_LEARNER
