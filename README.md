@@ -45,12 +45,12 @@ Citing
                   César García-Osorio and
                   Juan J. Rodríguez and
                   Jesus Maudes},
-  title        = {jlgarridol/sslearn: Zenodo Indexed},
-  month        = jan,
+  title        = {jlgarridol/sslearn: V1.0.2},
+  month        = feb,
   year         = 2023,
   publisher    = {Zenodo},
-  version      = {1.0.1},
-  doi          = {10.5281/zenodo.7565222},
-  url          = {https://doi.org/10.5281/zenodo.7565222}
+  version      = {1.0.2},
+  doi          = {10.5281/zenodo.7650049},
+  url          = {https://doi.org/10.5281/zenodo.7650049}
 }
 ```
