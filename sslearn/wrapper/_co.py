@@ -1,11 +1,8 @@
-import math
 import sys
 import warnings
 from abc import abstractmethod
-from collections import defaultdict
 
 import numpy as np
-import scipy.stats as st
 import pandas as pd
 from joblib import Parallel, delayed
 from scipy.special import softmax
@@ -19,14 +16,14 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import check_array, check_random_state
+from sklearn.utils import check_array, check_random_state, resample
 from sklearn.utils.validation import check_is_fitted
 
 from sslearn.utils import check_n_jobs
 
 from ..base import BaseEnsemble, get_dataset
 from ..utils import (calc_number_per_class, calculate_prior_probability, check_classifier,
-                     choice_with_proportion, confidence_interval)
+                     choice_with_proportion, confidence_interval, mode, safe_division)
 
 
 class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
@@ -64,7 +61,7 @@ class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
             else:
                 if not hasattr(self, "_one_hot_not_proba"):
                     self._one_hot_not_proba = OneHotEncoder(sparse_output=False)
-                    self._one_hot_not_proba.fit(np.array(self.classes_).reshape(-1, 1))
+                    self._one_hot_not_proba.fit(np.array(self.classes_, dtype=type(self.classes_[0])).reshape(-1, 1))
                 base = np.zeros((X.shape[0], len(self.classes_)), np.float)
                 for h in self.h_:
                     base += self._one_hot_not_proba.transform(h.predict(X).reshape(-1, 1))
@@ -217,12 +214,14 @@ class DemocraticCoLearning(BaseCoTraining):
 
             for i in range(self.n_estimators):
                 self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
-
+            if X_unlabel.shape[0] == 0:
+                break
             # Majority Vote
             predictions = [H.predict(X_unlabel) for H in self.base_estimator]
-            majority_class = st.mode(np.array(predictions), axis=0, keepdims=True)[
-                0
-            ].flatten()  # K in pseudocode
+            majority_class = mode(np.array(predictions, dtype=predictions[0].dtype))[0]
+            # majority_class = st.mode(np.array(predictions, dtype=predictions[0].dtype), axis=0, keepdims=True)[
+            #     0
+            # ].flatten()  # K in pseudocode
 
             L_ = [[]] * self.n_estimators
             Ly_ = [[]] * self.n_estimators
@@ -329,7 +328,7 @@ class DemocraticCoLearning(BaseCoTraining):
         for w, H in zip(self.confidences_, self.h_):
             cj = H.predict(X)
             factor = self.one_hot.transform(cj.reshape(-1, 1)).astype(int)
-            C += w*factor
+            C += w * factor
             sizes += factor
 
         Cavg[sizes == 0] = 0.5  # «voting power» of 0.5 for small groups
@@ -907,6 +906,9 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 
         self.ensemble_estimator.fit(X_label, y_label, **kwards)
 
+        if X_unlabel.shape[0] == 0:
+            return self
+
         for _ in range(self.max_iterations):
             if len(permutation) == 0:
                 break
@@ -1013,14 +1015,14 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
                         self.label_encoder_.transform(self.label_encoder_.classes_),
                     )
                 )
-            y = np.array(list(map(lambda x: self.le_dict_.get(x, -1), y)))
+            y = np.array(list(map(lambda x: self.le_dict_.get(x, -1), y)), dtype=y.dtype)
 
         return self.ensemble_estimator.score(X, y, sample_weight)
 
 
 # Done and tested
 class CoForest(BaseCoTraining):
-    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, n_jobs=1, random_state=None):
+    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, bootstrap=True, n_jobs=None, random_state=None, version="1.0.3"):
         """
         Li, M., & Zhou, Z.-H. (2007).
         Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples.
@@ -1037,6 +1039,8 @@ class CoForest(BaseCoTraining):
             The decision threshold. Should be in [0, 1)., by default 0.5
         n_jobs : int, optional
             The number of jobs to run in parallel for both fit and predict., by default None
+        bootstrap : bool, optional
+            Whether bootstrap samples are used when building estimators., by default True
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
         **kwards : dict, optional
@@ -1045,26 +1049,91 @@ class CoForest(BaseCoTraining):
         self.base_estimator = check_classifier(base_estimator, collection_size=n_estimators)
         self.n_estimators = n_estimators
         self.threshold = threshold
+        self.bootstrap = bootstrap
         self._epsilon = sys.float_info.epsilon
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.version = version
+        if self.version == "1.0.2":
+            warnings.warn("The version 1.0.2 is deprecated. Please use the version 1.0.3", DeprecationWarning)
 
-    def __estimate_error(self, hypothesis, X, y):
-        probas = hypothesis.predict_proba(X)
-        ei_t = 0
-        classes = list(hypothesis.classes_)
-        for j in range(y.shape[0]):
-            true_y = y[j]
-            true_y_index = classes.index(true_y)
-            ei_t += 1 - probas[j, true_y_index]
-        if ei_t == 0:
-            ei_t = self._epsilon
-        return ei_t
+    def __bootstraping(self, X, y, r_state):
+        # It is necessary to bootstrap the data
+        if self.bootstrap and self.version == "1.0.3":
+            is_df = isinstance(X, pd.DataFrame)
+            columns = None
+            if is_df:
+                columns = X.columns
+                X = X.to_numpy()
+            y = y.copy()
+            # Get a reprentation of each class
+            classes = np.unique(y)
+            # Choose at least one sample from each class
+            X_label, y_label = [], []
+            for c in classes:
+                index = np.where(y == c)[0]
+                # Choose one sample from each class
+                X_label.append(X[index[0], :])
+                y_label.append(y[index[0]])
+                # Remove the sample from the original data
+                X = np.delete(X, index[0], axis=0)
+                y = np.delete(y, index[0], axis=0)
+            X, y = resample(X, y, random_state=r_state)
+            X = np.concatenate((X, np.array(X_label)), axis=0)
+            y = np.concatenate((y, np.array(y_label)), axis=0)
+            if is_df:
+                X = pd.DataFrame(X, columns=columns)
+        return X, y
 
-    def _fit_estimator(self, X, y, i, **kwards):
+    def __estimate_error(self, hypothesis, X, y, index):
+        if self.version == "1.0.3":
+            concomitants = [h for i, h in enumerate(self.hypotheses) if i != index]
+            predicted = [h.predict(X) for h in concomitants]
+            predicted = np.array(predicted, dtype=y.dtype)
+            # Get the majority vote
+            predicted, _ = mode(predicted)
+            # predicted, _ = st.mode(predicted, axis=1)
+            # Get the error rate
+            return 1 - accuracy_score(y, predicted)
+        else:
+            probas = hypothesis.predict_proba(X)
+            ei_t = 0
+            classes = list(hypothesis.classes_)
+            for j in range(y.shape[0]):
+                true_y = y[j]
+                true_y_index = classes.index(true_y)
+                ei_t += 1 - probas[j, true_y_index]
+            if ei_t == 0:
+                ei_t = self._epsilon
+            return ei_t
+
+    def __confidence(self, h_index, X):
+        concomitants = [h for i, h in enumerate(self.hypotheses) if i != h_index]
+
+        predicted = [h.predict(X) for h in concomitants]
+        predicted = np.array(predicted, dtype=predicted[0].dtype)
+        # Get the majority vote and the number of votes
+        _, counts = mode(predicted)
+        # _, counts = st.mode(predicted, axis=1)
+        confidences = counts / len(concomitants)
+        return confidences
+
+    def _fit_estimator(self, X, y, i, beginning=False, **kwards):
         estimator = self.base_estimator
         if type(self.base_estimator) == list:
             estimator = skclone(self.hypotheses[i])
+
+        if "random_state" in estimator.get_params():
+            r_state = estimator.random_state
+        else:
+            r_state = self.random_state
+            if r_state is None:
+                r_state = np.random.randint(0, 1000)
+            r_state += i
+        # Only in the beginning
+        if beginning:
+            X, y = self.__bootstraping(X, y, r_state)
+
         return skclone(estimator).fit(X, y, **kwards)
 
     def fit(self, X, y, **kwards):
@@ -1100,28 +1169,33 @@ class CoForest(BaseCoTraining):
                 self.hypotheses[-1].set_params(random_state=random_state.randint(0, 2 ** 32 - 1))
             errors.append(0.5)
 
-        self.hypotheses = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._fit_estimator)(X_label, y_label, i, **kwards)
+        self.hypotheses = Parallel(n_jobs=n_jobs)(
+            delayed(self._fit_estimator)(X_label, y_label, i, beginning=True, **kwards)
             for i in range(self.n_estimators)
         )
 
         for i in range(self.n_estimators):
-            weights.append(np.max(self.hypotheses[i].predict_proba(X_label), axis=1).sum())
+            # The paper stablishes that the weight of each hypothesis is 0,
+            # but it is not possible to do that because it will be impossible increase the training set
+            if self.version == "1.0.2":
+                weights.append(np.max(self.hypotheses[i].predict_proba(X_label), axis=1).sum())  # Version 1.0.2
+            else:
+                weights.append(self.__confidence(i, X_label).sum())
 
-        changing = True
+        changing = True if X_unlabel.shape[0] > 0 else False
         while changing:
             changing = False
             for i in range(self.n_estimators):
                 hi, ei, wi = self.hypotheses[i], errors[i], weights[i]
 
-                ei_t = self.__estimate_error(hi, X_label, y_label)
+                ei_t = self.__estimate_error(hi, X_label, y_label, i)
 
                 if ei_t < ei:
                     random_index_subsample = list(range(X_unlabel.shape[0]))
                     random_index_subsample = random_state.permutation(
                         random_index_subsample
                     )
-                    cond = random_index_subsample[0:int(ei * wi / ei_t)]
+                    cond = random_index_subsample[0:int(safe_division(ei * wi, ei_t, self._epsilon))]
                     if is_df:
                         Ui_t = X_unlabel.iloc[cond, :]
                     else:

@@ -22,8 +22,7 @@ from sslearn.wrapper import (
 X, y = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone.csv"), format="pandas")
 X2, y2 = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone.csv"), format="numpy")
 
-X_b, y_b, X_unlabel, true_label = artificial_ssl_dataset(*load_breast_cancer(return_X_y=True), random_state=42)
-
+X_l, y_l = load_breast_cancer(return_X_y=True)
 
 
 multiples_estimator = [
@@ -49,6 +48,12 @@ def check_multiple(estimator, **kwargs):
     clf.fit(X, y)
     clf.predict(X)
     clf.predict_proba(X)
+
+def check_all_label(estimator, **kwargs):
+    clf = estimator(**kwargs)
+    clf.fit(X_l, y_l)
+    clf.predict(X_l)
+    clf.predict_proba(X_l)
 
 def check_pandas(estimator, **kwargs):
     clf = estimator(**kwargs)
@@ -77,6 +82,9 @@ class TestCoForest:
 
     def test_random_state(self):
         check_random(CoForest)
+
+    def test_all_label(self):
+        check_all_label(CoForest)
     
 
 class TestCoTrainingByCommittee:
@@ -86,6 +94,9 @@ class TestCoTrainingByCommittee:
 
     def test_random_state(self):
         check_random(CoTrainingByCommittee, estimator_key="ensemble_estimator")
+
+    def test_all_label(self):
+        check_all_label(CoTrainingByCommittee)
 
 
 class TestCoTraining:
@@ -116,6 +127,10 @@ class TestCoTraining:
         check_random(CoTraining, force_second_view=False)
 
 
+    def test_all_label(self):
+        check_all_label(CoTraining, force_second_view=False)
+
+
 class TestDemocraticCoLearning:
     
     def test_basic(self):
@@ -126,6 +141,9 @@ class TestDemocraticCoLearning:
     
     def test_random_state(self):
         check_random(DemocraticCoLearning, n_estimators=3)
+
+    def test_all_label(self):
+        check_all_label(DemocraticCoLearning)
 
 
 class TestRasco:
@@ -139,6 +157,9 @@ class TestRasco:
     def test_random_state(self):
         check_random(Rasco, n_estimators=10)
 
+    def test_all_label(self):
+        check_all_label(Rasco)
+
 
 class TestRelRasco:
 
@@ -151,11 +172,18 @@ class TestRelRasco:
     def test_random_state(self):
         check_random(RelRasco, n_estimators=10)
 
+    def test_all_label(self):
+        check_all_label(RelRasco)
+
 
 class TestSelfTraining:
 
     def test_basic(self):
         check_basic(SelfTraining, base_estimator=KNeighborsClassifier())
+
+    def test_all_label(self):
+        check_all_label(SelfTraining, base_estimator=KNeighborsClassifier())
+
 
 
 class TestSetred:
@@ -165,6 +193,9 @@ class TestSetred:
 
     def test_random_state(self):
         check_random(Setred)
+
+    def test_all_label(self):
+        check_all_label(Setred)
 
 
 class TestTriTraining:
@@ -184,6 +215,9 @@ class TestTriTraining:
     def test_no_more_three(self):
         with pytest.raises(AttributeError):
             _ =  TriTraining(base_estimator=multiples_estimator)
+
+    def test_all_label(self):
+        check_all_label(TriTraining)
     
 
 class TestDeTriTraining:
@@ -193,6 +227,9 @@ class TestDeTriTraining:
     
     def test_random_state(self):
         check_random(DeTriTraining, max_iterations=1)
+
+    def test_all_label(self):
+        check_all_label(DeTriTraining, max_iterations=1)
 
 # Create a fake groups
 groups = list()
@@ -231,4 +268,10 @@ class TestWiWTriTraining:
             y2 = clf.predict(X, instance_group=groups)
 
             assert np.all(y1 == y2)
+
+    def test_all_label(self):
+        clf = WiWTriTraining(base_estimator=KNeighborsClassifier())
+        clf.fit(X, y, instance_group=groups)
+        clf.predict(X, instance_group=groups)
+        clf.predict_proba(X)
 

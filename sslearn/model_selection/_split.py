@@ -76,8 +76,8 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
     y_unlabel: ndarray
         The true label for each y in the same order.
     """
-    assert (label_rate > 0) and (label_rate < 100),\
-        "Label rate must be in (0, 100)."
+    assert (label_rate > 0) and (label_rate < 1),\
+        "Label rate must be in (0, 1)."
     assert "test_size" not in kwards and "train_size" not in kwards,\
         "Test size and train size are illegal parameters in this method."
     X_label, X_unlabel, y_label, true_label = \

@@ -20,16 +20,12 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.ensemble._base import _set_random_states
 from sklearn.utils import check_random_state
 
-
-
-
 def get_dataset(X, y):
 
     is_df = False
     if isinstance(X, pd.DataFrame):
         is_df = True
         columns = X.columns
-
 
     X = check_array(X)
     y = check_array(y, ensure_2d=False, dtype=y.dtype.type)

@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2023-03-29
+
+### Added
+- Methods now support no unlabeled data. In this case, the method will return the same as the base estimator.
+
+### Changed
+- In OneHotEncoder, the `sparse` parameter is now `sparse_output` to avoid a FutureWarning.
+
+### Fixed
+
+- CoForest now is most similar to the original paper.
+- TriTraining can use at least 3 n_jobs. Fixed the bug that allows using as many n_jobs as cpus in the machine.
+
 ## [1.0.2] - 2023-02-17
 
 ### Fixed

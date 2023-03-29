@@ -3,14 +3,10 @@ import os
 import math
 
 import pandas as pd
-import json
 
 from statsmodels.stats.proportion import proportion_confint
-import scipy.stats as st
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import ClassifierMixin
-
-import sslearn
 
 
 def safe_division(dividend, divisor, epsilon):
@@ -19,14 +15,13 @@ def safe_division(dividend, divisor, epsilon):
     return dividend / divisor
 
 
-def confidence_interval(X, hyp, y, alpha=.95 ):
+def confidence_interval(X, hyp, y, alpha=.95):
     data = hyp.predict(X)
 
     successes = np.count_nonzero(data == y)
     trials = X.shape[0]
     li, hi = proportion_confint(successes, trials, alpha=1 - alpha, method="wilson")
     return li, hi
-    
 
 
 def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
@@ -69,6 +64,27 @@ def is_int(x):
     return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
 
 
+def mode(y):
+    """Calculate the mode of a list of values
+
+    Parameters
+    ----------
+    y : array-like of shape (n_samples, n_estimators)
+        array of values
+
+    Returns
+    -------
+    mode: array-like of shape (n_samples,)
+        array of mode of each label
+    count: array-like of shape (n_samples,)
+        array of count of the mode of each label
+    """
+    array = pd.DataFrame(np.array(y))
+    mode = array.mode(axis=0).loc[0, :]
+    count = array.apply(lambda x: x.value_counts().max())
+    return mode.values, count.values
+
+
 def check_n_jobs(n_jobs):
     """Check `n_jobs` parameter according to the scikit-learn convention.
     From sktime: BSD 3-Clause
@@ -101,8 +117,9 @@ def calc_number_per_class(y_label):
     number_per_class = dict()
     for c in classes:
         number_per_class[c] = math.ceil(proportion[c] * factor)
-    
+
     return number_per_class
+
 
 def check_classifier(base_classifier, can_be_list=True, collection_size=None):
 
@@ -114,7 +131,7 @@ def check_classifier(base_classifier, can_be_list=True, collection_size=None):
                 raise AttributeError(f"base_classifier is a list of classifiers, but its length ({len(base_classifier)}) is different from expected ({collection_size})")
         for i, bc in enumerate(base_classifier):
             base_classifier[i] = check_classifier(bc, False)
-        return list(base_classifier) # Transform to list
+        return list(base_classifier)  # Transform to list
     else:
         if not isinstance(base_classifier, ClassifierMixin):
             raise AttributeError(f"base_classifier must be a ClassifierMixin, but found {type(base_classifier)}")
