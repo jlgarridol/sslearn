@@ -1,7 +1,7 @@
 Semi-Supervised Learning Library (sslearn)
 ===
 
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/jlgarridol/sslearn/Python%20package)
+![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml)
 
 The `sslearn` library is a Python package for machine learning over Semi-supervised datasets. It is an extension of [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
@@ -35,4 +35,22 @@ X, y, X_unlabel, true_label = artificial_ssl_dataset(X, y, label_rate=0.1)
 
 model = TriTraining().fit(X, y)
 model.score(X_unlabel, true_label)
+```
+
+Citing
+---
+```bibtex
+@software{jose_luis_garrido_labrador_2023_7565222,
+  author       = {José Luis Garrido-Labrador and
+                  César García-Osorio and
+                  Juan J. Rodríguez and
+                  Jesus Maudes},
+  title        = {jlgarridol/sslearn: Zenodo Indexed},
+  month        = jan,
+  year         = 2023,
+  publisher    = {Zenodo},
+  version      = {1.0.1},
+  doi          = {10.5281/zenodo.7565222},
+  url          = {https://doi.org/10.5281/zenodo.7565222}
+}
 ```

@@ -4,16 +4,10 @@ with open('README.md') as f:
     readme = f.read()
 
 
-def parse_requirements(filename):
-    """ load requirements from a pip requirements file """
-    lineiter = (line.strip() for line in open(filename))
-    return [line for line in lineiter if line and not line.startswith("#")]
-
-
 def get_version():
     with open('sslearn/__init__.py') as f:
         for line in f:
-            if line.startswith('__VERSION__'):
+            if line.startswith('__version__'):
                 return line.split('=')[1].strip().strip("'")
 
 
@@ -31,7 +25,12 @@ setuptools.setup(
     url='https://github.com/jlgarridol/sslearn',
     license='new BSD',
     download_url=url,
-    install_requires=parse_requirements('requirements.txt'),
+    install_requires=["joblib==1.2.0",
+                      "numpy==1.23.3",
+                      "pandas==1.4.3",
+                      "scikit_learn==1.2.0",
+                      "scipy==1.9.3",
+                      "statsmodels==0.13.2"],
     packages=setuptools.find_packages(exclude=("tests", "experiments")),
     include_package_data=True,
     classifiers=[
