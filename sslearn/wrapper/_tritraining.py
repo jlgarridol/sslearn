@@ -114,7 +114,7 @@ class TriTraining(BaseCoTraining):
                 skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X_sampled, y_sampled, **kwards)
             )
 
-        something_has_changed = True
+        something_has_changed = True if X_unlabel.size > 0 else False
         while something_has_changed:
             something_has_changed = False
             L = [[]] * self._N_LEARNER
@@ -258,12 +258,12 @@ class WiWTriTraining(TriTraining):
     def __init__(
         self,
         base_estimator,
-        n_samples = 100,
-        n_jobs = None,
-        method="hungarian", 
+        n_samples=100,
+        n_jobs=None,
+        method="hungarian",
         conflict_weighted=True,
         conflict_over="labeled",
-        random_state = None,
+        random_state=None,
     ):
         """TriTraining with restriction Who-is-Who.
 
@@ -289,16 +289,16 @@ class WiWTriTraining(TriTraining):
             * "none": don't penalize the "meause error", by default "labeled"
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
-        """    
+        """
         super().__init__(base_estimator, n_samples, random_state, n_jobs)
         conflict_over_choices = ["labeled", "labeled_plus", "unlabeled", "all", "none"]
         if conflict_over not in conflict_over_choices:
             raise ValueError(
                 f"conflict_over must be one of {conflict_over_choices}, got {conflict_over}"
-            )        
+            )
         self.conflict_over = conflict_over
-        self.method=method
-        self.conflict_weighted=conflict_weighted
+        self.method = method
+        self.conflict_weighted = conflict_weighted
 
     def fit(self, X, y, instance_group=None, **kwards):
         """Build a TriTraining classifier from the training set (X, y).
@@ -358,7 +358,7 @@ class WiWTriTraining(TriTraining):
                 X_label,
                 y_label,
                 group_label,
-                replace=False, # It must be False to keep the group restriction
+                replace=False,  # It must be False to keep the group restriction
                 n_samples=self.n_samples,
                 random_state=random_state,
             )
@@ -373,10 +373,10 @@ class WiWTriTraining(TriTraining):
 
             hypotheses.append(
                 WhoIsWhoClassifier(self.base_estimator if not isinstance(self.base_estimator, list) else self.base_estimator[i], method=self.method, conflict_weighted=self.conflict_weighted).
-                        fit(X_sampled, y_sampled, instance_group=group_sample, **kwards)
+                fit(X_sampled, y_sampled, instance_group=group_sample, **kwards)
             )
 
-        something_has_changed = True
+        something_has_changed = True if X_unlabel.shape[0] > 0 else False
 
         while something_has_changed:
             something_has_changed = False
@@ -474,7 +474,7 @@ class WiWTriTraining(TriTraining):
             conflict = (h1.conflict_rate(LU, GLU) + h2.conflict_rate(LU, GLU))
         else:
             conflict = 0
-        return me * (1 + conflict/2)
+        return me * (1 + conflict / 2)
 
     def _fit_estimator(self, hyp, X_label, y_label, L, Ly, update, **kwards):
         Lg = kwards.pop("Lg", None)
@@ -490,13 +490,14 @@ class WiWTriTraining(TriTraining):
 
             return hyp.fit(_tempL, _tempY, instance_group=_tempG, **kwards)
         return hyp
-    
+
     def predict(self, X, instance_group):
         y_probas = self.predict_proba(X)
 
         y_preds = combine_predictions(y_probas, instance_group, len(self.classes_), self.method)
 
         return self.classes_.take(y_preds)
+
 
 class DeTriTraining(TriTraining):
 
@@ -586,7 +587,7 @@ class DeTriTraining(TriTraining):
             S = (S[0].to_numpy(), S[1])
 
         for k in clusters:
-            centroids[k] = np.mean(S[0][S[1]==k], axis=0)
+            centroids[k] = np.mean(S[0][S[1] == k], axis=0)
 
         def seeded(x):
             min_ = np.inf
@@ -624,9 +625,9 @@ class DeTriTraining(TriTraining):
                     if not np.array_equal(new_centroids[k], centroids[k]):
                         changes = True
             centroids = new_centroids
-        
+
         return new_clusters
-                     
+
     def fit(self, X, y, **kwards):
         """Build a DeTriTraining classifier from the training set (X, y).
 
@@ -643,7 +644,7 @@ class DeTriTraining(TriTraining):
             Fitted estimator.
         """
         X_label, y_label, X_unlabel = get_dataset(X, y)
-        
+
         is_df = isinstance(X_label, pd.DataFrame)
 
         self.classes_ = np.unique(y_label)
@@ -686,9 +687,9 @@ class DeTriTraining(TriTraining):
 
             S_.append((X_sampled, y_sampled))
 
-        changes = True
+        changes = True 
         last_addition = [0] * self._N_LEARNER
-        it = 0
+        it = 0 if X_unlabel.shape[0] > 0  else self.max_iterations
         while it < self.max_iterations:
             it += 1
             changes = False
@@ -709,7 +710,7 @@ class DeTriTraining(TriTraining):
 
             for i in range(self._N_LEARNER):
                 if len(S_[i][0]) > len(X_label):
-                    last_addition[i] = len(S_[i][0]) 
+                    last_addition[i] = len(S_[i][0])
                     changes = True
                     hypothesis[i].fit(*S_[i], **kwards)
 
@@ -718,7 +719,7 @@ class DeTriTraining(TriTraining):
         else:
             warn.warn("Maximum number of iterations reached before convergence. Consider increasing max_iter to improve the fit.", ConvergenceWarning)
 
-        S = np.concatenate([x[0] for x in S_]) if not is_df else pd.concat([x[0] for x in S_]) , np.concatenate([x[1] for x in S_])
+        S = np.concatenate([x[0] for x in S_]) if not is_df else pd.concat([x[0] for x in S_]), np.concatenate([x[1] for x in S_])
         S_0, index_ = np.unique(S[0], axis=0, return_index=True)
         S_1 = S[1][index_]
         S = S_0, S_1

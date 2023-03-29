@@ -214,7 +214,8 @@ class DemocraticCoLearning(BaseCoTraining):
 
             for i in range(self.n_estimators):
                 self.base_estimator[i].fit(L[i], Ly[i], **estimator_kwards[i])
-
+            if X_unlabel.shape[0] == 0:
+                break
             # Majority Vote
             predictions = [H.predict(X_unlabel) for H in self.base_estimator]
             majority_class = mode(np.array(predictions, dtype=predictions[0].dtype))[0]
@@ -905,6 +906,9 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 
         self.ensemble_estimator.fit(X_label, y_label, **kwards)
 
+        if X_unlabel.shape[0] == 0:
+            return self
+
         for _ in range(self.max_iterations):
             if len(permutation) == 0:
                 break
@@ -1110,7 +1114,7 @@ class CoForest(BaseCoTraining):
         predicted = np.array(predicted, dtype=predicted[0].dtype)
         # Get the majority vote and the number of votes
         _, counts = mode(predicted)
-        #_, counts = st.mode(predicted, axis=1)
+        # _, counts = st.mode(predicted, axis=1)
         confidences = counts / len(concomitants)
         return confidences
 
@@ -1178,7 +1182,7 @@ class CoForest(BaseCoTraining):
             else:
                 weights.append(self.__confidence(i, X_label).sum())
 
-        changing = True
+        changing = True if X_unlabel.shape[0] > 0 else False
         while changing:
             changing = False
             for i in range(self.n_estimators):

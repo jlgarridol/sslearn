@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.3] - 2023-03-xx
 
+### Added
+- Methods now support no unlabeled data. In this case, the method will return the same as the base estimator.
+
 ### Changed
 - In OneHotEncoder, the `sparse` parameter is now `sparse_output` to avoid a FutureWarning.
 

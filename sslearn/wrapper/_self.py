@@ -239,6 +239,9 @@ class Setred(ClassifierMixin, BaseEstimator):
 
         sort_idx = np.argsort(list(y_probabilities.keys()))
 
+        if X_unlabel.shape[0] == 0:
+            return self
+
         for _ in range(self.max_iterations):
             U_ = resample(
                 X_unlabel, replace=False, n_samples=pool, random_state=random_state
