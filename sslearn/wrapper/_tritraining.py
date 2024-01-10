@@ -10,12 +10,15 @@ from sklearn.base import clone as skclone
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils import check_random_state, resample
+from sklearn.preprocessing import LabelEncoder
 from sklearn.exceptions import ConvergenceWarning
 
 from ..base import get_dataset
 from ..restricted import WhoIsWhoClassifier, combine_predictions
 from ..utils import check_classifier, check_n_jobs, safe_division
 from ._co import BaseCoTraining
+
+import time
 
 
 class TriTraining(BaseCoTraining):
@@ -557,9 +560,10 @@ class DeTriTraining(TriTraining):
         tuple (X, y)
             Enlarged dataset with instances where at least k_neighbors/2+1 have the same class.
         """
-        # k_neighbors +1 to ignore the own instance.
-        knn = KNeighborsClassifier(n_neighbors=self.k_neighbors + 1, n_jobs=self.n_jobs)
+        init = time.time()
+        knn = KNeighborsClassifier(n_neighbors=self.k_neighbors, n_jobs=self.n_jobs)
         valid = knn.fit(*S).predict(S[0]) == S[1]
+        print(f"Depure time: {time.time() - init}")
         return S[0][valid], S[1][valid]
 
     def _clustering(self, S, X):
@@ -589,22 +593,29 @@ class DeTriTraining(TriTraining):
         for k in clusters:
             centroids[k] = np.mean(S[0][S[1] == k], axis=0)
 
-        def seeded(x):
-            min_ = np.inf
-            k_min = None
-            for k in centroids:
-                candidate = np.linalg.norm(x - centroids[k])
-                if candidate < min_ or k_min is None:
-                    min_ = candidate
-                    k_min = k
-            return k_min
+        def seeded(X):
+            # For each instance, calculate the distance to each centroid
+            distances = np.linalg.norm(X[:, None, :] - np.array(list(centroids.values())), axis=2)
+            # Get the index of the nearest centroid
+            return np.argmin(distances, axis=1)
 
-        def constrained(x):
-            candidate = S[1][(S[0] == x).sum(axis=1) == X.shape[1]]
-            if len(candidate) == 0:
-                return seeded(x)
-            else:
-                return candidate[0]
+        def constrained(X):
+            # Calculate the distances to centroids using broadcasting
+            distances = np.linalg.norm(X[:, None, :] - np.array(list(centroids.values())), axis=2)
+            # Get the index of the nearest centroid
+            nearest = np.argmin(distances, axis=1)
+            # Create a mask to find instances in X that belong to S[0]
+            mask = (S[0] == X[:, None])
+            # Find the row and column indices where all elements are True
+            i, j = np.where(mask.all(axis=2))
+            # Initialize cluster with -1
+            cluster = np.full(X.shape[0], -1, dtype=int)
+            # Update cluster for the instances found in S[0]
+            cluster[i] = S[1][j]
+            # Update cluster for instances not found in S[0]
+            cluster[cluster == -1] = nearest[cluster == -1]
+
+            return cluster
 
         if self.mode == "seeded":
             op = seeded
@@ -617,7 +628,7 @@ class DeTriTraining(TriTraining):
             changes = False
             iterations += 1
             # Need to vectorize
-            new_clusters = np.apply_along_axis(op, 1, X)
+            new_clusters = op(X)
             new_centroids = dict()
             for k in clusters:
                 if np.any(new_clusters == k):
@@ -644,6 +655,10 @@ class DeTriTraining(TriTraining):
             Fitted estimator.
         """
         X_label, y_label, X_unlabel = get_dataset(X, y)
+
+        self.label_encoder_ = LabelEncoder()
+        self.label_encoder_.fit(y_label)
+        y_label = self.label_encoder_.transform(y_label)
 
         is_df = isinstance(X_label, pd.DataFrame)
 
@@ -687,9 +702,9 @@ class DeTriTraining(TriTraining):
 
             S_.append((X_sampled, y_sampled))
 
-        changes = True 
+        changes = True
         last_addition = [0] * self._N_LEARNER
-        it = 0 if X_unlabel.shape[0] > 0  else self.max_iterations
+        it = 0 if X_unlabel.shape[0] > 0 else self.max_iterations
         while it < self.max_iterations:
             it += 1
             changes = False
@@ -704,6 +719,7 @@ class DeTriTraining(TriTraining):
                 L[i] = (X_unlabel[validx] if not is_df else X_unlabel.iloc[validx, :], y_p[validx])
 
             for i, _ in enumerate(L):
+
                 if len(L[i][0]) > 0:
                     S_[i] = np.concatenate((X_label, L[i][0])) if not is_df else pd.concat([X_label, L[i][0]]), np.concatenate((y_label, L[i][1]))
                     S_[i] = self._depure(S_[i])

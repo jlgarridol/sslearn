@@ -779,7 +779,8 @@ class RelRasco(Rasco):
         random_state=None,
         n_jobs=None,
     ):
-        """Co-Training with relevant random subspaces
+        """
+        Co-Training with relevant random subspaces
 
         Yaslan, Y., & Cataltepe, Z. (2010).
         Co-training with relevant random subspaces.

@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
-from joblib import Parallel
+from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin
 from sklearn.base import clone as skclone
 from sklearn.base import is_classifier
@@ -14,7 +14,6 @@ from sklearn.multiclass import (LabelBinarizer, OneVsRestClassifier,
                                 _predict_binary)
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import check_X_y, check_array
-from sklearn.utils.fixes import delayed
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.metaestimators import available_if
 from sklearn.ensemble._base import _set_random_states
@@ -61,8 +60,14 @@ class BaseEnsemble(ABC, MetaEstimatorMixin):
             Array with predicted labels.
         """
         predicted_probabilitiy = self.predict_proba(X)
-        return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
+        classes = self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
                                   axis=0)
+
+        # If exists label_encoder_ attribute, use it to transform classes
+        if hasattr(self, "label_encoder_"):
+            classes = self.label_encoder_.inverse_transform(classes)
+            
+        return classes
 
 
 class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
