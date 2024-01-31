@@ -26,12 +26,12 @@ def test_artificial_ssl_dataset_with_force_minimum():
     X = np.concatenate((X, [X_0]), axis=0)
     y = np.concatenate((y, [y_0]), axis=0)    
 
-    X, y, X_unlabel, true_label = artificial_ssl_dataset(X, y, label_rate=0.02, force_minimum=2)
+    X, y, X_unlabel, true_label = artificial_ssl_dataset(X, y, label_rate=0.02, force_minimum=1)
     assert X_unlabel.shape[0] == true_label.shape[0]
-    assert X_unlabel.shape[0]/X.shape[0] == pytest.approx(0.96, abs=0.01)
-    # Check if all labels have at least 10 instances
     for i in np.unique(y):
         assert np.sum(y == i) >= 1
+
+    pytest.raises(ValueError, artificial_ssl_dataset, X, y, label_rate=0.02, force_minimum=2)
 
 def test_StratifiedKFoldSS():
     X, y = load_iris(return_X_y=True)

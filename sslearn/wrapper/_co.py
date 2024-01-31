@@ -1020,7 +1020,6 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 
         return self.ensemble_estimator.score(X, y, sample_weight)
 
-
 # Done and tested
 class CoForest(BaseCoTraining):
     def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, bootstrap=True, n_jobs=None, random_state=None, version="1.0.3"):
