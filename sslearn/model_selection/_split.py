@@ -1,4 +1,5 @@
 import sklearn.model_selection as ms
+from sklearn.utils import check_random_state
 import numpy as np
 
 
@@ -46,7 +47,7 @@ class StratifiedKFoldSS():
             yield X_, y_, label, unlabel
 
 
-def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
+def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, force_minimum=None, **kwards):
     """Create an artificial Semi-supervised dataset from a supervised dataset.
 
     Parameters
@@ -60,6 +61,8 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
         Proportion between labeled instances and unlabel instances, by default 0.1
     random_state : int or RandomState, optional
         Controls the shuffling applied to the data before applying the split. Pass an int for reproducible output across multiple function calls, by default None
+    force_minimum: int, optional
+        Force a minimum of instances of each class, by default None
     shuffle: bool, default=True
         Whether or not to shuffle the data before splitting. If shuffle=False then stratify must be None.
     stratify: array-like, default=None
@@ -80,6 +83,19 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
         "Label rate must be in (0, 1)."
     assert "test_size" not in kwards and "train_size" not in kwards,\
         "Test size and train size are illegal parameters in this method."
+    
+    if force_minimum is not None:
+        try:
+            selected = __random_select_n_instances(y, force_minimum, random_state)
+        except ValueError:
+            raise ValueError("The number of instances of each class is less than force_minimum.")
+        X_selected = X[selected]
+        y_selected = y[selected]
+
+        # Remove selected instances from X and y
+        X = np.delete(X, selected, axis=0)
+        y = np.delete(y, selected, axis=0)
+    
     X_label, X_unlabel, y_label, true_label = \
         ms.train_test_split(X, y,
                             train_size=label_rate,
@@ -87,4 +103,20 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, **kwards):
     X = np.concatenate((X_label, X_unlabel), axis=0)
     y = np.concatenate((y_label, np.array([-1] * len(true_label))), axis=0)
 
+    if force_minimum is not None:
+        X = np.concatenate((X, X_selected), axis=0)
+        y = np.concatenate((y, y_selected), axis=0)
+
     return X, y, X_unlabel, true_label
+
+def __random_select_n_instances(y, n, random_state):
+
+    # Select n instances of each class randomly
+    classes = np.unique(y)
+    selected = []
+    random_state = check_random_state(random_state)
+    for c in classes:
+        idx = np.where(y == c)[0]
+        selected.append(random_state.choice(idx, n, replace=False))
+    selected = np.concatenate(selected)
+    return selected

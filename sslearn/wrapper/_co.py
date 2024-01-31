@@ -779,7 +779,8 @@ class RelRasco(Rasco):
         random_state=None,
         n_jobs=None,
     ):
-        """Co-Training with relevant random subspaces
+        """
+        Co-Training with relevant random subspaces
 
         Yaslan, Y., & Cataltepe, Z. (2010).
         Co-training with relevant random subspaces.
@@ -1018,7 +1019,6 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             y = np.array(list(map(lambda x: self.le_dict_.get(x, -1), y)), dtype=y.dtype)
 
         return self.ensemble_estimator.score(X, y, sample_weight)
-
 
 # Done and tested
 class CoForest(BaseCoTraining):
