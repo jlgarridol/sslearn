@@ -9,12 +9,12 @@ Installation
 ---
 ### Dependencies
 
-* scikit_learn = 1.2.0
-* joblib = 1.2.0
-* numpy = 1.23.3
-* pandas = 1.4.3
-* scipy = 1.9.3
-* statsmodels = 0.13.2
+* joblib >= 1.2.0
+* numpy >= 1.23.3
+* pandas >= 1.4.3
+* scikit_learn >= 1.2.0
+* scipy >= 1.10.1
+* statsmodels >= 0.13.2
 * pytest = 7.2.0 (only for testing)
 
 ### `pip` installation
