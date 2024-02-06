@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add a parameter to `artificial_ssl_dataset` to force a minimum of instances. Issue #11
+- Add a parameter to `artificial_ssl_dataset` to return indexes. Issue #13
+
+### Changed
+- The `artificial_ssl_dataset` changed the process to generate the dataset, based in indexes. Issue #13
 
 ### Fixed
 - DeTriTraining now is vectorized and is faster than before.
