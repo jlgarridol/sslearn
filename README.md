@@ -40,14 +40,14 @@ model.score(X_unlabel, true_label)
 Citing
 ---
 ```bibtex
-@software{jose_luis_garrido_labrador_2023_7781117,
+@software{jose_luis_garrido_labrador_2024_10623889,
   author       = {José Luis Garrido-Labrador},
-  title        = {jlgarridol/sslearn: v1.0.3.1},
-  month        = mar,
-  year         = 2023,
+  title        = {jlgarridol/sslearn: v1.0.4},
+  month        = feb,
+  year         = 2024,
   publisher    = {Zenodo},
-  version      = {1.0.3.1},
-  doi          = {10.5281/zenodo.7781117},
-  url          = {https://doi.org/10.5281/zenodo.7781117}
+  version      = {1.0.4},
+  doi          = {10.5281/zenodo.10623889},
+  url          = {https://doi.org/10.5281/zenodo.10623889}
 }
 ```
