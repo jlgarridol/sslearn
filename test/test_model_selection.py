@@ -33,6 +33,19 @@ def test_artificial_ssl_dataset_with_force_minimum():
 
     pytest.raises(ValueError, artificial_ssl_dataset, X, y, label_rate=0.02, force_minimum=2)
 
+def test_artificial_ssl_dataset_with_indexes():
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, true_label, label, unlabel = artificial_ssl_dataset(X, y, label_rate=0.1, indexes=True)
+    
+    assert X_unlabel.shape[0] == unlabel.shape[0]
+
+    try:
+        X, y, X_unlabel, true_label, label, unlabel = artificial_ssl_dataset(X, y, label_rate=0.1, indexes=False)
+    except ValueError:
+        pass
+    except:
+        assert False, "Should raise ValueError if indexes=False and unpack the label and unlabel indexes."
+
 def test_StratifiedKFoldSS():
     X, y = load_iris(return_X_y=True)
     splits = 5
