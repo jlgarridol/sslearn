@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
         favicon=f"data:image/svg+xml;base64,{favicon}",
         logo=f"data:image/svg+xml;base64,{logo}",
-        logo_link="/",
+        logo_link="/sslearn",
         footer_text=f"pdoc {pdoc.__version__}",
         search=True,
         math=True,

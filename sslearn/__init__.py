@@ -3,6 +3,9 @@ import os
 if os.path.exists("../README.md"):
     with open("../README.md", "r") as f:
         __doc__ = f.read()
+elif os.path.exists("README.md"):
+    with open("README.md", "r") as f:
+        __doc__ = f.read()
 else:
     __doc__ = "Semi-Supervised Learning (SSL) is a Python package that provides tools to train and evaluate semi-supervised learning models."
 
