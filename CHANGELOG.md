@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - DeTriTraining now is vectorized and is faster than before.
 
-# [1.0.3.1] - 2023-04-01
+## [1.0.3.1] - 2023-04-01
 
 ### Changed
 - Hot fix for avoid problems with Pypi
