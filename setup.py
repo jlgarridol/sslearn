@@ -12,7 +12,7 @@ def get_version():
 
 
 version = get_version()
-url = f"https://github.com/jlgarridol/sslearn/archive/refs/tags/f{version}.tar.gz"
+url = f"https://github.com/jlgarridol/sslearn/archive/refs/tags/{version}.tar.gz"
 
 setuptools.setup(
     name='sslearn',
@@ -42,5 +42,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ]
 )

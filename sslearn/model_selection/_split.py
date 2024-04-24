@@ -5,6 +5,20 @@ import numpy as np
 
 class StratifiedKFoldSS():
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
+        """Stratified K-Folds cross-validator for semi-supervised learning.
+
+        Provides train/test indices to split data in train/test sets.
+
+        Parameters
+        ----------
+        n_splits : int, default=5
+            Number of folds. Must be at least 2.
+        shuffle : bool, default=False
+            Whether to shuffle each class's samples before splitting into batches.
+        random_state : int or RandomState instance, default=None
+            When shuffle is True, random_state affects the ordering of the indices.
+            
+        """
 
         self.K = ms.StratifiedKFold(n_splits=n_splits, shuffle=shuffle,
                                     random_state=random_state)
@@ -29,9 +43,9 @@ class StratifiedKFoldSS():
             The feature set.
         y : ndarray
             The label set, -1 for unlabel instance.
-        label: ndarray
+        label : ndarray
             The training set indices for split mark as labeled.
-        unlabel: ndarray
+        unlabel : ndarray
             The training set indices for split mark as unlabeled.
         """
         for train, test in self.K.split(X, y):
