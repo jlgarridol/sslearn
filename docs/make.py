@@ -12,7 +12,7 @@ import pygments.lexers.python
 
 import pdoc.render
 
-here = Path("..")
+here = Path(__file__).parent.parent
 
 if __name__ == "__main__":
 
