@@ -40,7 +40,7 @@ class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
             Array representing the data.
         Returns
         -------
-        ndarray of shape (n_samples, n_features)
+        class probabilities: ndarray of shape (n_samples, n_classes)
             Array with prediction probabilities.
         """
         is_df = isinstance(X, pd.DataFrame)
@@ -86,9 +86,7 @@ class DemocraticCoLearning(BaseCoTraining):
         random_state=None
     ):
         """
-        Y. Zhou and S. Goldman, "Democratic co-learning,"
-        16th IEEE International Conference on Tools with Artificial Intelligence,
-        2004, pp. 594-602, doi: 10.1109/ICTAI.2004.48.
+        Democratic Co-learning. Ensemble of classifiers of different types.
 
         Parameters
         ----------
@@ -108,6 +106,12 @@ class DemocraticCoLearning(BaseCoTraining):
         ------
         AttributeError
             If n_estimators is None and base_estimator is not a list
+
+        References
+        ----------
+        Y. Zhou and S. Goldman, "Democratic co-learning,"
+        16th IEEE International Conference on Tools with Artificial Intelligence,
+        2004, pp. 594-602, doi: 10.1109/ICTAI.2004.48.
         """
 
         if isinstance(base_estimator, ClassifierMixin) and n_estimators is not None:
@@ -182,7 +186,7 @@ class DemocraticCoLearning(BaseCoTraining):
 
         Returns
         -------
-        self
+        self : DemocraticCoLearning
             fitted classifier
         """
 
@@ -346,7 +350,7 @@ class DemocraticCoLearning(BaseCoTraining):
             Array representing the data.
         Returns
         -------
-        ndarray of shape (n_samples, n_features)
+        class probabilities: ndarray of shape (n_samples, n_classes)
             Array with prediction probabilities.
         """
         if "h_" in dir(self):
@@ -358,17 +362,6 @@ class DemocraticCoLearning(BaseCoTraining):
 
 
 class CoTraining(BaseCoTraining):
-    """
-    Avrim Blum and Tom Mitchell. 1998.
-    Combining labeled and unlabeled data with co-training.
-    In Proceedings of the eleventh annual conference on Computational learning theory (COLT' 98).
-    Association for Computing Machinery, New York, NY, USA, 92–100.
-    DOI:https://doi.org/10.1145/279943.279962
-
-    Han, Xian-Hua, Yen-wei Chen, and Xiang Ruan. 2011. 
-    ‘Multi-Class Co-Training Learning for Object and Scene Recognition’.
-    Pp. 67–70 in. Nara, Japan.
-    """
 
     def __init__(
         self,
@@ -380,7 +373,9 @@ class CoTraining(BaseCoTraining):
         force_second_view=True,
         random_state=None
     ):
-        """Create a CoTraining classifier
+        """
+        Create a CoTraining classifier. 
+        Multi-view learning algorithm that uses two classifiers to label instances.
 
         Parameters
         ----------
@@ -398,6 +393,18 @@ class CoTraining(BaseCoTraining):
             The second classifier needs a different view of the data. If False then a second view will be same as the first, by default True
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
+
+        References
+        ----------
+        Avrim Blum and Tom Mitchell. 1998.
+        Combining labeled and unlabeled data with co-training.
+        In Proceedings of the eleventh annual conference on Computational learning theory (COLT' 98).
+        Association for Computing Machinery, New York, NY, USA, 92-100.
+        DOI:https://doi.org/10.1145/279943.279962
+
+        Han, Xian-Hua, Yen-wei Chen, and Xiang Ruan. 2011. 
+        'Multi-Class Co-Training Learning for Object and Scene Recognition'.
+        Pp. 67-70 in. Nara, Japan.
         """
         self.base_estimator = check_classifier(base_estimator, False)
         if second_base_estimator is not None:
@@ -561,7 +568,7 @@ class CoTraining(BaseCoTraining):
             Array representing the data from another view, by default None
         Returns
         -------
-        ndarray of shape (n_samples, n_features)
+        class probabilities: ndarray of shape (n_samples, n_classes)
             Array with prediction probabilities.
         """
         if "columns_" in dir(self):
@@ -638,12 +645,6 @@ class Rasco(BaseCoTraining):
         """
         Co-Training based on random subspaces
 
-        Wang, J., Luo, S. W., & Zeng, X. H. (2008, June).
-        A random subspace method for co-training.
-        In <i>2008 IEEE International Joint Conference on Neural Networks</i>
-        (IEEE World Congress on Computational Intelligence)
-        (pp. 195-200). IEEE.
-
         Parameters
         ----------
         base_estimator : ClassifierMixin, optional
@@ -657,6 +658,14 @@ class Rasco(BaseCoTraining):
             The number of features for each subspace. If it is None will be the half of the features size., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
+
+        References
+        ----------
+        Wang, J., Luo, S. W., & Zeng, X. H. (2008, June).
+        A random subspace method for co-training.
+        In <i>2008 IEEE International Joint Conference on Neural Networks</i>
+        (IEEE World Congress on Computational Intelligence)
+        (pp. 195-200). IEEE.
         """
         self.base_estimator = check_classifier(base_estimator, True, n_estimators)  # C in paper
         self.max_iterations = max_iterations  # J in paper
@@ -678,7 +687,7 @@ class Rasco(BaseCoTraining):
 
         Returns
         -------
-        list
+        subspaces : list
             List of index of features
         """
         random_state = check_random_state(random_state)
@@ -782,11 +791,6 @@ class RelRasco(Rasco):
         """
         Co-Training with relevant random subspaces
 
-        Yaslan, Y., & Cataltepe, Z. (2010).
-        Co-training with relevant random subspaces.
-        <i>Neurocomputing</i>, 73(10-12), 1652-1661.
-
-
         Parameters
         ----------
         base_estimator : ClassifierMixin, optional
@@ -802,6 +806,12 @@ class RelRasco(Rasco):
             controls the randomness of the estimator, by default None
         n_jobs : int, optional
             The number of jobs to run in parallel. -1 means using all processors., by default None
+
+        References
+        ----------
+        Yaslan, Y., & Cataltepe, Z. (2010).
+        Co-training with relevant random subspaces.
+        <i>Neurocomputing</i>, 73(10-12), 1652-1661.
         """
         super().__init__(
             base_estimator,
@@ -824,7 +834,7 @@ class RelRasco(Rasco):
 
         Returns
         -------
-        list
+        subspaces: list
             List of index of features
         """
         random_state = check_random_state(random_state)
@@ -853,12 +863,10 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
         min_instances_for_class=3,
         random_state=None,
     ):
-        """Create a committee trained by cotraining based on
+        """
+        Create a committee trained by cotraining based on
         the diversity of classifiers.
-        M. F. A. Hady and F. Schwenker,
-        "Co-training by Committee: A New Semi-supervised Learning Framework,"
-        2008 IEEE International Conference on Data Mining Workshops,
-        Pisa, 2008, pp. 563-572, doi: 10.1109/ICDMW.2008.27.
+
         Parameters
         ----------
         ensemble_estimator : ClassifierMixin, optional
@@ -870,6 +878,13 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             max number of unlabeled instances candidates to pseudolabel, by default 100
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
+
+        References
+        ----------
+        M. F. A. Hady and F. Schwenker,
+        "Co-training by Committee: A New Semi-supervised Learning Framework,"
+        2008 IEEE International Conference on Data Mining Workshops,
+        Pisa, 2008, pp. 563-572, doi: 10.1109/ICDMW.2008.27.
         """
         self.ensemble_estimator = check_classifier(ensemble_estimator, False)
         self.max_iterations = max_iterations
@@ -887,7 +902,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             The target values (class labels), -1 if unlabel.
         Returns
         -------
-        self: CoTrainingByCommittee
+        self : CoTrainingByCommittee
             Fitted estimator.
         """
         self.ensemble_estimator = skclone(self.ensemble_estimator)
@@ -969,7 +984,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             The input samples.
         Returns
         -------
-        y: array-like of shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The predicted classes
         """
         check_is_fitted(self.ensemble_estimator)
@@ -984,7 +999,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
             The input samples.
         Returns
         -------
-        y: ndarray of shape (n_samples, n_classes) or list of n_outputs such arrays if n_outputs > 1
+        y : ndarray of shape (n_samples, n_classes) or list of n_outputs such arrays if n_outputs > 1
             The predicted classes
         """
         check_is_fitted(self.ensemble_estimator)
@@ -1024,10 +1039,8 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 class CoForest(BaseCoTraining):
     def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, bootstrap=True, n_jobs=None, random_state=None, version="1.0.3"):
         """
-        Li, M., & Zhou, Z.-H. (2007).
-        Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples.
-        <i>IEEE Transactions on Systems, Man, and Cybernetics - Part A: Systems and Humans</i>,
-        37(6), 1088–1098. doi:10.1109/tsmca.2007.904745
+        Generate a CoForest classifier.
+        A SSL Random Forest adaption for CoTraining. 
 
         Parameters
         ----------
@@ -1045,6 +1058,13 @@ class CoForest(BaseCoTraining):
             controls the randomness of the estimator, by default None
         **kwards : dict, optional
             Additional parameters to be passed to base_estimator, by default None.
+
+        References
+        ----------
+        Li, M., & Zhou, Z.-H. (2007).
+        Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples.
+        <i>IEEE Transactions on Systems, Man, and Cybernetics - Part A: Systems and Humans</i>,
+        37(6), 1088-1098. doi:10.1109/tsmca.2007.904745
         """
         self.base_estimator = check_classifier(base_estimator, collection_size=n_estimators)
         self.n_estimators = n_estimators

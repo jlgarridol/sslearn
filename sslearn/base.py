@@ -1,3 +1,23 @@
+"""
+Summary of module `sslearn.base`:
+
+Functions
+---------
+get_dataset(X, y):
+    Check and divide dataset between labeled and unlabeled data.
+
+Classes
+-------
+FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
+    Create a classifier that fakes predict_proba method if it does not exist.
+
+OneVsRestSSLClassifier(OneVsRestClassifier):
+    Adapted OneVsRestClassifier for SSL datasets
+
+All doc
+----
+"""
+
 import array
 import warnings
 from abc import ABC, abstractmethod
@@ -19,7 +39,29 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.ensemble._base import _set_random_states
 from sklearn.utils import check_random_state
 
+__all__ = ["FakedProbaClassifier", "get_dataset", "OneVsRestSSLClassifier"]
+
+
+
 def get_dataset(X, y):
+    """Check and divide dataset between labeled and unlabeled data.
+
+    Parameters
+    ----------
+    X : ndarray or DataFrame of shape (n_samples, n_features)
+        Features matrix.
+    y : ndarray of shape (n_samples,)
+        Target vector.
+
+    Returns
+    -------
+    X_label : ndarray or DataFrame of shape (n_label, n_features)
+        Labeled features matrix.
+    y_label : ndarray or Serie of shape (n_label,)
+        Labeled target vector.
+    X_unlabel : ndarray or Serie DataFrame of shape (n_unlabel, n_features)
+        Unlabeled features matrix.
+    """
 
     is_df = False
     if isinstance(X, pd.DataFrame):
@@ -73,18 +115,63 @@ class BaseEnsemble(ABC, MetaEstimatorMixin):
 class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     def __init__(self, base_estimator):
+        """Create a classifier that fakes predict_proba method if it does not exist.
+
+        Parameters
+        ----------
+        base_estimator : ClassifierMixin
+            A classifier that implements fit and predict methods.
+        """
         self.base_estimator = base_estimator
 
     def fit(self, X, y):
+        """Fit a FakedProbaClassifier.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input samples.
+        y : {array-like, sparse matrix} of shape (n_samples,)
+            The target values.
+
+        Returns
+        -------
+        self : FakedProbaClassifier
+            Returns self.
+        """
         self.classes_ = np.unique(y)
         self.one_hot = OneHotEncoder().fit(y.reshape(-1, 1))
         self.base_estimator.fit(X, y)
         return self
 
     def predict(self, X):
+        """Predict the classes of X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array representing the data.
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples,)
+            Array with predicted labels.
+        """
         return self.base_estimator.predict(X)
 
     def predict_proba(self, X):
+        """Predict the probabilities of each class for X. 
+        If the base estimator does not have a predict_proba method, it will be faked using one hot encoding.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples, n_classes)
+            Array with predicted probabilities.
+        """
         if "predict_proba" in dir(self.base_estimator):
             return self.base_estimator.predict_proba(X)
         else:

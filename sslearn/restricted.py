@@ -1,8 +1,27 @@
+"""Summary of module `sslearn.restricted`:
+
+This module contains classes to train a classifier using the restricted set classification approach.
+
+Classes
+-------
+WhoIsWhoClassifier : Who is Who Classifier
+
+Functions
+---------
+conflict_rate : Compute the conflict rate of a prediction, given a set of restrictions.
+combine_predictions : Combine the predictions of a group of instances to keep the restrictions.
+
+All doc
+-------
+"""
+
 import numpy as np
 from sklearn.base import ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 from scipy.optimize import linear_sum_assignment
 import warnings
 import pandas as pd
+
+__all__ = ["WhoIsWhoClassifier", "conflict_rate", "combine_predictions"]
 
 class WhoIsWhoClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
