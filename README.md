@@ -2,7 +2,7 @@ Semi-Supervised Learning Library (sslearn)
 ===
 
 <!-- Insert logo in the middle -->
-<img width="750px" src="sslearn.svg"/>
+<img width="100%" src="https://raw.githubusercontent.com/jlgarridol/sslearn/main/docs/sslearn.svg"/>
 
 ![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml) ![PyPI - Version](https://img.shields.io/pypi/v/sslearn)
 
