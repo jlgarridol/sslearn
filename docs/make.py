@@ -16,16 +16,16 @@ here = Path(__file__).parent.parent
 
 if __name__ == "__main__":
 
-    favicon = (here / "docs" / "sslearn_mini.svg").read_bytes()
+    favicon = (here / "docs" / "sslearn_mini.webp").read_bytes()
     favicon = base64.b64encode(favicon).decode("utf8")
-    logo = (here / "docs" / "sslearn.svg").read_bytes()
+    logo = (here / "docs" / "sslearn.webp").read_bytes()
     logo = base64.b64encode(logo).decode("utf8")
 
     # Render main docs
     pdoc.render.configure(
 
-        favicon=f"data:image/svg+xml;base64,{favicon}",
-        logo=f"data:image/svg+xml;base64,{logo}",
+        favicon="data:image/webp;base64," + favicon,
+        logo="data:image/webp;base64," + logo,
         logo_link="/sslearn",
         footer_text=f"pdoc {pdoc.__version__}",
         search=True,
