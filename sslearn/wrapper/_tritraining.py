@@ -22,6 +22,33 @@ import time
 
 
 class TriTraining(BaseCoTraining):
+    """
+    **TriTraining. Trio of classifiers with bootstrapping.**
+
+    The main process is:
+    1. Generate three classifiers using bootstrapping.
+    2. Iterate until convergence:
+        1. Calculate the error between two hypotheses.
+        2. If the error is less than the previous error, generate a dataset with the instances where both hypotheses agree.
+        3. Retrain the classifiers with the new dataset and the original labeled dataset.
+    3. Combine the predictions of the three classifiers.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **References**
+    ----------
+    Zhi-Hua Zhou and Ming Li,<br>
+    Tri-training: exploiting unlabeled data using three classifiers,<br>
+    in <i>IEEE Transactions on Knowledge and Data Engineering</i>,<br>
+    vol. 17, no. 11, pp. 1529-1541, Nov. 2005,<br>
+    [10.1109/TKDE.2005.186](https://doi.org/10.1109/TKDE.2005.186)
+
+    """
 
     def __init__(
         self,
@@ -45,14 +72,7 @@ class TriTraining(BaseCoTraining):
             The number of jobs to run in parallel for both `fit` and `predict`.
             `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
             `-1` means using all processors., by default None
-
-        References
-        ----------
-        Zhi-Hua Zhou and Ming Li,
-        "Tri-training: exploiting unlabeled data using three classifiers,"
-        in <i>IEEE Transactions on Knowledge and Data Engineering</i>,
-        vol. 17, no. 11, pp. 1529-1541, Nov. 2005,
-        doi: 10.1109/TKDE.2005.186.
+       
         """
         self._N_LEARNER = 3
         self.base_estimator = check_classifier(base_estimator, collection_size=self._N_LEARNER)
@@ -262,6 +282,32 @@ class TriTraining(BaseCoTraining):
 
 
 class WiWTriTraining(TriTraining):
+    """
+    **Who-Is-Who TriTraining.**
+     
+    Trio of classifiers with bootstrapping and restricted set classification.
+    Is the same as TriTraining but with the restricted set classification.
+    Maninly, the conflict rate penalizes the ***measure error*** of basic TriTraining, it can be calculated over differentes subsamples of X, can be:
+    * `labeled` over complete L,
+    * `labeled_plus` over complete L union L',
+    * `unlabeled`: over complete U,
+    * `all`: over complete X (LuU) and
+    * `none`: don't penalize the ***meause error***, only use the restrictions for avoid share classes in the same group. 
+    
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances. Receives the instance group, an array-like of shape (n_samples) with the group of each instance. Two instances with the same label are not allowed to be in the same group.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **References**
+    ----------
+    Ludmila I. Kuncheva, Juan J. Rodríguez, Aaron S. Jackson, (2016)<br>
+    Restricted set classification: Who is there?<br>
+    <i>Pattern Recognition</i>, 63, 158-170, <br>
+    [10.1016/j.patcog.2016.08.028](https://doi.org/10.1016/j.patcog.2016.08.028)
+    """
 
     def __init__(
         self,
@@ -297,13 +343,6 @@ class WiWTriTraining(TriTraining):
             * "none": don't penalize the "meause error", by default "labeled"
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
-
-        References
-        ----------
-        Ludmila I. Kuncheva, Juan J. Rodríguez, Aaron S. Jackson,
-        Restricted set classification: Who is there?,
-        Pattern Recognition, 63, 158-170, 
-        10.1016/j.patcog.2016.08.028
         """
         super().__init__(base_estimator, n_samples, random_state, n_jobs)
         conflict_over_choices = ["labeled", "labeled_plus", "unlabeled", "all", "none"]
@@ -515,6 +554,28 @@ class WiWTriTraining(TriTraining):
 
 
 class DeTriTraining(TriTraining):
+    """
+    **TriTraining with Data Editing.**
+
+    It is a variation of the TriTraining, the main difference is that the instances are depurated in each iteration.
+    It means that the instances with their neighbors that have the same class are kept, the rest are removed.
+    At the end of the iterations, the instances are clustered and the class is assigned to the cluster centroid.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **References**
+    ----------
+    Deng C., Guo M.Z. (2006)<br>
+    Tri-training and Data Editing Based Semi-supervised Clustering Algorithm, <br>
+    in <i>Gelbukh A., Reyes-Garcia C.A. (eds) MICAI 2006: Advances in Artificial Intelligence. MICAI 2006.</i><br>
+    Lecture Notes in Computer Science, vol 4293. Springer, Berlin, Heidelberg.<br>
+    [10.1007/11925231_61](https://doi.org/10.1007/11925231_61)
+    """
 
     def __init__(self, base_estimator=DecisionTreeClassifier(), k_neighbors=3,
                  n_samples=None, mode="seeded", max_iterations=100, n_jobs=None, random_state=None):
@@ -545,15 +606,6 @@ class DeTriTraining(TriTraining):
             Doesn't affect fit method., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
-
-        References
-        ----------
-        Deng C., Guo M.Z. (2006)
-        Tri-training and Data Editing Based Semi-supervised Clustering Algorithm. 
-        In: Gelbukh A., Reyes-Garcia C.A. (eds) MICAI 2006: Advances in Artificial Intelligence. MICAI 2006. 
-        Lecture Notes in Computer Science, vol 4293.
-        Springer, Berlin, Heidelberg.
-        https://doi.org/10.1007/11925231_61
         """
         super().__init__(base_estimator, n_samples, random_state)
         self.k_neighbors = k_neighbors

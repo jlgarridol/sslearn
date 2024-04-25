@@ -52,7 +52,7 @@
 
             <h2>Contents</h2>
             <ul>
-  <li><a href="#all-doc">All doc</a></li>
+  <li><a href="#functions">Functions</a></li>
 </ul>
 
 
@@ -92,7 +92,7 @@
 
 <p>This module contains functions to load and save datasets in different formats.</p>
 
-<h6 id="functions">Functions</h6>
+<h2 id="functions">Functions</h2>
 
 <ol>
 <li>read_csv : Load a dataset from a CSV file.</li>
@@ -100,8 +100,6 @@
 <li>secure_dataset : Secure the dataset by converting it into a secure format.</li>
 <li>save_keel : Save a dataset in KEEL format.</li>
 </ol>
-
-<h2 id="all-doc">All doc</h2>
 </div>
 
                         <input id="mod-datasets-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
@@ -113,22 +111,21 @@
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="sd">This module contains functions to load and save datasets in different formats.</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">Functions</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="sd">---------</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">## Functions</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">1. read_csv : Load a dataset from a CSV file.</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">2. read_keel : Load a dataset from a KEEL file.</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="sd">3. secure_dataset : Secure the dataset by converting it into a secure format.</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">4. save_keel : Save a dataset in KEEL format.</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="sd">All doc</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="sd">-------</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="kn">from</span> <span class="nn">._loader</span> <span class="kn">import</span> <span class="n">read_csv</span><span class="p">,</span> <span class="n">read_keel</span>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">._writer</span> <span class="kn">import</span> <span class="n">save_keel</span>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="kn">from</span> <span class="nn">._preprocess</span> <span class="kn">import</span> <span class="n">secure_dataset</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;read_csv&quot;</span><span class="p">,</span> <span class="s2">&quot;read_keel&quot;</span><span class="p">,</span> <span class="s2">&quot;secure_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;save_keel&quot;</span><span class="p">]</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="kn">from</span> <span class="nn">._loader</span> <span class="kn">import</span> <span class="n">read_csv</span><span class="p">,</span> <span class="n">read_keel</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="kn">from</span> <span class="nn">._writer</span> <span class="kn">import</span> <span class="n">save_keel</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="kn">from</span> <span class="nn">._preprocess</span> <span class="kn">import</span> <span class="n">secure_dataset</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;read_csv&quot;</span><span class="p">,</span> <span class="s2">&quot;read_keel&quot;</span><span class="p">,</span> <span class="s2">&quot;secure_dataset&quot;</span><span class="p">,</span> <span class="s2">&quot;save_keel&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -145,7 +142,7 @@
     </div>
     <a class="headerlink" href="#read_csv"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="read_csv-94"><a href="#read_csv-94"><span class="linenos"> 94</span></a><span class="k">def</span> <span class="nf">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">target_col</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwards</span><span class="p">):</span>
-</span><span id="read_csv-95"><a href="#read_csv-95"><span class="linenos"> 95</span></a>    <span class="sd">&quot;&quot;&quot;Read a .csv file</span>
+</span><span id="read_csv-95"><a href="#read_csv-95"><span class="linenos"> 95</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a .csv file</span>
 </span><span id="read_csv-96"><a href="#read_csv-96"><span class="linenos"> 96</span></a>
 </span><span id="read_csv-97"><a href="#read_csv-97"><span class="linenos"> 97</span></a><span class="sd">    Parameters</span>
 </span><span id="read_csv-98"><a href="#read_csv-98"><span class="linenos"> 98</span></a><span class="sd">    ----------</span>
@@ -221,7 +218,7 @@ Dataset loaded.</li>
     </div>
     <a class="headerlink" href="#read_keel"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="read_keel-14"><a href="#read_keel-14"><span class="linenos">14</span></a><span class="k">def</span> <span class="nf">read_keel</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;pandas&quot;</span><span class="p">,</span> <span class="n">secure</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">target_col</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwards</span><span class="p">):</span>
-</span><span id="read_keel-15"><a href="#read_keel-15"><span class="linenos">15</span></a>    <span class="sd">&quot;&quot;&quot;Read a .dat file from KEEL (http://www.keel.es/)</span>
+</span><span id="read_keel-15"><a href="#read_keel-15"><span class="linenos">15</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a .dat file from KEEL (http://www.keel.es/)</span>
 </span><span id="read_keel-16"><a href="#read_keel-16"><span class="linenos">16</span></a>
 </span><span id="read_keel-17"><a href="#read_keel-17"><span class="linenos">17</span></a><span class="sd">    Parameters</span>
 </span><span id="read_keel-18"><a href="#read_keel-18"><span class="linenos">18</span></a><span class="sd">    ----------</span>
@@ -340,7 +337,7 @@ Dataset loaded.</li>
     </div>
     <a class="headerlink" href="#secure_dataset"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="secure_dataset-2"><a href="#secure_dataset-2"><span class="linenos"> 2</span></a><span class="k">def</span> <span class="nf">secure_dataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-</span><span id="secure_dataset-3"><a href="#secure_dataset-3"><span class="linenos"> 3</span></a>    <span class="sd">&quot;&quot;&quot;It guarantees that the dataset has not  `-1` as valid class, in order to make it semi-supervised after</span>
+</span><span id="secure_dataset-3"><a href="#secure_dataset-3"><span class="linenos"> 3</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;It guarantees that the dataset has not  `-1` as valid class, in order to make it semi-supervised after</span>
 </span><span id="secure_dataset-4"><a href="#secure_dataset-4"><span class="linenos"> 4</span></a>
 </span><span id="secure_dataset-5"><a href="#secure_dataset-5"><span class="linenos"> 5</span></a><span class="sd">    Parameters</span>
 </span><span id="secure_dataset-6"><a href="#secure_dataset-6"><span class="linenos"> 6</span></a><span class="sd">    ----------</span>
@@ -397,7 +394,7 @@ Dataset securized.</li>
     </div>
     <a class="headerlink" href="#save_keel"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="save_keel-8"><a href="#save_keel-8"><span class="linenos"> 8</span></a><span class="k">def</span> <span class="nf">save_keel</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">route</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attribute_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">target_name</span><span class="o">=</span><span class="s2">&quot;Class&quot;</span><span class="p">,</span>  <span class="n">classification</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">unlabeled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">force_targets</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-</span><span id="save_keel-9"><a href="#save_keel-9"><span class="linenos"> 9</span></a>    <span class="sd">&quot;&quot;&quot;Save a dataset in the KEEL format</span>
+</span><span id="save_keel-9"><a href="#save_keel-9"><span class="linenos"> 9</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Save a dataset in the KEEL format</span>
 </span><span id="save_keel-10"><a href="#save_keel-10"><span class="linenos">10</span></a>
 </span><span id="save_keel-11"><a href="#save_keel-11"><span class="linenos">11</span></a><span class="sd">    Parameters</span>
 </span><span id="save_keel-12"><a href="#save_keel-12"><span class="linenos">12</span></a><span class="sd">    ----------</span>

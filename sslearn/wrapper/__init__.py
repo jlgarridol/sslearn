@@ -3,25 +3,35 @@ Summary of module `sslearn.wrapper`:
 
 This module contains classes to train semi-supervised learning algorithms using a wrapper approach.
 
-Self-Training Algorithms
-------------------------
-1. SelfTraining : Self-training algorithm.
-2. Setred : Self-training with redundancy reduction.
+## Self-Training Algorithms
 
-Co-Training Algorithms
------------------------
-1. CoTraining : Co-training
-2. CoTrainingByCommittee : Co-training by committee
-3. DemocraticCoLearning : Democratic co-learning
-4. Rasco : Random subspace co-training
-5. RelRasco : Relevant random subspace co-training
-6. CoForest : Co-Forest
-7. TriTraining : Tri-training
-8. DeTriTraining : Data Editing Tri-training
-9. WiWTriTraining : Who-Is-Who Tri-training
+* [SelfTraining](#SelfTraining): 
+Self-training algorithm.
+* [Setred](#Setred):
+Self-training with redundancy reduction.
 
-All doc
-----
+## Co-Training Algorithms
+
+* [CoTraining](#CoTraining):
+Co-training
+* [CoTrainingByCommittee](#CoTrainingByCommittee):
+Co-training by committee
+* [DemocraticCoLearning](#DemocraticCoLearning):
+Democratic co-learning
+* [Rasco](#Rasco):
+Random subspace co-training
+* [RelRasco](#RelRasco):
+Relevant random subspace co-training
+* [CoForest](#CoForest):
+Co-Forest
+* [TriTraining](#TriTraining):
+Tri-training
+* [DeTriTraining](#DeTriTraining):
+Data Editing Tri-training
+* [WiWTriTraining](#WiWTriTraining):
+Who-Is-Who Tri-training
+
+
 """
 
 from ._co import (CoForest, CoTraining, CoTrainingByCommittee,
@@ -29,5 +39,6 @@ from ._co import (CoForest, CoTraining, CoTrainingByCommittee,
 from ._self import SelfTraining, Setred
 from ._tritraining import DeTriTraining, TriTraining, WiWTriTraining
 
-__all__ = ["SelfTraining", "CoTrainingByCommittee", "Rasco", "RelRasco", "TriTraining", "WiWTriTraining",
-           "CoTraining", "DeTriTraining", "DemocraticCoLearning", "Setred", "CoForest"]
+__all__ = ["SelfTraining", "Setred", "CoTraining", "CoTrainingByCommittee",
+           "DemocraticCoLearning", "Rasco", "RelRasco", "CoForest",
+           "TriTraining", "DeTriTraining", "WiWTriTraining"]

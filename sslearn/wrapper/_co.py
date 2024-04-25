@@ -19,6 +19,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array, check_random_state, resample
 from sklearn.utils.validation import check_is_fitted
 
+
 from sslearn.utils import check_n_jobs
 
 from ..base import BaseEnsemble, get_dataset
@@ -26,7 +27,19 @@ from ..utils import (calc_number_per_class, calculate_prior_probability, check_c
                      choice_with_proportion, confidence_interval, mode, safe_division)
 
 
-class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
+class BaseCoTraining(BaseEnsemble):
+    """
+    Base class for CoTraining classifiers.
+
+    Include
+    -------
+    1. `predict_proba` method that returns the probability of each class.
+    2. `predict` method that returns the class of each instance by argmax of `predict_proba`.
+    3. `score` method that returns the mean accuracy on the given test data and labels.
+    """
+
+    _estimator_type = "classifier"
+
     @abstractmethod
     def fit(self, X, y, **kwards):
         pass
@@ -69,9 +82,90 @@ class BaseCoTraining(BaseEstimator, ClassifierMixin, BaseEnsemble):
             return y
         else:
             raise NotFittedError("Classifier not fitted")
+        
+        _estimator_type = "classifier"
+
+    def score(self, X, y, sample_weight=None):
+        """
+        Return the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Test samples.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            True labels for `X`.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
+        """
+        from .metrics import accuracy_score
+
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
 class DemocraticCoLearning(BaseCoTraining):
+    """
+    **Democratic Co-learning. Ensemble of classifiers of different types.**
+    --------------------------------------------
+
+    A iterative algorithm that uses a ensemble of classifiers to label instances.
+    The main process is:
+    1. Train each classifier with the labeled instances.
+    2. While any classifier is retrained:
+        1. Predict the instances from the unlabeled set.
+        2. Calculate the confidence interval for each classifier for define weights.
+        3. Calculate the weighted vote for each instance.
+        4. Calculate the majority vote for each instance.
+        5. Select the instances to label if majority vote is the same as weighted vote.
+        6. Select the instances to retrain the classifier, if `only_mislabeled` is False then select all instances, else select only mislabeled instances for each classifier.
+        7. Retrain the classifier with the new instances if the error rate is lower than the previous iteration.
+    3. Ignore the classifiers with confidence interval lower than 0.5.
+    4. Combine the probabilities of each classifier.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+    
+    
+    **Example**
+    -------
+    ```python
+    from sklearn.datasets import load_iris
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.naive_bayes import GaussianNB
+    from sklearn.neighbors import KNeighborsClassifier
+    from sslearn.wrapper import DemocraticCoLearning
+    from sslearn.model_selection import artificial_ssl_dataset
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+    dcl = DemocraticCoLearning(base_estimator=[DecisionTreeClassifier(), GaussianNB(), KNeighborsClassifier(n_neighbors=3)])
+    dcl.fit(X, y)
+    dcl.score(X_unlabel, y_unlabel)
+    ``` 
+
+    **References**
+    ----------
+    Y. Zhou and S. Goldman, (2004) <br>
+    Democratic co-learning, <br>
+    in <i>16th IEEE International Conference on Tools with Artificial Intelligence</i>,<br>
+    pp. 594-602, [10.1109/ICTAI.2004.48](https://doi.org/10.1109/ICTAI.2004.48).
+    """
+
     def __init__(
         self,
         base_estimator=[
@@ -106,12 +200,6 @@ class DemocraticCoLearning(BaseCoTraining):
         ------
         AttributeError
             If n_estimators is None and base_estimator is not a list
-
-        References
-        ----------
-        Y. Zhou and S. Goldman, "Democratic co-learning,"
-        16th IEEE International Conference on Tools with Artificial Intelligence,
-        2004, pp. 594-602, doi: 10.1109/ICTAI.2004.48.
         """
 
         if isinstance(base_estimator, ClassifierMixin) and n_estimators is not None:
@@ -362,6 +450,60 @@ class DemocraticCoLearning(BaseCoTraining):
 
 
 class CoTraining(BaseCoTraining):
+    """
+    **CoTraining classifier. Multi-view learning algorithm that uses two classifiers to label instances.**
+    --------------------------------------------
+
+    The main process is:
+    1. Train each classifier with the labeled instances and their respective view.
+    2. While max iterations is not reached or any instance is unlabeled:
+        1. Predict the instances from the unlabeled set.
+        2. Select the instances that have the same prediction and the predictions are above the threshold.
+        3. Label the instances with the highest probability, keeping the balance of the classes.
+        4. Retrain the classifier with the new instances.
+    3. Combine the probabilities of each classifier.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **Example**
+    -------
+    ```python
+    from sklearn.datasets import load_iris
+    from sklearn.tree import DecisionTreeClassifier
+    from sslearn.wrapper import CoTraining
+    from sslearn.model_selection import artificial_ssl_dataset
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+    cotraining = CoTraining(DecisionTreeClassifier())
+    X1 = X[:, [0, 1]]
+    X2 = X[:, [2, 3]]
+    cotraining.fit(X1, y, X2) 
+    # or
+    cotraining.fit(X, y, features=[[0, 1], [2, 3]])
+    # or
+    cotraining = CoTraining(DecisionTreeClassifier(), force_second_view=False)
+    cotraining.fit(X, y)
+    ``` 
+
+    **References**
+    ----------
+    Avrim Blum and Tom Mitchell. (1998).<br>
+    Combining labeled and unlabeled data with co-training<br>
+    in <i>Proceedings of the eleventh annual conference on Computational learning theory (COLT' 98)</i>.<br>
+    Association for Computing Machinery, New York, NY, USA, 92-100.<br>
+    [10.1145/279943.279962](https://doi.org/10.1145/279943.279962)
+
+    Han, Xian-Hua, Yen-wei Chen, and Xiang Ruan. (2011). <br>
+    Multi-Class Co-Training Learning for Object and Scene Recognition,<br>
+    pp. 67-70 in. Nara, Japan. <br>
+    [http://www.mva-org.jp/Proceedings/2011CD/papers/04-08.pdf](http://www.mva-org.jp/Proceedings/2011CD/papers/04-08.pdf)<br>
+    """
 
     def __init__(
         self,
@@ -394,17 +536,6 @@ class CoTraining(BaseCoTraining):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
 
-        References
-        ----------
-        Avrim Blum and Tom Mitchell. 1998.
-        Combining labeled and unlabeled data with co-training.
-        In Proceedings of the eleventh annual conference on Computational learning theory (COLT' 98).
-        Association for Computing Machinery, New York, NY, USA, 92-100.
-        DOI:https://doi.org/10.1145/279943.279962
-
-        Han, Xian-Hua, Yen-wei Chen, and Xiang Ruan. 2011. 
-        'Multi-Class Co-Training Learning for Object and Scene Recognition'.
-        Pp. 67-70 in. Nara, Japan.
         """
         self.base_estimator = check_classifier(base_estimator, False)
         if second_base_estimator is not None:
@@ -633,6 +764,54 @@ class CoTraining(BaseCoTraining):
 
 
 class Rasco(BaseCoTraining):
+    """
+    **Co-Training based on random subspaces**
+    --------------------------------------------
+
+    Generate a set of random subspaces and train a classifier for each subspace.
+
+    The main process is:
+    1. Generate a set of random subspaces.
+    2. Train a classifier for each subspace.
+    3. While max iterations is not reached or any instance is unlabeled:
+        1. Predict the instances from the unlabeled set for each classifier.
+        2. Calculate the average of the predictions.
+        3. Select the instances with the highest probability.
+        4. Label the instances with the highest probability, keeping the balance of the classes.
+        5. Retrain the classifier with the new instances.
+    4. Combine the probabilities of each classifier.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **Example**
+    -------
+    ```python
+    from sklearn.datasets import load_iris
+    from sslearn.wrapper import Rasco
+    from sslearn.model_selection import artificial_ssl_dataset
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+    rasco = Rasco()
+    rasco.fit(X, y)
+    rasco.score(X_unlabel, y_unlabel) 
+    ```    
+
+    **References**
+    ----------
+    Wang, J., Luo, S. W., & Zeng, X. H. (2008).<br>
+    A random subspace method for co-training,<br>
+    in <i>2008 IEEE International Joint Conference on Neural Networks</i><br>
+    IEEE World Congress on Computational Intelligence<br>
+    (pp. 195-200). IEEE. [10.1109/IJCNN.2008.4633789](https://doi.org/10.1109/IJCNN.2008.4633789)
+    """
+
+
     def __init__(
         self,
         base_estimator=DecisionTreeClassifier(),
@@ -658,14 +837,6 @@ class Rasco(BaseCoTraining):
             The number of features for each subspace. If it is None will be the half of the features size., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
-
-        References
-        ----------
-        Wang, J., Luo, S. W., & Zeng, X. H. (2008, June).
-        A random subspace method for co-training.
-        In <i>2008 IEEE International Joint Conference on Neural Networks</i>
-        (IEEE World Congress on Computational Intelligence)
-        (pp. 195-200). IEEE.
         """
         self.base_estimator = check_classifier(base_estimator, True, n_estimators)  # C in paper
         self.max_iterations = max_iterations  # J in paper
@@ -779,6 +950,42 @@ class Rasco(BaseCoTraining):
 
 
 class RelRasco(Rasco):
+    """
+    **Co-Training based on relevant random subspaces**
+    --------------------------------------------
+
+    Is a variation of `sslearn.wrapper.Rasco` that uses the mutual information of each feature to select the random subspaces.
+    The process of training is the same as Rasco.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **Example**
+    -------
+    ```python
+    from sklearn.datasets import load_iris
+    from sslearn.wrapper import RelRasco
+    from sslearn.model_selection import artificial_ssl_dataset
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+    relrasco = RelRasco()
+    relrasco.fit(X, y)
+    relrasco.score(X_unlabel, y_unlabel)
+    ```
+
+    **References**
+    ----------
+    Yaslan, Y., & Cataltepe, Z. (2010).<br>
+    Co-training with relevant random subspaces.<br>
+    <i>Neurocomputing</i>, 73(10-12), 1652-1661.<br>
+    [10.1016/j.neucom.2010.01.018](https://doi.org/10.1016/j.neucom.2010.01.018)
+    """
+
     def __init__(
         self,
         base_estimator=DecisionTreeClassifier(),
@@ -807,11 +1014,6 @@ class RelRasco(Rasco):
         n_jobs : int, optional
             The number of jobs to run in parallel. -1 means using all processors., by default None
 
-        References
-        ----------
-        Yaslan, Y., & Cataltepe, Z. (2010).
-        Co-training with relevant random subspaces.
-        <i>Neurocomputing</i>, 73(10-12), 1652-1661.
         """
         super().__init__(
             base_estimator,
@@ -854,7 +1056,53 @@ class RelRasco(Rasco):
 
 
 # Done and tested
-class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
+class CoTrainingByCommittee(BaseCoTraining):
+    """
+    **Co-Training by Committee classifier.**
+    --------------------------------------------
+
+    Create a committee trained by co-training based on the diversity of the classifiers
+
+    The main process is:
+    1. Train a committee of classifiers.
+    2. Create a pool of unlabeled instances.
+    3. While max iterations is not reached or any instance is unlabeled:
+        1. Predict the instances from the unlabeled set.
+        2. Select the instances with the highest probability.
+        3. Label the instances with the highest probability, keeping the balance of the classes but ensuring that at least n instances of each class are added.
+        4. Retrain the classifier with the new instances.
+    4. Combine the probabilities of each classifier.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **Example**
+    -------
+    ```python
+    from sklearn.datasets import load_iris
+    from sslearn.wrapper import CoTrainingByCommittee
+    from sslearn.model_selection import artificial_ssl_dataset
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+    cotraining = CoTrainingByCommittee()
+    cotraining.fit(X, y)
+    cotraining.score(X_unlabel, y_unlabel)
+    ```
+
+    **References**
+    ----------
+    M. F. A. Hady and F. Schwenker,<br>
+    Co-training by Committee: A New Semi-supervised Learning Framework,<br>
+    in <i>2008 IEEE International Conference on Data Mining Workshops</i>,<br>
+    Pisa, 2008, pp. 563-572,  [10.1109/ICDMW.2008.27](https://doi.org/10.1109/ICDMW.2008.27)
+    """
+
+
     def __init__(
         self,
         ensemble_estimator=BaggingClassifier(),
@@ -879,12 +1127,7 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
 
-        References
-        ----------
-        M. F. A. Hady and F. Schwenker,
-        "Co-training by Committee: A New Semi-supervised Learning Framework,"
-        2008 IEEE International Conference on Data Mining Workshops,
-        Pisa, 2008, pp. 563-572, doi: 10.1109/ICDMW.2008.27.
+
         """
         self.ensemble_estimator = check_classifier(ensemble_estimator, False)
         self.max_iterations = max_iterations
@@ -1037,6 +1280,52 @@ class CoTrainingByCommittee(ClassifierMixin, BaseEnsemble, BaseEstimator):
 
 # Done and tested
 class CoForest(BaseCoTraining):
+    """
+    **CoForest classifier. Random Forest co-training**
+    ----------------------------
+    
+    Ensemble method for CoTraining based on Random Forest.
+
+    The main process is:
+    1. Train a committee of classifiers using bootstrap.
+    2. While any base classifier is retrained:
+        1. Predict the instances from the unlabeled set.
+        2. Select the instances with the highest probability.
+        3. Label the instances with the highest probability
+        4. Add the instances to the labeled set only if the error is not bigger than the previous error.
+        5. Retrain the classifier with the new instances.
+    3. Combine the probabilities of each classifier.
+
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `predict_proba`: Predict the probability for each class.
+    - `score`: Return the mean accuracy on the given test data and labels.
+
+    **Example**
+    -------
+    ```python
+    from sklearn.datasets import load_iris
+    from sslearn.wrapper import CoForest
+    from sslearn.model_selection import artificial_ssl_dataset
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+    coforest = CoForest()
+    coforest.fit(X, y)
+    coforest.score(X_unlabel, y_unlabel)
+    ```
+
+    **References**
+    ----------
+    Li, M., & Zhou, Z.-H. (2007).<br>
+    Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples.<br>
+    <i>IEEE Transactions on Systems, Man, and Cybernetics - Part A: Systems and Humans</i>,<br>
+    37(6), 1088-1098. [10.1109/tsmca.2007.904745](https://doi.org/10.1109/tsmca.2007.904745)
+    """
+
     def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=7, threshold=0.75, bootstrap=True, n_jobs=None, random_state=None, version="1.0.3"):
         """
         Generate a CoForest classifier.
@@ -1058,13 +1347,6 @@ class CoForest(BaseCoTraining):
             controls the randomness of the estimator, by default None
         **kwards : dict, optional
             Additional parameters to be passed to base_estimator, by default None.
-
-        References
-        ----------
-        Li, M., & Zhou, Z.-H. (2007).
-        Improve Computer-Aided Diagnosis With Machine Learning Techniques Using Undiagnosed Samples.
-        <i>IEEE Transactions on Systems, Man, and Cybernetics - Part A: Systems and Humans</i>,
-        37(6), 1088-1098. doi:10.1109/tsmca.2007.904745
         """
         self.base_estimator = check_classifier(base_estimator, collection_size=n_estimators)
         self.n_estimators = n_estimators

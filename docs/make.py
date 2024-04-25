@@ -14,6 +14,9 @@ import pdoc.render
 
 here = Path(__file__).parent.parent
 
+# Ignore set_score_request in the docs
+
+
 if __name__ == "__main__":
 
     favicon = (here / "docs" / "sslearn_mini.webp").read_bytes()

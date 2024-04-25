@@ -47,7 +47,12 @@
 
             <h2>Contents</h2>
             <ul>
-  <li><a href="#semi-supervised-learning-library-sslearn">Semi-Supervised Learning Library (sslearn)</a></li>
+  <li><a href="#semi-supervised-learning-library-sslearn">Semi-Supervised Learning Library (sslearn)</a>
+  <ul>
+    <li><a href="#installation">Installation</a></li>
+    <li><a href="#code-example">Code example</a></li>
+    <li><a href="#citing">Citing</a></li>
+  </ul></li>
 </ul>
 
 
@@ -86,11 +91,11 @@ sslearn    </h1>
 <p><!-- Insert logo in the middle -->
 <img width="100%" src="https://raw.githubusercontent.com/jlgarridol/sslearn/main/docs/sslearn.webp"/></p>
 
-<p><img src="https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn" alt="Code Climate maintainability" /> <img src="https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn" alt="Code Climate coverage" /> <img src="https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml" alt="GitHub Workflow Status" /> <img src="https://img.shields.io/pypi/v/sslearn" alt="PyPI - Version" /></p>
+<p><img src="https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn" alt="Code Climate maintainability" /> <img src="https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn" alt="Code Climate coverage" /> <img src="https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml" alt="GitHub Workflow Status" /> <img src="https://img.shields.io/pypi/v/sslearn" alt="PyPI - Version" /> <a href="https://jlgarridol.github.io/sslearn/"><img src="https://img.shields.io/badge/doc-available-blue?style=flat" alt="Static Badge" /></a></p>
 
 <p>The <code><a href="">sslearn</a></code> library is a Python package for machine learning over Semi-supervised datasets. It is an extension of <a href="https://github.com/scikit-learn/scikit-learn">scikit-learn</a>.</p>
 
-<h6 id="installation">Installation</h6>
+<h2 id="installation">Installation</h2>
 
 <h3 id="dependencies">Dependencies</h3>
 
@@ -111,7 +116,7 @@ sslearn    </h1>
 <pre><code>pip install sslearn
 </code></pre>
 
-<h6 id="code-example">Code example</h6>
+<h2 id="code-example">Code example</h2>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/wrapper.html">sslearn.wrapper</a></span> <span class="kn">import</span> <span class="n">TriTraining</span>
@@ -126,19 +131,19 @@ sslearn    </h1>
 </code></pre>
 </div>
 
-<h6 id="citing">Citing</h6>
+<h2 id="citing">Citing</h2>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code><span class="nc">@software</span><span class="p">{</span><span class="nl">jose_luis_garrido_labrador_2024_10623889</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">author</span><span class="w">       </span><span class="p">=</span><span class="w"> </span><span class="s">{José Luis Garrido-Labrador}</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">title</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="s">{jlgarridol/sslearn: v1.0.4}</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">month</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="nv">feb</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">year</span><span class="w">         </span><span class="p">=</span><span class="w"> </span><span class="m">2024</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">publisher</span><span class="w">    </span><span class="p">=</span><span class="w"> </span><span class="s">{Zenodo}</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">version</span><span class="w">      </span><span class="p">=</span><span class="w"> </span><span class="s">{1.0.4}</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">doi</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{10.5281/zenodo.10623889}</span><span class="p">,</span><span class="w"></span>
-<span class="w">  </span><span class="na">url</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{https://doi.org/10.5281/zenodo.10623889}</span><span class="w"></span>
-<span class="p">}</span><span class="w"></span>
+<pre><span></span><code><span class="nc">@software</span><span class="p">{</span><span class="nl">jose_luis_garrido_labrador_2024_10623889</span><span class="p">,</span>
+<span class="w">  </span><span class="na">author</span><span class="w">       </span><span class="p">=</span><span class="w"> </span><span class="s">{José Luis Garrido-Labrador}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">title</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="s">{jlgarridol/sslearn: v1.0.4}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">month</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="nv">feb</span><span class="p">,</span>
+<span class="w">  </span><span class="na">year</span><span class="w">         </span><span class="p">=</span><span class="w"> </span><span class="m">2024</span><span class="p">,</span>
+<span class="w">  </span><span class="na">publisher</span><span class="w">    </span><span class="p">=</span><span class="w"> </span><span class="s">{Zenodo}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">version</span><span class="w">      </span><span class="p">=</span><span class="w"> </span><span class="s">{1.0.4}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">doi</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{10.5281/zenodo.10623889}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">url</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{https://doi.org/10.5281/zenodo.10623889}</span>
+<span class="p">}</span>
 </code></pre>
 </div>
 </div>

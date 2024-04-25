@@ -4,12 +4,13 @@ Semi-Supervised Learning Library (sslearn)
 <!-- Insert logo in the middle -->
 <img width="100%" src="https://raw.githubusercontent.com/jlgarridol/sslearn/main/docs/sslearn.webp"/>
 
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml) ![PyPI - Version](https://img.shields.io/pypi/v/sslearn)
+![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml) ![PyPI - Version](https://img.shields.io/pypi/v/sslearn) [![Static Badge](https://img.shields.io/badge/doc-available-blue?style=flat)](https://jlgarridol.github.io/sslearn/)
 
 The `sslearn` library is a Python package for machine learning over Semi-supervised datasets. It is an extension of [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
-Installation
----
+## Installation
+
+
 ### Dependencies
 
 * joblib >= 1.2.0
@@ -26,8 +27,9 @@ It can be installed using *Pypi*:
 
     pip install sslearn
 
-Code example
----
+## Code example
+
+
 ```python
 from sslearn.wrapper import TriTraining
 from sslearn.model_selection import artificial_ssl_dataset
@@ -40,8 +42,8 @@ model = TriTraining().fit(X, y)
 model.score(X_unlabel, true_label)
 ```
 
-Citing
----
+## Citing 
+
 ```bibtex
 @software{jose_luis_garrido_labrador_2024_10623889,
   author       = {José Luis Garrido-Labrador},

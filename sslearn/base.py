@@ -1,21 +1,21 @@
 """
 Summary of module `sslearn.base`:
 
-Functions
----------
+## Functions
+
+
 get_dataset(X, y):
     Check and divide dataset between labeled and unlabeled data.
 
-Classes
--------
-FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
-    Create a classifier that fakes predict_proba method if it does not exist.
+## Classes
 
-OneVsRestSSLClassifier(OneVsRestClassifier):
-    Adapted OneVsRestClassifier for SSL datasets
 
-All doc
-----
+[FakedProbaClassifier](#FakedProbaClassifier):
+>  Create a classifier that fakes predict_proba method if it does not exist.
+
+[OneVsRestSSLClassifier](#OneVsRestSSLClassifier):
+> Adapted OneVsRestClassifier for SSL datasets
+
 """
 
 import array
@@ -39,7 +39,7 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.ensemble._base import _set_random_states
 from sklearn.utils import check_random_state
 
-__all__ = ["FakedProbaClassifier", "get_dataset", "OneVsRestSSLClassifier"]
+__all__ = ["get_dataset", "FakedProbaClassifier", "OneVsRestSSLClassifier"]
 
 
 
@@ -84,7 +84,7 @@ def get_dataset(X, y):
     return X_label, y_label, X_unlabel
 
 
-class BaseEnsemble(ABC, MetaEstimatorMixin):
+class BaseEnsemble(ABC, MetaEstimatorMixin, BaseEstimator):
 
     @abstractmethod
     def predict_proba(self, X):
@@ -113,6 +113,22 @@ class BaseEnsemble(ABC, MetaEstimatorMixin):
 
 
 class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
+    """
+    Fake predict_proba method for classifiers that do not have it. 
+    When predict_proba is called, it will use one hot encoding to fake the probabilities if base_estimator does not have predict_proba method.
+
+    Examples
+    --------
+    ```python
+    from sklearn.svm import SVC
+    # SVC does not have predict_proba method
+
+    from sslearn.base import FakedProbaClassifier
+    faked_svc = FakedProbaClassifier(SVC())
+    faked_svc.fit(X, y)
+    faked_svc.predict_proba(X) # One hot encoding probabilities
+    ```
+    """
 
     def __init__(self, base_estimator):
         """Create a classifier that fakes predict_proba method if it does not exist.
@@ -209,6 +225,12 @@ def _predict_binary_ssl(estimator, X, **predict_params):
 
 
 class OneVsRestSSLClassifier(OneVsRestClassifier):
+    """Adapted OneVsRestClassifier for SSL datasets
+
+    Prevent use unlabeled data as a independent class in the classifier.
+
+    For more information of OvR classifier, see the documentation of [OneVsRestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.multiclass.OneVsRestClassifier.html).
+    """
 
     def __init__(self, estimator, *, n_jobs=None):
         """Adapted OneVsRestClassifier for SSL datasets

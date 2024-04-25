@@ -52,7 +52,7 @@
 
             <h2>Contents</h2>
             <ul>
-  <li><a href="#all-doc">All doc</a></li>
+  <li><a href="#classes">Classes</a></li>
 </ul>
 
 
@@ -65,9 +65,6 @@
                         <li>
                                 <a class="function" href="#SubViewClassifier.predict_proba">predict_proba</a>
                         </li>
-                        <li>
-                                <a class="function" href="#SubViewClassifier.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -76,9 +73,6 @@
                             <ul class="memberlist">
                         <li>
                                 <a class="function" href="#SubViewRegressor.predict">predict</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#SubViewRegressor.set_score_request">set_score_request</a>
                         </li>
                 </ul>
 
@@ -104,12 +98,15 @@
 
 <p>This module contains classes to train a classifier or a regressor selecting a sub-view of the data.</p>
 
-<h6 id="classes">Classes</h6>
+<h2 id="classes">Classes</h2>
 
-<p>SubViewClassifier : Train a sub-view classifier.
-SubViewRegressor : Train a sub-view regressor.</p>
+<p><a href="#SubViewClassifier">SubViewClassifier</a>:</p>
 
-<h2 id="all-doc">All doc</h2>
+<blockquote>
+  <p>Train a sub-view classifier.
+  <a href="#SubViewRegressor">SubViewRegressor</a>:
+  Train a sub-view regressor.</p>
+</blockquote>
 </div>
 
                         <input id="mod-subview-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
@@ -121,18 +118,19 @@ SubViewRegressor : Train a sub-view regressor.</p>
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="sd">This module contains classes to train a classifier or a regressor selecting a sub-view of the data.</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">Classes</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="sd">-------</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">SubViewClassifier : Train a sub-view classifier.</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">SubViewRegressor : Train a sub-view regressor.</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">All doc</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="sd">-------</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="kn">from</span> <span class="nn">._subview</span> <span class="kn">import</span> <span class="n">SubViewClassifier</span><span class="p">,</span> <span class="n">SubViewRegressor</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SubViewClassifier&quot;</span><span class="p">,</span> <span class="s2">&quot;SubViewRegressor&quot;</span><span class="p">]</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">## Classes</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">[SubViewClassifier](#SubViewClassifier):</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">&gt; Train a sub-view classifier.</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="sd">[SubViewRegressor](#SubViewRegressor):</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">&gt; Train a sub-view regressor.</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="kn">from</span> <span class="nn">._subview</span> <span class="kn">import</span> <span class="n">SubViewClassifier</span><span class="p">,</span> <span class="n">SubViewRegressor</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SubViewClassifier&quot;</span><span class="p">,</span> <span class="s2">&quot;SubViewRegressor&quot;</span><span class="p">]</span>
 </span></pre></div>
 
 
@@ -148,39 +146,54 @@ SubViewRegressor : Train a sub-view regressor.</p>
 
     </div>
     <a class="headerlink" href="#SubViewClassifier"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewClassifier-131"><a href="#SubViewClassifier-131"><span class="linenos">131</span></a><span class="k">class</span> <span class="nc">SubViewClassifier</span><span class="p">(</span><span class="n">SubView</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">):</span>
-</span><span id="SubViewClassifier-132"><a href="#SubViewClassifier-132"><span class="linenos">132</span></a>
-</span><span id="SubViewClassifier-133"><a href="#SubViewClassifier-133"><span class="linenos">133</span></a>    <span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-</span><span id="SubViewClassifier-134"><a href="#SubViewClassifier-134"><span class="linenos">134</span></a>        <span class="sd">&quot;&quot;&quot;Predict class probabilities using the base estimator.</span>
-</span><span id="SubViewClassifier-135"><a href="#SubViewClassifier-135"><span class="linenos">135</span></a>
-</span><span id="SubViewClassifier-136"><a href="#SubViewClassifier-136"><span class="linenos">136</span></a><span class="sd">        Parameters</span>
-</span><span id="SubViewClassifier-137"><a href="#SubViewClassifier-137"><span class="linenos">137</span></a><span class="sd">        ----------</span>
-</span><span id="SubViewClassifier-138"><a href="#SubViewClassifier-138"><span class="linenos">138</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-</span><span id="SubViewClassifier-139"><a href="#SubViewClassifier-139"><span class="linenos">139</span></a><span class="sd">            The input samples.</span>
-</span><span id="SubViewClassifier-140"><a href="#SubViewClassifier-140"><span class="linenos">140</span></a>
-</span><span id="SubViewClassifier-141"><a href="#SubViewClassifier-141"><span class="linenos">141</span></a><span class="sd">        Returns</span>
-</span><span id="SubViewClassifier-142"><a href="#SubViewClassifier-142"><span class="linenos">142</span></a><span class="sd">        -------</span>
-</span><span id="SubViewClassifier-143"><a href="#SubViewClassifier-143"><span class="linenos">143</span></a><span class="sd">        p : array-like of shape (n_samples, n_classes)</span>
-</span><span id="SubViewClassifier-144"><a href="#SubViewClassifier-144"><span class="linenos">144</span></a><span class="sd">            The class probabilities of the input samples.</span>
-</span><span id="SubViewClassifier-145"><a href="#SubViewClassifier-145"><span class="linenos">145</span></a><span class="sd">        &quot;&quot;&quot;</span>        
-</span><span id="SubViewClassifier-146"><a href="#SubViewClassifier-146"><span class="linenos">146</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;regex&quot;</span><span class="p">:</span>
-</span><span id="SubViewClassifier-147"><a href="#SubViewClassifier-147"><span class="linenos">147</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="SubViewClassifier-148"><a href="#SubViewClassifier-148"><span class="linenos">148</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span>
-</span><span id="SubViewClassifier-149"><a href="#SubViewClassifier-149"><span class="linenos">149</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="SubViewClassifier-150"><a href="#SubViewClassifier-150"><span class="linenos">150</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;include&quot;</span><span class="p">:</span>
-</span><span id="SubViewClassifier-151"><a href="#SubViewClassifier-151"><span class="linenos">151</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_include_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="SubViewClassifier-152"><a href="#SubViewClassifier-152"><span class="linenos">152</span></a>
-</span><span id="SubViewClassifier-153"><a href="#SubViewClassifier-153"><span class="linenos">153</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_estimator_</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewClassifier-154"><a href="#SubViewClassifier-154"><span class="linenos">154</span></a><span class="k">class</span> <span class="nc">SubViewClassifier</span><span class="p">(</span><span class="n">SubView</span><span class="p">,</span> <span class="n">ClassifierMixin</span><span class="p">):</span>
+</span><span id="SubViewClassifier-155"><a href="#SubViewClassifier-155"><span class="linenos">155</span></a>
+</span><span id="SubViewClassifier-156"><a href="#SubViewClassifier-156"><span class="linenos">156</span></a>    <span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+</span><span id="SubViewClassifier-157"><a href="#SubViewClassifier-157"><span class="linenos">157</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict class probabilities using the base estimator.</span>
+</span><span id="SubViewClassifier-158"><a href="#SubViewClassifier-158"><span class="linenos">158</span></a>
+</span><span id="SubViewClassifier-159"><a href="#SubViewClassifier-159"><span class="linenos">159</span></a><span class="sd">        Parameters</span>
+</span><span id="SubViewClassifier-160"><a href="#SubViewClassifier-160"><span class="linenos">160</span></a><span class="sd">        ----------</span>
+</span><span id="SubViewClassifier-161"><a href="#SubViewClassifier-161"><span class="linenos">161</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
+</span><span id="SubViewClassifier-162"><a href="#SubViewClassifier-162"><span class="linenos">162</span></a><span class="sd">            The input samples.</span>
+</span><span id="SubViewClassifier-163"><a href="#SubViewClassifier-163"><span class="linenos">163</span></a>
+</span><span id="SubViewClassifier-164"><a href="#SubViewClassifier-164"><span class="linenos">164</span></a><span class="sd">        Returns</span>
+</span><span id="SubViewClassifier-165"><a href="#SubViewClassifier-165"><span class="linenos">165</span></a><span class="sd">        -------</span>
+</span><span id="SubViewClassifier-166"><a href="#SubViewClassifier-166"><span class="linenos">166</span></a><span class="sd">        p : array-like of shape (n_samples, n_classes)</span>
+</span><span id="SubViewClassifier-167"><a href="#SubViewClassifier-167"><span class="linenos">167</span></a><span class="sd">            The class probabilities of the input samples.</span>
+</span><span id="SubViewClassifier-168"><a href="#SubViewClassifier-168"><span class="linenos">168</span></a><span class="sd">        &quot;&quot;&quot;</span>        
+</span><span id="SubViewClassifier-169"><a href="#SubViewClassifier-169"><span class="linenos">169</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;regex&quot;</span><span class="p">:</span>
+</span><span id="SubViewClassifier-170"><a href="#SubViewClassifier-170"><span class="linenos">170</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="SubViewClassifier-171"><a href="#SubViewClassifier-171"><span class="linenos">171</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span>
+</span><span id="SubViewClassifier-172"><a href="#SubViewClassifier-172"><span class="linenos">172</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="SubViewClassifier-173"><a href="#SubViewClassifier-173"><span class="linenos">173</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;include&quot;</span><span class="p">:</span>
+</span><span id="SubViewClassifier-174"><a href="#SubViewClassifier-174"><span class="linenos">174</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_include_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="SubViewClassifier-175"><a href="#SubViewClassifier-175"><span class="linenos">175</span></a>
+</span><span id="SubViewClassifier-176"><a href="#SubViewClassifier-176"><span class="linenos">176</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_estimator_</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Base class for all estimators in scikit-learn.</p>
+            <div class="docstring"><p>A classifier that uses a subview of the data.</p>
 
-<h6 id="notes">Notes</h6>
+<h6 id="example">Example</h6>
 
-<p>All estimators should specify all the parameters that can be set
-at the class level in their <code><a href="#SubViewClassifier.__init__">__init__</a></code> as explicit keyword
-arguments (no <code>*args</code> or <code>**kwargs</code>).</p>
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.tree</span> <span class="kn">import</span> <span class="n">DecisionTreeClassifier</span>
+<span class="kn">from</span> <span class="nn"><a href="">sslearn.subview</a></span> <span class="kn">import</span> <span class="n">SubViewClassifier</span>
+
+<span class="c1"># Mode &#39;include&#39; will include all columns that contain `string`</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(),</span> <span class="s2">&quot;sepal&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;include&quot;</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Mode &#39;regex&#39; will include all columns that match the regex</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(),</span> <span class="s2">&quot;sepal.*&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;regex&quot;</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Mode &#39;index&#39; will include the columns at the index, useful for numpy arrays</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</code></pre>
+</div>
 </div>
 
 
@@ -195,27 +208,27 @@ arguments (no <code>*args</code> or <code>**kwargs</code>).</p>
 
     </div>
     <a class="headerlink" href="#SubViewClassifier.predict_proba"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewClassifier.predict_proba-133"><a href="#SubViewClassifier.predict_proba-133"><span class="linenos">133</span></a>    <span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-</span><span id="SubViewClassifier.predict_proba-134"><a href="#SubViewClassifier.predict_proba-134"><span class="linenos">134</span></a>        <span class="sd">&quot;&quot;&quot;Predict class probabilities using the base estimator.</span>
-</span><span id="SubViewClassifier.predict_proba-135"><a href="#SubViewClassifier.predict_proba-135"><span class="linenos">135</span></a>
-</span><span id="SubViewClassifier.predict_proba-136"><a href="#SubViewClassifier.predict_proba-136"><span class="linenos">136</span></a><span class="sd">        Parameters</span>
-</span><span id="SubViewClassifier.predict_proba-137"><a href="#SubViewClassifier.predict_proba-137"><span class="linenos">137</span></a><span class="sd">        ----------</span>
-</span><span id="SubViewClassifier.predict_proba-138"><a href="#SubViewClassifier.predict_proba-138"><span class="linenos">138</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-</span><span id="SubViewClassifier.predict_proba-139"><a href="#SubViewClassifier.predict_proba-139"><span class="linenos">139</span></a><span class="sd">            The input samples.</span>
-</span><span id="SubViewClassifier.predict_proba-140"><a href="#SubViewClassifier.predict_proba-140"><span class="linenos">140</span></a>
-</span><span id="SubViewClassifier.predict_proba-141"><a href="#SubViewClassifier.predict_proba-141"><span class="linenos">141</span></a><span class="sd">        Returns</span>
-</span><span id="SubViewClassifier.predict_proba-142"><a href="#SubViewClassifier.predict_proba-142"><span class="linenos">142</span></a><span class="sd">        -------</span>
-</span><span id="SubViewClassifier.predict_proba-143"><a href="#SubViewClassifier.predict_proba-143"><span class="linenos">143</span></a><span class="sd">        p : array-like of shape (n_samples, n_classes)</span>
-</span><span id="SubViewClassifier.predict_proba-144"><a href="#SubViewClassifier.predict_proba-144"><span class="linenos">144</span></a><span class="sd">            The class probabilities of the input samples.</span>
-</span><span id="SubViewClassifier.predict_proba-145"><a href="#SubViewClassifier.predict_proba-145"><span class="linenos">145</span></a><span class="sd">        &quot;&quot;&quot;</span>        
-</span><span id="SubViewClassifier.predict_proba-146"><a href="#SubViewClassifier.predict_proba-146"><span class="linenos">146</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;regex&quot;</span><span class="p">:</span>
-</span><span id="SubViewClassifier.predict_proba-147"><a href="#SubViewClassifier.predict_proba-147"><span class="linenos">147</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="SubViewClassifier.predict_proba-148"><a href="#SubViewClassifier.predict_proba-148"><span class="linenos">148</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span>
-</span><span id="SubViewClassifier.predict_proba-149"><a href="#SubViewClassifier.predict_proba-149"><span class="linenos">149</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="SubViewClassifier.predict_proba-150"><a href="#SubViewClassifier.predict_proba-150"><span class="linenos">150</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;include&quot;</span><span class="p">:</span>
-</span><span id="SubViewClassifier.predict_proba-151"><a href="#SubViewClassifier.predict_proba-151"><span class="linenos">151</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_include_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="SubViewClassifier.predict_proba-152"><a href="#SubViewClassifier.predict_proba-152"><span class="linenos">152</span></a>
-</span><span id="SubViewClassifier.predict_proba-153"><a href="#SubViewClassifier.predict_proba-153"><span class="linenos">153</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_estimator_</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewClassifier.predict_proba-156"><a href="#SubViewClassifier.predict_proba-156"><span class="linenos">156</span></a>    <span class="k">def</span> <span class="nf">predict_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+</span><span id="SubViewClassifier.predict_proba-157"><a href="#SubViewClassifier.predict_proba-157"><span class="linenos">157</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict class probabilities using the base estimator.</span>
+</span><span id="SubViewClassifier.predict_proba-158"><a href="#SubViewClassifier.predict_proba-158"><span class="linenos">158</span></a>
+</span><span id="SubViewClassifier.predict_proba-159"><a href="#SubViewClassifier.predict_proba-159"><span class="linenos">159</span></a><span class="sd">        Parameters</span>
+</span><span id="SubViewClassifier.predict_proba-160"><a href="#SubViewClassifier.predict_proba-160"><span class="linenos">160</span></a><span class="sd">        ----------</span>
+</span><span id="SubViewClassifier.predict_proba-161"><a href="#SubViewClassifier.predict_proba-161"><span class="linenos">161</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
+</span><span id="SubViewClassifier.predict_proba-162"><a href="#SubViewClassifier.predict_proba-162"><span class="linenos">162</span></a><span class="sd">            The input samples.</span>
+</span><span id="SubViewClassifier.predict_proba-163"><a href="#SubViewClassifier.predict_proba-163"><span class="linenos">163</span></a>
+</span><span id="SubViewClassifier.predict_proba-164"><a href="#SubViewClassifier.predict_proba-164"><span class="linenos">164</span></a><span class="sd">        Returns</span>
+</span><span id="SubViewClassifier.predict_proba-165"><a href="#SubViewClassifier.predict_proba-165"><span class="linenos">165</span></a><span class="sd">        -------</span>
+</span><span id="SubViewClassifier.predict_proba-166"><a href="#SubViewClassifier.predict_proba-166"><span class="linenos">166</span></a><span class="sd">        p : array-like of shape (n_samples, n_classes)</span>
+</span><span id="SubViewClassifier.predict_proba-167"><a href="#SubViewClassifier.predict_proba-167"><span class="linenos">167</span></a><span class="sd">            The class probabilities of the input samples.</span>
+</span><span id="SubViewClassifier.predict_proba-168"><a href="#SubViewClassifier.predict_proba-168"><span class="linenos">168</span></a><span class="sd">        &quot;&quot;&quot;</span>        
+</span><span id="SubViewClassifier.predict_proba-169"><a href="#SubViewClassifier.predict_proba-169"><span class="linenos">169</span></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;regex&quot;</span><span class="p">:</span>
+</span><span id="SubViewClassifier.predict_proba-170"><a href="#SubViewClassifier.predict_proba-170"><span class="linenos">170</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regex_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="SubViewClassifier.predict_proba-171"><a href="#SubViewClassifier.predict_proba-171"><span class="linenos">171</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;index&quot;</span><span class="p">:</span>
+</span><span id="SubViewClassifier.predict_proba-172"><a href="#SubViewClassifier.predict_proba-172"><span class="linenos">172</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="SubViewClassifier.predict_proba-173"><a href="#SubViewClassifier.predict_proba-173"><span class="linenos">173</span></a>        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;include&quot;</span><span class="p">:</span>
+</span><span id="SubViewClassifier.predict_proba-174"><a href="#SubViewClassifier.predict_proba-174"><span class="linenos">174</span></a>            <span class="n">X</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_include_subview</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="SubViewClassifier.predict_proba-175"><a href="#SubViewClassifier.predict_proba-175"><span class="linenos">175</span></a>
+</span><span id="SubViewClassifier.predict_proba-176"><a href="#SubViewClassifier.predict_proba-176"><span class="linenos">176</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_estimator_</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -238,58 +251,6 @@ The class probabilities of the input samples.</li>
 
 
                             </div>
-                            <div id="SubViewClassifier.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#SubViewClassifier.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -302,10 +263,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="SubViewClassifier.get_params" class="function">get_params</dd>
                 <dd id="SubViewClassifier.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="SubViewClassifier.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.ClassifierMixin</dt>
@@ -326,32 +283,47 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
 
     </div>
     <a class="headerlink" href="#SubViewRegressor"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewRegressor-155"><a href="#SubViewRegressor-155"><span class="linenos">155</span></a><span class="k">class</span> <span class="nc">SubViewRegressor</span><span class="p">(</span><span class="n">SubView</span><span class="p">,</span> <span class="n">RegressorMixin</span><span class="p">):</span>
-</span><span id="SubViewRegressor-156"><a href="#SubViewRegressor-156"><span class="linenos">156</span></a>
-</span><span id="SubViewRegressor-157"><a href="#SubViewRegressor-157"><span class="linenos">157</span></a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-</span><span id="SubViewRegressor-158"><a href="#SubViewRegressor-158"><span class="linenos">158</span></a>        <span class="sd">&quot;&quot;&quot;Predict using the base estimator.</span>
-</span><span id="SubViewRegressor-159"><a href="#SubViewRegressor-159"><span class="linenos">159</span></a>
-</span><span id="SubViewRegressor-160"><a href="#SubViewRegressor-160"><span class="linenos">160</span></a><span class="sd">        Parameters</span>
-</span><span id="SubViewRegressor-161"><a href="#SubViewRegressor-161"><span class="linenos">161</span></a><span class="sd">        ----------</span>
-</span><span id="SubViewRegressor-162"><a href="#SubViewRegressor-162"><span class="linenos">162</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-</span><span id="SubViewRegressor-163"><a href="#SubViewRegressor-163"><span class="linenos">163</span></a><span class="sd">            The input samples.</span>
-</span><span id="SubViewRegressor-164"><a href="#SubViewRegressor-164"><span class="linenos">164</span></a>
-</span><span id="SubViewRegressor-165"><a href="#SubViewRegressor-165"><span class="linenos">165</span></a><span class="sd">        Returns</span>
-</span><span id="SubViewRegressor-166"><a href="#SubViewRegressor-166"><span class="linenos">166</span></a><span class="sd">        -------</span>
-</span><span id="SubViewRegressor-167"><a href="#SubViewRegressor-167"><span class="linenos">167</span></a><span class="sd">        y : array-like of shape (n_samples,)</span>
-</span><span id="SubViewRegressor-168"><a href="#SubViewRegressor-168"><span class="linenos">168</span></a><span class="sd">            The predicted values.</span>
-</span><span id="SubViewRegressor-169"><a href="#SubViewRegressor-169"><span class="linenos">169</span></a><span class="sd">        &quot;&quot;&quot;</span>        
-</span><span id="SubViewRegressor-170"><a href="#SubViewRegressor-170"><span class="linenos">170</span></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewRegressor-178"><a href="#SubViewRegressor-178"><span class="linenos">178</span></a><span class="k">class</span> <span class="nc">SubViewRegressor</span><span class="p">(</span><span class="n">SubView</span><span class="p">,</span> <span class="n">RegressorMixin</span><span class="p">):</span>
+</span><span id="SubViewRegressor-179"><a href="#SubViewRegressor-179"><span class="linenos">179</span></a>
+</span><span id="SubViewRegressor-180"><a href="#SubViewRegressor-180"><span class="linenos">180</span></a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+</span><span id="SubViewRegressor-181"><a href="#SubViewRegressor-181"><span class="linenos">181</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict using the base estimator.</span>
+</span><span id="SubViewRegressor-182"><a href="#SubViewRegressor-182"><span class="linenos">182</span></a>
+</span><span id="SubViewRegressor-183"><a href="#SubViewRegressor-183"><span class="linenos">183</span></a><span class="sd">        Parameters</span>
+</span><span id="SubViewRegressor-184"><a href="#SubViewRegressor-184"><span class="linenos">184</span></a><span class="sd">        ----------</span>
+</span><span id="SubViewRegressor-185"><a href="#SubViewRegressor-185"><span class="linenos">185</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
+</span><span id="SubViewRegressor-186"><a href="#SubViewRegressor-186"><span class="linenos">186</span></a><span class="sd">            The input samples.</span>
+</span><span id="SubViewRegressor-187"><a href="#SubViewRegressor-187"><span class="linenos">187</span></a>
+</span><span id="SubViewRegressor-188"><a href="#SubViewRegressor-188"><span class="linenos">188</span></a><span class="sd">        Returns</span>
+</span><span id="SubViewRegressor-189"><a href="#SubViewRegressor-189"><span class="linenos">189</span></a><span class="sd">        -------</span>
+</span><span id="SubViewRegressor-190"><a href="#SubViewRegressor-190"><span class="linenos">190</span></a><span class="sd">        y : array-like of shape (n_samples,)</span>
+</span><span id="SubViewRegressor-191"><a href="#SubViewRegressor-191"><span class="linenos">191</span></a><span class="sd">            The predicted values.</span>
+</span><span id="SubViewRegressor-192"><a href="#SubViewRegressor-192"><span class="linenos">192</span></a><span class="sd">        &quot;&quot;&quot;</span>        
+</span><span id="SubViewRegressor-193"><a href="#SubViewRegressor-193"><span class="linenos">193</span></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>Base class for all estimators in scikit-learn.</p>
+            <div class="docstring"><p>A classifier that uses a subview of the data.</p>
 
-<h6 id="notes">Notes</h6>
+<h6 id="example">Example</h6>
 
-<p>All estimators should specify all the parameters that can be set
-at the class level in their <code><a href="#SubViewRegressor.__init__">__init__</a></code> as explicit keyword
-arguments (no <code>*args</code> or <code>**kwargs</code>).</p>
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.tree</span> <span class="kn">import</span> <span class="n">DecisionTreeClassifier</span>
+<span class="kn">from</span> <span class="nn"><a href="">sslearn.subview</a></span> <span class="kn">import</span> <span class="n">SubViewClassifier</span>
+
+<span class="c1"># Mode &#39;include&#39; will include all columns that contain `string`</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(),</span> <span class="s2">&quot;sepal&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;include&quot;</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Mode &#39;regex&#39; will include all columns that match the regex</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(),</span> <span class="s2">&quot;sepal.*&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;regex&quot;</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="c1"># Mode &#39;index&#39; will include the columns at the index, useful for numpy arrays</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+<span class="n">clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</code></pre>
+</div>
 </div>
 
 
@@ -366,20 +338,20 @@ arguments (no <code>*args</code> or <code>**kwargs</code>).</p>
 
     </div>
     <a class="headerlink" href="#SubViewRegressor.predict"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewRegressor.predict-157"><a href="#SubViewRegressor.predict-157"><span class="linenos">157</span></a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-</span><span id="SubViewRegressor.predict-158"><a href="#SubViewRegressor.predict-158"><span class="linenos">158</span></a>        <span class="sd">&quot;&quot;&quot;Predict using the base estimator.</span>
-</span><span id="SubViewRegressor.predict-159"><a href="#SubViewRegressor.predict-159"><span class="linenos">159</span></a>
-</span><span id="SubViewRegressor.predict-160"><a href="#SubViewRegressor.predict-160"><span class="linenos">160</span></a><span class="sd">        Parameters</span>
-</span><span id="SubViewRegressor.predict-161"><a href="#SubViewRegressor.predict-161"><span class="linenos">161</span></a><span class="sd">        ----------</span>
-</span><span id="SubViewRegressor.predict-162"><a href="#SubViewRegressor.predict-162"><span class="linenos">162</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
-</span><span id="SubViewRegressor.predict-163"><a href="#SubViewRegressor.predict-163"><span class="linenos">163</span></a><span class="sd">            The input samples.</span>
-</span><span id="SubViewRegressor.predict-164"><a href="#SubViewRegressor.predict-164"><span class="linenos">164</span></a>
-</span><span id="SubViewRegressor.predict-165"><a href="#SubViewRegressor.predict-165"><span class="linenos">165</span></a><span class="sd">        Returns</span>
-</span><span id="SubViewRegressor.predict-166"><a href="#SubViewRegressor.predict-166"><span class="linenos">166</span></a><span class="sd">        -------</span>
-</span><span id="SubViewRegressor.predict-167"><a href="#SubViewRegressor.predict-167"><span class="linenos">167</span></a><span class="sd">        y : array-like of shape (n_samples,)</span>
-</span><span id="SubViewRegressor.predict-168"><a href="#SubViewRegressor.predict-168"><span class="linenos">168</span></a><span class="sd">            The predicted values.</span>
-</span><span id="SubViewRegressor.predict-169"><a href="#SubViewRegressor.predict-169"><span class="linenos">169</span></a><span class="sd">        &quot;&quot;&quot;</span>        
-</span><span id="SubViewRegressor.predict-170"><a href="#SubViewRegressor.predict-170"><span class="linenos">170</span></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="SubViewRegressor.predict-180"><a href="#SubViewRegressor.predict-180"><span class="linenos">180</span></a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+</span><span id="SubViewRegressor.predict-181"><a href="#SubViewRegressor.predict-181"><span class="linenos">181</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict using the base estimator.</span>
+</span><span id="SubViewRegressor.predict-182"><a href="#SubViewRegressor.predict-182"><span class="linenos">182</span></a>
+</span><span id="SubViewRegressor.predict-183"><a href="#SubViewRegressor.predict-183"><span class="linenos">183</span></a><span class="sd">        Parameters</span>
+</span><span id="SubViewRegressor.predict-184"><a href="#SubViewRegressor.predict-184"><span class="linenos">184</span></a><span class="sd">        ----------</span>
+</span><span id="SubViewRegressor.predict-185"><a href="#SubViewRegressor.predict-185"><span class="linenos">185</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
+</span><span id="SubViewRegressor.predict-186"><a href="#SubViewRegressor.predict-186"><span class="linenos">186</span></a><span class="sd">            The input samples.</span>
+</span><span id="SubViewRegressor.predict-187"><a href="#SubViewRegressor.predict-187"><span class="linenos">187</span></a>
+</span><span id="SubViewRegressor.predict-188"><a href="#SubViewRegressor.predict-188"><span class="linenos">188</span></a><span class="sd">        Returns</span>
+</span><span id="SubViewRegressor.predict-189"><a href="#SubViewRegressor.predict-189"><span class="linenos">189</span></a><span class="sd">        -------</span>
+</span><span id="SubViewRegressor.predict-190"><a href="#SubViewRegressor.predict-190"><span class="linenos">190</span></a><span class="sd">        y : array-like of shape (n_samples,)</span>
+</span><span id="SubViewRegressor.predict-191"><a href="#SubViewRegressor.predict-191"><span class="linenos">191</span></a><span class="sd">            The predicted values.</span>
+</span><span id="SubViewRegressor.predict-192"><a href="#SubViewRegressor.predict-192"><span class="linenos">192</span></a><span class="sd">        &quot;&quot;&quot;</span>        
+</span><span id="SubViewRegressor.predict-193"><a href="#SubViewRegressor.predict-193"><span class="linenos">193</span></a>        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -402,58 +374,6 @@ The predicted values.</li>
 
 
                             </div>
-                            <div id="SubViewRegressor.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#SubViewRegressor.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -465,10 +385,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="SubViewRegressor.get_params" class="function">get_params</dd>
                 <dd id="SubViewRegressor.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="SubViewRegressor.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.RegressorMixin</dt>

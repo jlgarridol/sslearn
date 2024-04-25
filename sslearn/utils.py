@@ -3,16 +3,23 @@ Some utility functions
 
 This module contains utility functions that are used in different parts of the library.
 
-Functions
----------
-safe_division : Safely divide two numbers preventing division by zero.
-confidence_interval : Calculate the confidence interval of the predictions.
-choice_with_proportion : Choice the best predictions according to the proportion of each class.
-calculate_prior_probability : Calculate the priori probability of each label.
-check_n_jobs : Check `n_jobs` parameter according to the scikit-learn convention.
+## Functions
 
-All doc
--------
+[safe_division](#safe_division):
+> Safely divide two numbers preventing division by zero.
+[confidence_interval](#confidence_interval):
+> Calculate the confidence interval of the predictions.
+[choice_with_proportion](#choice_with_proportion): 
+> Choice the best predictions according to the proportion of each class.
+[calculate_prior_probability](#calculate_prior_probability):
+> Calculate the priori probability of each label.
+[mode](#mode):
+> Calculate the mode of a list of values.
+[check_n_jobs](#check_n_jobs):
+> Check `n_jobs` parameter according to the scikit-learn convention.
+[check_classifier](#check_classifier):
+> Check if the classifier is a ClassifierMixin or a list of ClassifierMixin.
+
 """
 
 import numpy as np
@@ -26,7 +33,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import ClassifierMixin
 
 __all__ = ["safe_division", "confidence_interval", "choice_with_proportion", "calculate_prior_probability",
-           "check_n_jobs"]
+           "mode", "check_n_jobs", "check_classifier"]
 
 
 def safe_division(dividend, divisor, epsilon):

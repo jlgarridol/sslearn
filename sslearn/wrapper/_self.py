@@ -13,6 +13,37 @@ from ..base import get_dataset
 
 
 class SelfTraining(SelfTrainingClassifier):
+    """
+    **Self Training Classifier with data loader compatible.**
+    ----------------------------
+
+    Is the same `SelfTrainingClassifier` from sklearn but with `sslearn` data loader compatible.
+    For more information, see the [sklearn documentation](https://scikit-learn.org/stable/modules/generated/sklearn.semi_supervised.SelfTrainingClassifier.html).
+
+    **Example**
+    -----------
+    ```python
+    from sklearn.datasets import load_iris
+    from sslearn.model_selection import artificial_ssl_dataset
+    from sslearn.wrapper import SelfTraining
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+
+    clf = SelfTraining()
+    clf.fit(X, y)
+    clf.score(X_unlabel, y_unlabel)
+    ```
+
+    **References**
+    --------------
+    David Yarowsky. (1995). <br>
+    Unsupervised word sense disambiguation rivaling supervised methods.<br>
+    In <i>Proceedings of the 33rd annual meeting on Association for Computational Linguistics (ACL '95).</i><br>
+    Association for Computational Linguistics,<br>
+    Stroudsburg, PA, USA, 189-196. <br>
+    [10.3115/981658.981684](https://doi.org/10.3115/981658.981684)
+    """
 
     _estimator_type = "classifier"
 
@@ -65,14 +96,6 @@ class SelfTraining(SelfTrainingClassifier):
 
         verbose : bool, default=False
             Enable verbose output.
-
-        References
-        ----------
-        David Yarowsky. 1995. Unsupervised word sense disambiguation rivaling
-        supervised methods. In Proceedings of the 33rd annual meeting on
-        Association for Computational Linguistics (ACL '95). Association for
-        Computational Linguistics, Stroudsburg, PA, USA, 189-196. DOI:
-        https://doi.org/10.3115/981658.981684
         """
         super().__init__(base_estimator, threshold, criterion, k_best, max_iter, verbose)
 
@@ -102,6 +125,49 @@ class SelfTraining(SelfTrainingClassifier):
 
 
 class Setred(ClassifierMixin, BaseEstimator):
+    """
+    **Self-training with Editing.**
+    ----------------------------
+
+    Create a SETRED classifier. It is a self-training algorithm that uses a rejection mechanism to avoid adding noisy samples to the training set.
+    The main process are:
+    1. Train a classifier with the labeled data.
+    2. Create a pool of unlabeled data and select the most confident predictions.
+    3. Repeat until the maximum number of iterations is reached:
+        a. Select the most confident predictions from the unlabeled data.
+        b. Calculate the neighborhood graph of the labeled data and the selected instances from the unlabeled data.
+        c. Calculate the significance level of the selected instances.
+        d. Reject the instances that are not significant according their position in the neighborhood graph.
+        e. Add the selected instances to the labeled data and retrains the classifier.
+        f. Add new instances to the pool of unlabeled data.
+    4. Return the classifier trained with the labeled data.
+
+    **Example**
+    -----------
+    ```python
+    from sklearn.datasets import load_iris
+    from sslearn.model_selection import artificial_ssl_dataset
+    from sslearn.wrapper import Setred
+
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, y_unlabel, _, _ = artificial_ssl_dataset(X, y, label_rate=0.1, random_state=0)
+
+    clf = Setred()
+    clf.fit(X, y)
+    clf.score(X_unlabel, y_unlabel)
+    ```
+
+    **References**
+    ----------
+    Li, Ming, and Zhi-Hua Zhou. (2005)<br>
+    SETRED: Self-training with editing,<br>
+    in <i>Advances in Knowledge Discovery and Data Mining.</i> <br>
+    Pacific-Asia Conference on Knowledge Discovery and Data Mining <br>
+    LNAI 3518, Springer, Berlin, Heidelberg, <br>
+    [10.1007/11430919_71](https://doi.org/10.1007/11430919_71)
+
+    """
+
     def __init__(
         self,
         base_estimator=KNeighborsClassifier(n_neighbors=3),
@@ -127,7 +193,7 @@ class Setred(ClassifierMixin, BaseEstimator):
             The distance metric to use for the graph.
             The default metric is euclidean, and with p=2 is equivalent to the standard Euclidean metric.
             For a list of available metrics, see the documentation of DistanceMetric and the metrics listed in sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
-            Note that the “cosine” metric uses cosine_distances., by default "euclidean"
+            Note that the `cosine` metric uses cosine_distances., by default `euclidean`
         poolsize : float, optional
             Max number of unlabel instances candidates to pseudolabel, by default 0.25
         rejection_threshold : float, optional
@@ -138,12 +204,6 @@ class Setred(ClassifierMixin, BaseEstimator):
             controls the randomness of the estimator, by default None
         n_jobs : int, optional
             The number of parallel jobs to run for neighbors search. None means 1 unless in a joblib.parallel_backend context. -1 means using all processors, by default None
-        
-        References
-        ----------
-        Li, Ming, and Zhi-Hua Zhou. "SETRED: Self-training with editing."
-        Pacific-Asia Conference on Knowledge Discovery and Data Mining.
-        Springer, Berlin, Heidelberg, 2005. doi: 10.1007/11430919_71.
         """
         self.base_estimator = check_classifier(base_estimator, can_be_list=False)
         self.max_iterations = max_iterations

@@ -2,17 +2,19 @@
 
 This module contains classes to train a classifier using the restricted set classification approach.
 
-Classes
--------
-WhoIsWhoClassifier : Who is Who Classifier
+## Classes
 
-Functions
----------
-conflict_rate : Compute the conflict rate of a prediction, given a set of restrictions.
-combine_predictions : Combine the predictions of a group of instances to keep the restrictions.
+[WhoIsWhoClassifier](#WhoIsWhoClassifier):
+> Who is Who Classifier
 
-All doc
--------
+## Functions
+
+[conflict_rate](#conflict_rate): 
+> Compute the conflict rate of a prediction, given a set of restrictions.
+[combine_predictions](#combine_predictions): 
+> Combine the predictions of a group of instances to keep the restrictions.
+
+
 """
 
 import numpy as np
@@ -21,7 +23,7 @@ from scipy.optimize import linear_sum_assignment
 import warnings
 import pandas as pd
 
-__all__ = ["WhoIsWhoClassifier", "conflict_rate", "combine_predictions"]
+__all__ = ["conflict_rate", "combine_predictions", "WhoIsWhoClassifier"]
 
 class WhoIsWhoClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
