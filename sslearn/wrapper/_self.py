@@ -197,7 +197,7 @@ class Setred(ClassifierMixin, BaseEstimator):
         poolsize : float, optional
             Max number of unlabel instances candidates to pseudolabel, by default 0.25
         rejection_threshold : float, optional
-            significance level, by default 0.1
+            significance level, by default 0.05
         graph_neighbors : int, optional
             Number of neighbors for each sample., by default 1
         random_state : int, RandomState instance, optional

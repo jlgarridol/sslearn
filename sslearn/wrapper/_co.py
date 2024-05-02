@@ -1102,7 +1102,6 @@ class CoTrainingByCommittee(BaseCoTraining):
     Pisa, 2008, pp. 563-572,  [10.1109/ICDMW.2008.27](https://doi.org/10.1109/ICDMW.2008.27)
     """
 
-
     def __init__(
         self,
         ensemble_estimator=BaggingClassifier(),

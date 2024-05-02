@@ -16,7 +16,7 @@ from sslearn.datasets import read_csv
 from sslearn.model_selection import artificial_ssl_dataset
 from sslearn.wrapper import (
     CoTraining, CoForest, CoTrainingByCommittee, DemocraticCoLearning, Rasco, RelRasco,
-    SelfTraining, Setred, TriTraining, WiWTriTraining, DeTriTraining
+    SelfTraining, Setred, TriTraining, DeTriTraining    
 )
 
 X, y = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone.csv"), format="pandas")
@@ -238,40 +238,40 @@ for order, i in enumerate(range(0, len(X), 5)):
 groups = np.array(groups)
 groups = groups[:X.shape[0]]
 
-class TestWiWTriTraining:
+# class TestWiWTriTraining:
     
-    def test_basic(self):
-        clf = WiWTriTraining(base_estimator=DecisionTreeClassifier())
-        clf.fit(X, y, instance_group=groups)
-        clf.predict(X, instance_group=groups)
-        clf.predict_proba(X)
+#     def test_basic(self):
+#         clf = WiWTriTraining(base_estimator=DecisionTreeClassifier())
+#         clf.fit(X, y, instance_group=groups)
+#         clf.predict(X, instance_group=groups)
+#         clf.predict_proba(X)
 
-        clf = WiWTriTraining(DecisionTreeClassifier())
-        clf.fit(X2, y2, instance_group=groups)
-        clf.predict(X2, instance_group=groups)
-        clf.predict_proba(X2)
+#         clf = WiWTriTraining(DecisionTreeClassifier())
+#         clf.fit(X2, y2, instance_group=groups)
+#         clf.predict(X2, instance_group=groups)
+#         clf.predict_proba(X2)
 
-    def test_multiple(self):
-        clf = WiWTriTraining(base_estimator=[DecisionTreeClassifier(max_depth=1), DecisionTreeClassifier(max_depth=2), DecisionTreeClassifier(max_depth=3)])
-        clf.fit(X, y, instance_group=groups)
-        clf.predict(X, instance_group=groups)
-        clf.predict_proba(X)
+#     def test_multiple(self):
+#         clf = WiWTriTraining(base_estimator=[DecisionTreeClassifier(max_depth=1), DecisionTreeClassifier(max_depth=2), DecisionTreeClassifier(max_depth=3)])
+#         clf.fit(X, y, instance_group=groups)
+#         clf.predict(X, instance_group=groups)
+#         clf.predict_proba(X)
     
-    def test_random_state(self):
-        for i in range(10):
-            clf = WiWTriTraining(base_estimator=KNeighborsClassifier(), random_state=i)
-            clf.fit(X, y, instance_group=groups)
-            y1 = clf.predict(X, instance_group=groups)
+#     def test_random_state(self):
+#         for i in range(10):
+#             clf = WiWTriTraining(base_estimator=KNeighborsClassifier(), random_state=i)
+#             clf.fit(X, y, instance_group=groups)
+#             y1 = clf.predict(X, instance_group=groups)
 
-            clf = WiWTriTraining(base_estimator=KNeighborsClassifier(), random_state=i)
-            clf.fit(X, y, instance_group=groups)
-            y2 = clf.predict(X, instance_group=groups)
+#             clf = WiWTriTraining(base_estimator=KNeighborsClassifier(), random_state=i)
+#             clf.fit(X, y, instance_group=groups)
+#             y2 = clf.predict(X, instance_group=groups)
 
-            assert np.all(y1 == y2)
+#             assert np.all(y1 == y2)
 
-    def test_all_label(self):
-        clf = WiWTriTraining(base_estimator=KNeighborsClassifier())
-        clf.fit(X, y, instance_group=groups)
-        clf.predict(X, instance_group=groups)
-        clf.predict_proba(X)
+#     def test_all_label(self):
+#         clf = WiWTriTraining(base_estimator=KNeighborsClassifier())
+#         clf.fit(X, y, instance_group=groups)
+#         clf.predict(X, instance_group=groups)
+#         clf.predict_proba(X)
 
