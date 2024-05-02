@@ -186,7 +186,7 @@ class Setred(ClassifierMixin, BaseEstimator):
         Parameters
         ----------
         base_estimator : ClassifierMixin, optional
-            An estimator object implementing fit and predict_proba,, by default DecisionTreeClassifier(), by default KNeighborsClassifier(n_neighbors=3)
+            An estimator object implementing fit and predict_proba, by default KNeighborsClassifier(n_neighbors=3)
         max_iterations : int, optional
             Maximum number of iterations allowed. Should be greater than or equal to 0., by default 40
         distance : str, optional
