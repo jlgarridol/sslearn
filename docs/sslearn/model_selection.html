@@ -63,6 +63,18 @@
             <li>
                     <a class="function" href="#artificial_ssl_dataset">artificial_ssl_dataset</a>
             </li>
+            <li>
+                    <a class="class" href="#StratifiedKFoldSS">StratifiedKFoldSS</a>
+                            <ul class="memberlist">
+                        <li>
+                                <a class="function" href="#StratifiedKFoldSS.__init__">StratifiedKFoldSS</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#StratifiedKFoldSS.split">split</a>
+                        </li>
+                </ul>
+
+            </li>
     </ul>
 
 
@@ -123,7 +135,7 @@
 </span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>
 </span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="kn">from</span> <span class="nn">._split</span> <span class="kn">import</span> <span class="o">*</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="kn">from</span> <span class="nn">._split</span> <span class="kn">import</span> <span class="n">artificial_ssl_dataset</span><span class="p">,</span> <span class="n">StratifiedKFoldSS</span>
 </span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>
 </span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;artificial_ssl_dataset&#39;</span><span class="p">,</span> <span class="s1">&#39;StratifiedKFoldSS&#39;</span><span class="p">]</span>
 </span></pre></div>
@@ -141,110 +153,110 @@
 
     </div>
     <a class="headerlink" href="#artificial_ssl_dataset"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="artificial_ssl_dataset-65"><a href="#artificial_ssl_dataset-65"><span class="linenos"> 65</span></a><span class="k">def</span> <span class="nf">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_minimum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwards</span><span class="p">):</span>
-</span><span id="artificial_ssl_dataset-66"><a href="#artificial_ssl_dataset-66"><span class="linenos"> 66</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an artificial Semi-supervised dataset from a supervised dataset.</span>
-</span><span id="artificial_ssl_dataset-67"><a href="#artificial_ssl_dataset-67"><span class="linenos"> 67</span></a>
-</span><span id="artificial_ssl_dataset-68"><a href="#artificial_ssl_dataset-68"><span class="linenos"> 68</span></a><span class="sd">    Parameters</span>
-</span><span id="artificial_ssl_dataset-69"><a href="#artificial_ssl_dataset-69"><span class="linenos"> 69</span></a><span class="sd">    ----------</span>
-</span><span id="artificial_ssl_dataset-70"><a href="#artificial_ssl_dataset-70"><span class="linenos"> 70</span></a><span class="sd">    X : array-like of shape (n_samples, n_features)</span>
-</span><span id="artificial_ssl_dataset-71"><a href="#artificial_ssl_dataset-71"><span class="linenos"> 71</span></a><span class="sd">        Training data, where n_samples is the number of samples</span>
-</span><span id="artificial_ssl_dataset-72"><a href="#artificial_ssl_dataset-72"><span class="linenos"> 72</span></a><span class="sd">        and n_features is the number of features.</span>
-</span><span id="artificial_ssl_dataset-73"><a href="#artificial_ssl_dataset-73"><span class="linenos"> 73</span></a><span class="sd">    y : array-like of shape (n_samples,)</span>
-</span><span id="artificial_ssl_dataset-74"><a href="#artificial_ssl_dataset-74"><span class="linenos"> 74</span></a><span class="sd">        The target variable for supervised learning problems.</span>
-</span><span id="artificial_ssl_dataset-75"><a href="#artificial_ssl_dataset-75"><span class="linenos"> 75</span></a><span class="sd">    label_rate : float, optional</span>
-</span><span id="artificial_ssl_dataset-76"><a href="#artificial_ssl_dataset-76"><span class="linenos"> 76</span></a><span class="sd">        Proportion between labeled instances and unlabel instances, by default 0.1</span>
-</span><span id="artificial_ssl_dataset-77"><a href="#artificial_ssl_dataset-77"><span class="linenos"> 77</span></a><span class="sd">    random_state : int or RandomState, optional</span>
-</span><span id="artificial_ssl_dataset-78"><a href="#artificial_ssl_dataset-78"><span class="linenos"> 78</span></a><span class="sd">        Controls the shuffling applied to the data before applying the split. Pass an int for reproducible output across multiple function calls, by default None</span>
-</span><span id="artificial_ssl_dataset-79"><a href="#artificial_ssl_dataset-79"><span class="linenos"> 79</span></a><span class="sd">    force_minimum: int, optional</span>
-</span><span id="artificial_ssl_dataset-80"><a href="#artificial_ssl_dataset-80"><span class="linenos"> 80</span></a><span class="sd">        Force a minimum of instances of each class, by default None</span>
-</span><span id="artificial_ssl_dataset-81"><a href="#artificial_ssl_dataset-81"><span class="linenos"> 81</span></a><span class="sd">    indexes: bool, optional</span>
-</span><span id="artificial_ssl_dataset-82"><a href="#artificial_ssl_dataset-82"><span class="linenos"> 82</span></a><span class="sd">        If True, return the indexes of the labeled and unlabeled instances, by default False</span>
-</span><span id="artificial_ssl_dataset-83"><a href="#artificial_ssl_dataset-83"><span class="linenos"> 83</span></a><span class="sd">    shuffle: bool, default=True</span>
-</span><span id="artificial_ssl_dataset-84"><a href="#artificial_ssl_dataset-84"><span class="linenos"> 84</span></a><span class="sd">        Whether or not to shuffle the data before splitting. If shuffle=False then stratify must be None.</span>
-</span><span id="artificial_ssl_dataset-85"><a href="#artificial_ssl_dataset-85"><span class="linenos"> 85</span></a><span class="sd">    stratify: array-like, default=None</span>
-</span><span id="artificial_ssl_dataset-86"><a href="#artificial_ssl_dataset-86"><span class="linenos"> 86</span></a><span class="sd">        If not None, data is split in a stratified fashion, using this as the class labels.</span>
-</span><span id="artificial_ssl_dataset-87"><a href="#artificial_ssl_dataset-87"><span class="linenos"> 87</span></a>
-</span><span id="artificial_ssl_dataset-88"><a href="#artificial_ssl_dataset-88"><span class="linenos"> 88</span></a><span class="sd">    Returns</span>
-</span><span id="artificial_ssl_dataset-89"><a href="#artificial_ssl_dataset-89"><span class="linenos"> 89</span></a><span class="sd">    -------</span>
-</span><span id="artificial_ssl_dataset-90"><a href="#artificial_ssl_dataset-90"><span class="linenos"> 90</span></a><span class="sd">    X : ndarray</span>
-</span><span id="artificial_ssl_dataset-91"><a href="#artificial_ssl_dataset-91"><span class="linenos"> 91</span></a><span class="sd">        The feature set.</span>
-</span><span id="artificial_ssl_dataset-92"><a href="#artificial_ssl_dataset-92"><span class="linenos"> 92</span></a><span class="sd">    y : ndarray</span>
-</span><span id="artificial_ssl_dataset-93"><a href="#artificial_ssl_dataset-93"><span class="linenos"> 93</span></a><span class="sd">        The label set, -1 for unlabel instance.</span>
-</span><span id="artificial_ssl_dataset-94"><a href="#artificial_ssl_dataset-94"><span class="linenos"> 94</span></a><span class="sd">    X_unlabel: ndarray</span>
-</span><span id="artificial_ssl_dataset-95"><a href="#artificial_ssl_dataset-95"><span class="linenos"> 95</span></a><span class="sd">        The feature set for each y mark as unlabel</span>
-</span><span id="artificial_ssl_dataset-96"><a href="#artificial_ssl_dataset-96"><span class="linenos"> 96</span></a><span class="sd">    y_unlabel: ndarray</span>
-</span><span id="artificial_ssl_dataset-97"><a href="#artificial_ssl_dataset-97"><span class="linenos"> 97</span></a><span class="sd">        The true label for each y in the same order.</span>
-</span><span id="artificial_ssl_dataset-98"><a href="#artificial_ssl_dataset-98"><span class="linenos"> 98</span></a><span class="sd">    label: ndarray (optional)</span>
-</span><span id="artificial_ssl_dataset-99"><a href="#artificial_ssl_dataset-99"><span class="linenos"> 99</span></a><span class="sd">        The training set indexes for split mark as labeled.</span>
-</span><span id="artificial_ssl_dataset-100"><a href="#artificial_ssl_dataset-100"><span class="linenos">100</span></a><span class="sd">    unlabel: ndarray (optional)</span>
-</span><span id="artificial_ssl_dataset-101"><a href="#artificial_ssl_dataset-101"><span class="linenos">101</span></a><span class="sd">        The training set indexes for split mark as unlabeled.</span>
-</span><span id="artificial_ssl_dataset-102"><a href="#artificial_ssl_dataset-102"><span class="linenos">102</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="artificial_ssl_dataset-103"><a href="#artificial_ssl_dataset-103"><span class="linenos">103</span></a>    <span class="k">assert</span> <span class="p">(</span><span class="n">label_rate</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">label_rate</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">),</span>\
-</span><span id="artificial_ssl_dataset-104"><a href="#artificial_ssl_dataset-104"><span class="linenos">104</span></a>        <span class="s2">&quot;Label rate must be in (0, 1).&quot;</span>
-</span><span id="artificial_ssl_dataset-105"><a href="#artificial_ssl_dataset-105"><span class="linenos">105</span></a>    <span class="k">assert</span> <span class="s2">&quot;test_size&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwards</span> <span class="ow">and</span> <span class="s2">&quot;train_size&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwards</span><span class="p">,</span>\
-</span><span id="artificial_ssl_dataset-106"><a href="#artificial_ssl_dataset-106"><span class="linenos">106</span></a>        <span class="s2">&quot;Test size and train size are illegal parameters in this method.&quot;</span>
-</span><span id="artificial_ssl_dataset-107"><a href="#artificial_ssl_dataset-107"><span class="linenos">107</span></a>
-</span><span id="artificial_ssl_dataset-108"><a href="#artificial_ssl_dataset-108"><span class="linenos">108</span></a>    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
-</span><span id="artificial_ssl_dataset-109"><a href="#artificial_ssl_dataset-109"><span class="linenos">109</span></a>
-</span><span id="artificial_ssl_dataset-110"><a href="#artificial_ssl_dataset-110"><span class="linenos">110</span></a>    <span class="k">if</span> <span class="n">force_minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="artificial_ssl_dataset-111"><a href="#artificial_ssl_dataset-111"><span class="linenos">111</span></a>        <span class="k">try</span><span class="p">:</span>
-</span><span id="artificial_ssl_dataset-112"><a href="#artificial_ssl_dataset-112"><span class="linenos">112</span></a>            <span class="n">selected</span> <span class="o">=</span> <span class="n">__random_select_n_instances</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">force_minimum</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
-</span><span id="artificial_ssl_dataset-113"><a href="#artificial_ssl_dataset-113"><span class="linenos">113</span></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-</span><span id="artificial_ssl_dataset-114"><a href="#artificial_ssl_dataset-114"><span class="linenos">114</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of instances of each class is less than force_minimum.&quot;</span><span class="p">)</span>
-</span><span id="artificial_ssl_dataset-115"><a href="#artificial_ssl_dataset-115"><span class="linenos">115</span></a>
-</span><span id="artificial_ssl_dataset-116"><a href="#artificial_ssl_dataset-116"><span class="linenos">116</span></a>        <span class="c1"># Remove selected instances from indices</span>
-</span><span id="artificial_ssl_dataset-117"><a href="#artificial_ssl_dataset-117"><span class="linenos">117</span></a>        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>    
-</span><span id="artificial_ssl_dataset-118"><a href="#artificial_ssl_dataset-118"><span class="linenos">118</span></a>
-</span><span id="artificial_ssl_dataset-119"><a href="#artificial_ssl_dataset-119"><span class="linenos">119</span></a>    <span class="c1"># Train test split with indexes</span>
-</span><span id="artificial_ssl_dataset-120"><a href="#artificial_ssl_dataset-120"><span class="linenos">120</span></a>    <span class="n">label</span><span class="p">,</span> <span class="n">unlabel</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">train_test_split</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="n">label_rate</span><span class="p">,</span>
-</span><span id="artificial_ssl_dataset-121"><a href="#artificial_ssl_dataset-121"><span class="linenos">121</span></a>                                         <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwards</span><span class="p">)</span>
-</span><span id="artificial_ssl_dataset-122"><a href="#artificial_ssl_dataset-122"><span class="linenos">122</span></a>
-</span><span id="artificial_ssl_dataset-123"><a href="#artificial_ssl_dataset-123"><span class="linenos">123</span></a>    <span class="k">if</span> <span class="n">force_minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="artificial_ssl_dataset-124"><a href="#artificial_ssl_dataset-124"><span class="linenos">124</span></a>        <span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">selected</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
-</span><span id="artificial_ssl_dataset-125"><a href="#artificial_ssl_dataset-125"><span class="linenos">125</span></a>    
-</span><span id="artificial_ssl_dataset-126"><a href="#artificial_ssl_dataset-126"><span class="linenos">126</span></a>    <span class="c1"># Create the label and unlabel sets</span>
-</span><span id="artificial_ssl_dataset-127"><a href="#artificial_ssl_dataset-127"><span class="linenos">127</span></a>    <span class="n">X_label</span><span class="p">,</span> <span class="n">y_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">label</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>\
-</span><span id="artificial_ssl_dataset-128"><a href="#artificial_ssl_dataset-128"><span class="linenos">128</span></a>        <span class="n">X</span><span class="p">[</span><span class="n">unlabel</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">unlabel</span><span class="p">))</span>
-</span><span id="artificial_ssl_dataset-129"><a href="#artificial_ssl_dataset-129"><span class="linenos">129</span></a>
-</span><span id="artificial_ssl_dataset-130"><a href="#artificial_ssl_dataset-130"><span class="linenos">130</span></a>    <span class="c1"># Create the artificial dataset</span>
-</span><span id="artificial_ssl_dataset-131"><a href="#artificial_ssl_dataset-131"><span class="linenos">131</span></a>    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">X_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="artificial_ssl_dataset-132"><a href="#artificial_ssl_dataset-132"><span class="linenos">132</span></a>    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">y_label</span><span class="p">,</span> <span class="n">y_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="artificial_ssl_dataset-133"><a href="#artificial_ssl_dataset-133"><span class="linenos">133</span></a>
-</span><span id="artificial_ssl_dataset-134"><a href="#artificial_ssl_dataset-134"><span class="linenos">134</span></a>    <span class="k">if</span> <span class="n">indexes</span><span class="p">:</span>
-</span><span id="artificial_ssl_dataset-135"><a href="#artificial_ssl_dataset-135"><span class="linenos">135</span></a>        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">unlabel</span>
-</span><span id="artificial_ssl_dataset-136"><a href="#artificial_ssl_dataset-136"><span class="linenos">136</span></a>
-</span><span id="artificial_ssl_dataset-137"><a href="#artificial_ssl_dataset-137"><span class="linenos">137</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="artificial_ssl_dataset-70"><a href="#artificial_ssl_dataset-70"><span class="linenos"> 70</span></a><span class="k">def</span> <span class="nf">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_minimum</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwards</span><span class="p">):</span>
+</span><span id="artificial_ssl_dataset-71"><a href="#artificial_ssl_dataset-71"><span class="linenos"> 71</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an artificial Semi-supervised dataset from a supervised dataset.</span>
+</span><span id="artificial_ssl_dataset-72"><a href="#artificial_ssl_dataset-72"><span class="linenos"> 72</span></a>
+</span><span id="artificial_ssl_dataset-73"><a href="#artificial_ssl_dataset-73"><span class="linenos"> 73</span></a><span class="sd">    Parameters</span>
+</span><span id="artificial_ssl_dataset-74"><a href="#artificial_ssl_dataset-74"><span class="linenos"> 74</span></a><span class="sd">    ----------</span>
+</span><span id="artificial_ssl_dataset-75"><a href="#artificial_ssl_dataset-75"><span class="linenos"> 75</span></a><span class="sd">    X : array-like of shape (n_samples, n_features)</span>
+</span><span id="artificial_ssl_dataset-76"><a href="#artificial_ssl_dataset-76"><span class="linenos"> 76</span></a><span class="sd">        Training data, where n_samples is the number of samples</span>
+</span><span id="artificial_ssl_dataset-77"><a href="#artificial_ssl_dataset-77"><span class="linenos"> 77</span></a><span class="sd">        and n_features is the number of features.</span>
+</span><span id="artificial_ssl_dataset-78"><a href="#artificial_ssl_dataset-78"><span class="linenos"> 78</span></a><span class="sd">    y : array-like of shape (n_samples,)</span>
+</span><span id="artificial_ssl_dataset-79"><a href="#artificial_ssl_dataset-79"><span class="linenos"> 79</span></a><span class="sd">        The target variable for supervised learning problems.</span>
+</span><span id="artificial_ssl_dataset-80"><a href="#artificial_ssl_dataset-80"><span class="linenos"> 80</span></a><span class="sd">    label_rate : float, optional</span>
+</span><span id="artificial_ssl_dataset-81"><a href="#artificial_ssl_dataset-81"><span class="linenos"> 81</span></a><span class="sd">        Proportion between labeled instances and unlabel instances, by default 0.1</span>
+</span><span id="artificial_ssl_dataset-82"><a href="#artificial_ssl_dataset-82"><span class="linenos"> 82</span></a><span class="sd">    random_state : int or RandomState, optional</span>
+</span><span id="artificial_ssl_dataset-83"><a href="#artificial_ssl_dataset-83"><span class="linenos"> 83</span></a><span class="sd">        Controls the shuffling applied to the data before applying the split. Pass an int for reproducible output across multiple function calls, by default None</span>
+</span><span id="artificial_ssl_dataset-84"><a href="#artificial_ssl_dataset-84"><span class="linenos"> 84</span></a><span class="sd">    force_minimum: int, optional</span>
+</span><span id="artificial_ssl_dataset-85"><a href="#artificial_ssl_dataset-85"><span class="linenos"> 85</span></a><span class="sd">        Force a minimum of instances of each class, by default None</span>
+</span><span id="artificial_ssl_dataset-86"><a href="#artificial_ssl_dataset-86"><span class="linenos"> 86</span></a><span class="sd">    indexes: bool, optional</span>
+</span><span id="artificial_ssl_dataset-87"><a href="#artificial_ssl_dataset-87"><span class="linenos"> 87</span></a><span class="sd">        If True, return the indexes of the labeled and unlabeled instances, by default False</span>
+</span><span id="artificial_ssl_dataset-88"><a href="#artificial_ssl_dataset-88"><span class="linenos"> 88</span></a><span class="sd">    shuffle: bool, default=True</span>
+</span><span id="artificial_ssl_dataset-89"><a href="#artificial_ssl_dataset-89"><span class="linenos"> 89</span></a><span class="sd">        Whether or not to shuffle the data before splitting. If shuffle=False then stratify must be None.</span>
+</span><span id="artificial_ssl_dataset-90"><a href="#artificial_ssl_dataset-90"><span class="linenos"> 90</span></a><span class="sd">    stratify: array-like, default=None</span>
+</span><span id="artificial_ssl_dataset-91"><a href="#artificial_ssl_dataset-91"><span class="linenos"> 91</span></a><span class="sd">        If not None, data is split in a stratified fashion, using this as the class labels.</span>
+</span><span id="artificial_ssl_dataset-92"><a href="#artificial_ssl_dataset-92"><span class="linenos"> 92</span></a>
+</span><span id="artificial_ssl_dataset-93"><a href="#artificial_ssl_dataset-93"><span class="linenos"> 93</span></a><span class="sd">    Returns</span>
+</span><span id="artificial_ssl_dataset-94"><a href="#artificial_ssl_dataset-94"><span class="linenos"> 94</span></a><span class="sd">    -------</span>
+</span><span id="artificial_ssl_dataset-95"><a href="#artificial_ssl_dataset-95"><span class="linenos"> 95</span></a><span class="sd">    X : ndarray</span>
+</span><span id="artificial_ssl_dataset-96"><a href="#artificial_ssl_dataset-96"><span class="linenos"> 96</span></a><span class="sd">        The feature set.</span>
+</span><span id="artificial_ssl_dataset-97"><a href="#artificial_ssl_dataset-97"><span class="linenos"> 97</span></a><span class="sd">    y : ndarray</span>
+</span><span id="artificial_ssl_dataset-98"><a href="#artificial_ssl_dataset-98"><span class="linenos"> 98</span></a><span class="sd">        The label set, -1 for unlabel instance.</span>
+</span><span id="artificial_ssl_dataset-99"><a href="#artificial_ssl_dataset-99"><span class="linenos"> 99</span></a><span class="sd">    X_unlabel: ndarray</span>
+</span><span id="artificial_ssl_dataset-100"><a href="#artificial_ssl_dataset-100"><span class="linenos">100</span></a><span class="sd">        The feature set for each y mark as unlabel</span>
+</span><span id="artificial_ssl_dataset-101"><a href="#artificial_ssl_dataset-101"><span class="linenos">101</span></a><span class="sd">    y_unlabel: ndarray</span>
+</span><span id="artificial_ssl_dataset-102"><a href="#artificial_ssl_dataset-102"><span class="linenos">102</span></a><span class="sd">        The true label for each y in the same order.</span>
+</span><span id="artificial_ssl_dataset-103"><a href="#artificial_ssl_dataset-103"><span class="linenos">103</span></a><span class="sd">    label: ndarray (optional)</span>
+</span><span id="artificial_ssl_dataset-104"><a href="#artificial_ssl_dataset-104"><span class="linenos">104</span></a><span class="sd">        The training set indexes for split mark as labeled.</span>
+</span><span id="artificial_ssl_dataset-105"><a href="#artificial_ssl_dataset-105"><span class="linenos">105</span></a><span class="sd">    unlabel: ndarray (optional)</span>
+</span><span id="artificial_ssl_dataset-106"><a href="#artificial_ssl_dataset-106"><span class="linenos">106</span></a><span class="sd">        The training set indexes for split mark as unlabeled.</span>
+</span><span id="artificial_ssl_dataset-107"><a href="#artificial_ssl_dataset-107"><span class="linenos">107</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="artificial_ssl_dataset-108"><a href="#artificial_ssl_dataset-108"><span class="linenos">108</span></a>    <span class="k">assert</span> <span class="p">(</span><span class="n">label_rate</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">label_rate</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">),</span>\
+</span><span id="artificial_ssl_dataset-109"><a href="#artificial_ssl_dataset-109"><span class="linenos">109</span></a>        <span class="s2">&quot;Label rate must be in (0, 1).&quot;</span>
+</span><span id="artificial_ssl_dataset-110"><a href="#artificial_ssl_dataset-110"><span class="linenos">110</span></a>    <span class="k">assert</span> <span class="s2">&quot;test_size&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwards</span> <span class="ow">and</span> <span class="s2">&quot;train_size&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwards</span><span class="p">,</span>\
+</span><span id="artificial_ssl_dataset-111"><a href="#artificial_ssl_dataset-111"><span class="linenos">111</span></a>        <span class="s2">&quot;Test size and train size are illegal parameters in this method.&quot;</span>
+</span><span id="artificial_ssl_dataset-112"><a href="#artificial_ssl_dataset-112"><span class="linenos">112</span></a>
+</span><span id="artificial_ssl_dataset-113"><a href="#artificial_ssl_dataset-113"><span class="linenos">113</span></a>    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</span><span id="artificial_ssl_dataset-114"><a href="#artificial_ssl_dataset-114"><span class="linenos">114</span></a>
+</span><span id="artificial_ssl_dataset-115"><a href="#artificial_ssl_dataset-115"><span class="linenos">115</span></a>    <span class="k">if</span> <span class="n">force_minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="artificial_ssl_dataset-116"><a href="#artificial_ssl_dataset-116"><span class="linenos">116</span></a>        <span class="k">try</span><span class="p">:</span>
+</span><span id="artificial_ssl_dataset-117"><a href="#artificial_ssl_dataset-117"><span class="linenos">117</span></a>            <span class="n">selected</span> <span class="o">=</span> <span class="n">__random_select_n_instances</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">force_minimum</span><span class="p">,</span> <span class="n">random_state</span><span class="p">)</span>
+</span><span id="artificial_ssl_dataset-118"><a href="#artificial_ssl_dataset-118"><span class="linenos">118</span></a>        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+</span><span id="artificial_ssl_dataset-119"><a href="#artificial_ssl_dataset-119"><span class="linenos">119</span></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of instances of each class is less than force_minimum.&quot;</span><span class="p">)</span>
+</span><span id="artificial_ssl_dataset-120"><a href="#artificial_ssl_dataset-120"><span class="linenos">120</span></a>
+</span><span id="artificial_ssl_dataset-121"><a href="#artificial_ssl_dataset-121"><span class="linenos">121</span></a>        <span class="c1"># Remove selected instances from indices</span>
+</span><span id="artificial_ssl_dataset-122"><a href="#artificial_ssl_dataset-122"><span class="linenos">122</span></a>        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">selected</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>    
+</span><span id="artificial_ssl_dataset-123"><a href="#artificial_ssl_dataset-123"><span class="linenos">123</span></a>
+</span><span id="artificial_ssl_dataset-124"><a href="#artificial_ssl_dataset-124"><span class="linenos">124</span></a>    <span class="c1"># Train test split with indexes</span>
+</span><span id="artificial_ssl_dataset-125"><a href="#artificial_ssl_dataset-125"><span class="linenos">125</span></a>    <span class="n">label</span><span class="p">,</span> <span class="n">unlabel</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">train_test_split</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">train_size</span><span class="o">=</span><span class="n">label_rate</span><span class="p">,</span>
+</span><span id="artificial_ssl_dataset-126"><a href="#artificial_ssl_dataset-126"><span class="linenos">126</span></a>                                         <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">,</span> <span class="o">**</span><span class="n">kwards</span><span class="p">)</span>
+</span><span id="artificial_ssl_dataset-127"><a href="#artificial_ssl_dataset-127"><span class="linenos">127</span></a>
+</span><span id="artificial_ssl_dataset-128"><a href="#artificial_ssl_dataset-128"><span class="linenos">128</span></a>    <span class="k">if</span> <span class="n">force_minimum</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="artificial_ssl_dataset-129"><a href="#artificial_ssl_dataset-129"><span class="linenos">129</span></a>        <span class="n">label</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">selected</span><span class="p">,</span> <span class="n">label</span><span class="p">))</span>
+</span><span id="artificial_ssl_dataset-130"><a href="#artificial_ssl_dataset-130"><span class="linenos">130</span></a>    
+</span><span id="artificial_ssl_dataset-131"><a href="#artificial_ssl_dataset-131"><span class="linenos">131</span></a>    <span class="c1"># Create the label and unlabel sets</span>
+</span><span id="artificial_ssl_dataset-132"><a href="#artificial_ssl_dataset-132"><span class="linenos">132</span></a>    <span class="n">X_label</span><span class="p">,</span> <span class="n">y_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">label</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>\
+</span><span id="artificial_ssl_dataset-133"><a href="#artificial_ssl_dataset-133"><span class="linenos">133</span></a>        <span class="n">X</span><span class="p">[</span><span class="n">unlabel</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">unlabel</span><span class="p">))</span>
+</span><span id="artificial_ssl_dataset-134"><a href="#artificial_ssl_dataset-134"><span class="linenos">134</span></a>
+</span><span id="artificial_ssl_dataset-135"><a href="#artificial_ssl_dataset-135"><span class="linenos">135</span></a>    <span class="c1"># Create the artificial dataset</span>
+</span><span id="artificial_ssl_dataset-136"><a href="#artificial_ssl_dataset-136"><span class="linenos">136</span></a>    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">X_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="artificial_ssl_dataset-137"><a href="#artificial_ssl_dataset-137"><span class="linenos">137</span></a>    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">y_label</span><span class="p">,</span> <span class="n">y_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </span><span id="artificial_ssl_dataset-138"><a href="#artificial_ssl_dataset-138"><span class="linenos">138</span></a>
-</span><span id="artificial_ssl_dataset-139"><a href="#artificial_ssl_dataset-139"><span class="linenos">139</span></a>
-</span><span id="artificial_ssl_dataset-140"><a href="#artificial_ssl_dataset-140"><span class="linenos">140</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;    </span>
-</span><span id="artificial_ssl_dataset-141"><a href="#artificial_ssl_dataset-141"><span class="linenos">141</span></a><span class="sd">    if force_minimum is not None:</span>
-</span><span id="artificial_ssl_dataset-142"><a href="#artificial_ssl_dataset-142"><span class="linenos">142</span></a><span class="sd">        try:</span>
-</span><span id="artificial_ssl_dataset-143"><a href="#artificial_ssl_dataset-143"><span class="linenos">143</span></a><span class="sd">            selected = __random_select_n_instances(y, force_minimum, random_state)</span>
-</span><span id="artificial_ssl_dataset-144"><a href="#artificial_ssl_dataset-144"><span class="linenos">144</span></a><span class="sd">        except ValueError:</span>
-</span><span id="artificial_ssl_dataset-145"><a href="#artificial_ssl_dataset-145"><span class="linenos">145</span></a><span class="sd">            raise ValueError(&quot;The number of instances of each class is less than force_minimum.&quot;)</span>
-</span><span id="artificial_ssl_dataset-146"><a href="#artificial_ssl_dataset-146"><span class="linenos">146</span></a><span class="sd">        X_selected = X[selected]</span>
-</span><span id="artificial_ssl_dataset-147"><a href="#artificial_ssl_dataset-147"><span class="linenos">147</span></a><span class="sd">        y_selected = y[selected]</span>
-</span><span id="artificial_ssl_dataset-148"><a href="#artificial_ssl_dataset-148"><span class="linenos">148</span></a>
-</span><span id="artificial_ssl_dataset-149"><a href="#artificial_ssl_dataset-149"><span class="linenos">149</span></a><span class="sd">        # Remove selected instances from X and y</span>
-</span><span id="artificial_ssl_dataset-150"><a href="#artificial_ssl_dataset-150"><span class="linenos">150</span></a><span class="sd">        X = np.delete(X, selected, axis=0)</span>
-</span><span id="artificial_ssl_dataset-151"><a href="#artificial_ssl_dataset-151"><span class="linenos">151</span></a><span class="sd">        y = np.delete(y, selected, axis=0)</span>
-</span><span id="artificial_ssl_dataset-152"><a href="#artificial_ssl_dataset-152"><span class="linenos">152</span></a><span class="sd">    </span>
-</span><span id="artificial_ssl_dataset-153"><a href="#artificial_ssl_dataset-153"><span class="linenos">153</span></a><span class="sd">    X_label, X_unlabel, y_label, true_label = \</span>
-</span><span id="artificial_ssl_dataset-154"><a href="#artificial_ssl_dataset-154"><span class="linenos">154</span></a><span class="sd">        ms.train_test_split(X, y,</span>
-</span><span id="artificial_ssl_dataset-155"><a href="#artificial_ssl_dataset-155"><span class="linenos">155</span></a><span class="sd">                            train_size=label_rate,</span>
-</span><span id="artificial_ssl_dataset-156"><a href="#artificial_ssl_dataset-156"><span class="linenos">156</span></a><span class="sd">                            random_state=random_state, **kwards)</span>
-</span><span id="artificial_ssl_dataset-157"><a href="#artificial_ssl_dataset-157"><span class="linenos">157</span></a><span class="sd">    X = np.concatenate((X_label, X_unlabel), axis=0)</span>
-</span><span id="artificial_ssl_dataset-158"><a href="#artificial_ssl_dataset-158"><span class="linenos">158</span></a><span class="sd">    y = np.concatenate((y_label, np.array([-1] * len(true_label))), axis=0)</span>
-</span><span id="artificial_ssl_dataset-159"><a href="#artificial_ssl_dataset-159"><span class="linenos">159</span></a>
-</span><span id="artificial_ssl_dataset-160"><a href="#artificial_ssl_dataset-160"><span class="linenos">160</span></a><span class="sd">    if force_minimum is not None:</span>
-</span><span id="artificial_ssl_dataset-161"><a href="#artificial_ssl_dataset-161"><span class="linenos">161</span></a><span class="sd">        X = np.concatenate((X, X_selected), axis=0)</span>
-</span><span id="artificial_ssl_dataset-162"><a href="#artificial_ssl_dataset-162"><span class="linenos">162</span></a><span class="sd">        y = np.concatenate((y, y_selected), axis=0)</span>
-</span><span id="artificial_ssl_dataset-163"><a href="#artificial_ssl_dataset-163"><span class="linenos">163</span></a><span class="sd">    </span>
-</span><span id="artificial_ssl_dataset-164"><a href="#artificial_ssl_dataset-164"><span class="linenos">164</span></a><span class="sd">    if indexes:</span>
-</span><span id="artificial_ssl_dataset-165"><a href="#artificial_ssl_dataset-165"><span class="linenos">165</span></a><span class="sd">        return X, y, X_unlabel, true_label, X_label, X_unlabel</span>
-</span><span id="artificial_ssl_dataset-166"><a href="#artificial_ssl_dataset-166"><span class="linenos">166</span></a>
-</span><span id="artificial_ssl_dataset-167"><a href="#artificial_ssl_dataset-167"><span class="linenos">167</span></a><span class="sd">    return X, y, X_unlabel, true_label</span>
-</span><span id="artificial_ssl_dataset-168"><a href="#artificial_ssl_dataset-168"><span class="linenos">168</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="artificial_ssl_dataset-139"><a href="#artificial_ssl_dataset-139"><span class="linenos">139</span></a>    <span class="k">if</span> <span class="n">indexes</span><span class="p">:</span>
+</span><span id="artificial_ssl_dataset-140"><a href="#artificial_ssl_dataset-140"><span class="linenos">140</span></a>        <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">unlabel</span>
+</span><span id="artificial_ssl_dataset-141"><a href="#artificial_ssl_dataset-141"><span class="linenos">141</span></a>
+</span><span id="artificial_ssl_dataset-142"><a href="#artificial_ssl_dataset-142"><span class="linenos">142</span></a>    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span>
+</span><span id="artificial_ssl_dataset-143"><a href="#artificial_ssl_dataset-143"><span class="linenos">143</span></a>
+</span><span id="artificial_ssl_dataset-144"><a href="#artificial_ssl_dataset-144"><span class="linenos">144</span></a>
+</span><span id="artificial_ssl_dataset-145"><a href="#artificial_ssl_dataset-145"><span class="linenos">145</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;    </span>
+</span><span id="artificial_ssl_dataset-146"><a href="#artificial_ssl_dataset-146"><span class="linenos">146</span></a><span class="sd">    if force_minimum is not None:</span>
+</span><span id="artificial_ssl_dataset-147"><a href="#artificial_ssl_dataset-147"><span class="linenos">147</span></a><span class="sd">        try:</span>
+</span><span id="artificial_ssl_dataset-148"><a href="#artificial_ssl_dataset-148"><span class="linenos">148</span></a><span class="sd">            selected = __random_select_n_instances(y, force_minimum, random_state)</span>
+</span><span id="artificial_ssl_dataset-149"><a href="#artificial_ssl_dataset-149"><span class="linenos">149</span></a><span class="sd">        except ValueError:</span>
+</span><span id="artificial_ssl_dataset-150"><a href="#artificial_ssl_dataset-150"><span class="linenos">150</span></a><span class="sd">            raise ValueError(&quot;The number of instances of each class is less than force_minimum.&quot;)</span>
+</span><span id="artificial_ssl_dataset-151"><a href="#artificial_ssl_dataset-151"><span class="linenos">151</span></a><span class="sd">        X_selected = X[selected]</span>
+</span><span id="artificial_ssl_dataset-152"><a href="#artificial_ssl_dataset-152"><span class="linenos">152</span></a><span class="sd">        y_selected = y[selected]</span>
+</span><span id="artificial_ssl_dataset-153"><a href="#artificial_ssl_dataset-153"><span class="linenos">153</span></a>
+</span><span id="artificial_ssl_dataset-154"><a href="#artificial_ssl_dataset-154"><span class="linenos">154</span></a><span class="sd">        # Remove selected instances from X and y</span>
+</span><span id="artificial_ssl_dataset-155"><a href="#artificial_ssl_dataset-155"><span class="linenos">155</span></a><span class="sd">        X = np.delete(X, selected, axis=0)</span>
+</span><span id="artificial_ssl_dataset-156"><a href="#artificial_ssl_dataset-156"><span class="linenos">156</span></a><span class="sd">        y = np.delete(y, selected, axis=0)</span>
+</span><span id="artificial_ssl_dataset-157"><a href="#artificial_ssl_dataset-157"><span class="linenos">157</span></a><span class="sd">    </span>
+</span><span id="artificial_ssl_dataset-158"><a href="#artificial_ssl_dataset-158"><span class="linenos">158</span></a><span class="sd">    X_label, X_unlabel, y_label, true_label = \</span>
+</span><span id="artificial_ssl_dataset-159"><a href="#artificial_ssl_dataset-159"><span class="linenos">159</span></a><span class="sd">        ms.train_test_split(X, y,</span>
+</span><span id="artificial_ssl_dataset-160"><a href="#artificial_ssl_dataset-160"><span class="linenos">160</span></a><span class="sd">                            train_size=label_rate,</span>
+</span><span id="artificial_ssl_dataset-161"><a href="#artificial_ssl_dataset-161"><span class="linenos">161</span></a><span class="sd">                            random_state=random_state, **kwards)</span>
+</span><span id="artificial_ssl_dataset-162"><a href="#artificial_ssl_dataset-162"><span class="linenos">162</span></a><span class="sd">    X = np.concatenate((X_label, X_unlabel), axis=0)</span>
+</span><span id="artificial_ssl_dataset-163"><a href="#artificial_ssl_dataset-163"><span class="linenos">163</span></a><span class="sd">    y = np.concatenate((y_label, np.array([-1] * len(true_label))), axis=0)</span>
+</span><span id="artificial_ssl_dataset-164"><a href="#artificial_ssl_dataset-164"><span class="linenos">164</span></a>
+</span><span id="artificial_ssl_dataset-165"><a href="#artificial_ssl_dataset-165"><span class="linenos">165</span></a><span class="sd">    if force_minimum is not None:</span>
+</span><span id="artificial_ssl_dataset-166"><a href="#artificial_ssl_dataset-166"><span class="linenos">166</span></a><span class="sd">        X = np.concatenate((X, X_selected), axis=0)</span>
+</span><span id="artificial_ssl_dataset-167"><a href="#artificial_ssl_dataset-167"><span class="linenos">167</span></a><span class="sd">        y = np.concatenate((y, y_selected), axis=0)</span>
+</span><span id="artificial_ssl_dataset-168"><a href="#artificial_ssl_dataset-168"><span class="linenos">168</span></a><span class="sd">    </span>
+</span><span id="artificial_ssl_dataset-169"><a href="#artificial_ssl_dataset-169"><span class="linenos">169</span></a><span class="sd">    if indexes:</span>
+</span><span id="artificial_ssl_dataset-170"><a href="#artificial_ssl_dataset-170"><span class="linenos">170</span></a><span class="sd">        return X, y, X_unlabel, true_label, X_label, X_unlabel</span>
+</span><span id="artificial_ssl_dataset-171"><a href="#artificial_ssl_dataset-171"><span class="linenos">171</span></a>
+</span><span id="artificial_ssl_dataset-172"><a href="#artificial_ssl_dataset-172"><span class="linenos">172</span></a><span class="sd">    return X, y, X_unlabel, true_label</span>
+</span><span id="artificial_ssl_dataset-173"><a href="#artificial_ssl_dataset-173"><span class="linenos">173</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span></pre></div>
 
 
@@ -291,6 +303,209 @@ The training set indexes for split mark as unlabeled.</li>
 </div>
 
 
+                </section>
+                <section id="StratifiedKFoldSS">
+                            <input id="StratifiedKFoldSS-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr class">
+            
+    <span class="def">class</span>
+    <span class="name">StratifiedKFoldSS</span>:
+
+                <label class="view-source-button" for="StratifiedKFoldSS-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#StratifiedKFoldSS"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="StratifiedKFoldSS-7"><a href="#StratifiedKFoldSS-7"><span class="linenos"> 7</span></a><span class="k">class</span> <span class="nc">StratifiedKFoldSS</span><span class="p">():</span>
+</span><span id="StratifiedKFoldSS-8"><a href="#StratifiedKFoldSS-8"><span class="linenos"> 8</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS-9"><a href="#StratifiedKFoldSS-9"><span class="linenos"> 9</span></a><span class="sd">    Stratified K-Folds cross-validator for semi-supervised learning.</span>
+</span><span id="StratifiedKFoldSS-10"><a href="#StratifiedKFoldSS-10"><span class="linenos">10</span></a><span class="sd">    </span>
+</span><span id="StratifiedKFoldSS-11"><a href="#StratifiedKFoldSS-11"><span class="linenos">11</span></a><span class="sd">    Provides label and unlabel indices for each split. Using the StratifiedKFold method from sklearn.</span>
+</span><span id="StratifiedKFoldSS-12"><a href="#StratifiedKFoldSS-12"><span class="linenos">12</span></a><span class="sd">    The `test` set is the labeled set and the `train` set is the unlabeled set.</span>
+</span><span id="StratifiedKFoldSS-13"><a href="#StratifiedKFoldSS-13"><span class="linenos">13</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS-14"><a href="#StratifiedKFoldSS-14"><span class="linenos">14</span></a>
+</span><span id="StratifiedKFoldSS-15"><a href="#StratifiedKFoldSS-15"><span class="linenos">15</span></a>
+</span><span id="StratifiedKFoldSS-16"><a href="#StratifiedKFoldSS-16"><span class="linenos">16</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="StratifiedKFoldSS-17"><a href="#StratifiedKFoldSS-17"><span class="linenos">17</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS-18"><a href="#StratifiedKFoldSS-18"><span class="linenos">18</span></a><span class="sd">        Parameters</span>
+</span><span id="StratifiedKFoldSS-19"><a href="#StratifiedKFoldSS-19"><span class="linenos">19</span></a><span class="sd">        ----------</span>
+</span><span id="StratifiedKFoldSS-20"><a href="#StratifiedKFoldSS-20"><span class="linenos">20</span></a><span class="sd">        n_splits : int, default=5</span>
+</span><span id="StratifiedKFoldSS-21"><a href="#StratifiedKFoldSS-21"><span class="linenos">21</span></a><span class="sd">            Number of folds. Must be at least 2.</span>
+</span><span id="StratifiedKFoldSS-22"><a href="#StratifiedKFoldSS-22"><span class="linenos">22</span></a><span class="sd">        shuffle : bool, default=False</span>
+</span><span id="StratifiedKFoldSS-23"><a href="#StratifiedKFoldSS-23"><span class="linenos">23</span></a><span class="sd">            Whether to shuffle each class&#39;s samples before splitting into batches.</span>
+</span><span id="StratifiedKFoldSS-24"><a href="#StratifiedKFoldSS-24"><span class="linenos">24</span></a><span class="sd">        random_state : int or RandomState instance, default=None</span>
+</span><span id="StratifiedKFoldSS-25"><a href="#StratifiedKFoldSS-25"><span class="linenos">25</span></a><span class="sd">            When shuffle is True, random_state affects the ordering of the indices.</span>
+</span><span id="StratifiedKFoldSS-26"><a href="#StratifiedKFoldSS-26"><span class="linenos">26</span></a><span class="sd">            </span>
+</span><span id="StratifiedKFoldSS-27"><a href="#StratifiedKFoldSS-27"><span class="linenos">27</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS-28"><a href="#StratifiedKFoldSS-28"><span class="linenos">28</span></a>
+</span><span id="StratifiedKFoldSS-29"><a href="#StratifiedKFoldSS-29"><span class="linenos">29</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="n">n_splits</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+</span><span id="StratifiedKFoldSS-30"><a href="#StratifiedKFoldSS-30"><span class="linenos">30</span></a>                                    <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+</span><span id="StratifiedKFoldSS-31"><a href="#StratifiedKFoldSS-31"><span class="linenos">31</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span> <span class="o">=</span> <span class="n">n_splits</span>
+</span><span id="StratifiedKFoldSS-32"><a href="#StratifiedKFoldSS-32"><span class="linenos">32</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">shuffle</span> <span class="o">=</span> <span class="n">shuffle</span>
+</span><span id="StratifiedKFoldSS-33"><a href="#StratifiedKFoldSS-33"><span class="linenos">33</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
+</span><span id="StratifiedKFoldSS-34"><a href="#StratifiedKFoldSS-34"><span class="linenos">34</span></a>
+</span><span id="StratifiedKFoldSS-35"><a href="#StratifiedKFoldSS-35"><span class="linenos">35</span></a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span id="StratifiedKFoldSS-36"><a href="#StratifiedKFoldSS-36"><span class="linenos">36</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a artificial dataset based on StratifiedKFold method</span>
+</span><span id="StratifiedKFoldSS-37"><a href="#StratifiedKFoldSS-37"><span class="linenos">37</span></a>
+</span><span id="StratifiedKFoldSS-38"><a href="#StratifiedKFoldSS-38"><span class="linenos">38</span></a><span class="sd">        Parameters</span>
+</span><span id="StratifiedKFoldSS-39"><a href="#StratifiedKFoldSS-39"><span class="linenos">39</span></a><span class="sd">        ----------</span>
+</span><span id="StratifiedKFoldSS-40"><a href="#StratifiedKFoldSS-40"><span class="linenos">40</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
+</span><span id="StratifiedKFoldSS-41"><a href="#StratifiedKFoldSS-41"><span class="linenos">41</span></a><span class="sd">            Training data, where n_samples is the number of samples</span>
+</span><span id="StratifiedKFoldSS-42"><a href="#StratifiedKFoldSS-42"><span class="linenos">42</span></a><span class="sd">            and n_features is the number of features.</span>
+</span><span id="StratifiedKFoldSS-43"><a href="#StratifiedKFoldSS-43"><span class="linenos">43</span></a><span class="sd">        y : array-like of shape (n_samples,)</span>
+</span><span id="StratifiedKFoldSS-44"><a href="#StratifiedKFoldSS-44"><span class="linenos">44</span></a><span class="sd">            The target variable for supervised learning problems.</span>
+</span><span id="StratifiedKFoldSS-45"><a href="#StratifiedKFoldSS-45"><span class="linenos">45</span></a>
+</span><span id="StratifiedKFoldSS-46"><a href="#StratifiedKFoldSS-46"><span class="linenos">46</span></a><span class="sd">        Yields</span>
+</span><span id="StratifiedKFoldSS-47"><a href="#StratifiedKFoldSS-47"><span class="linenos">47</span></a><span class="sd">        -------</span>
+</span><span id="StratifiedKFoldSS-48"><a href="#StratifiedKFoldSS-48"><span class="linenos">48</span></a><span class="sd">        X : ndarray</span>
+</span><span id="StratifiedKFoldSS-49"><a href="#StratifiedKFoldSS-49"><span class="linenos">49</span></a><span class="sd">            The feature set.</span>
+</span><span id="StratifiedKFoldSS-50"><a href="#StratifiedKFoldSS-50"><span class="linenos">50</span></a><span class="sd">        y : ndarray</span>
+</span><span id="StratifiedKFoldSS-51"><a href="#StratifiedKFoldSS-51"><span class="linenos">51</span></a><span class="sd">            The label set, -1 for unlabel instance.</span>
+</span><span id="StratifiedKFoldSS-52"><a href="#StratifiedKFoldSS-52"><span class="linenos">52</span></a><span class="sd">        label : ndarray</span>
+</span><span id="StratifiedKFoldSS-53"><a href="#StratifiedKFoldSS-53"><span class="linenos">53</span></a><span class="sd">            The training set indices for split mark as labeled.</span>
+</span><span id="StratifiedKFoldSS-54"><a href="#StratifiedKFoldSS-54"><span class="linenos">54</span></a><span class="sd">        unlabel : ndarray</span>
+</span><span id="StratifiedKFoldSS-55"><a href="#StratifiedKFoldSS-55"><span class="linenos">55</span></a><span class="sd">            The training set indices for split mark as unlabeled.</span>
+</span><span id="StratifiedKFoldSS-56"><a href="#StratifiedKFoldSS-56"><span class="linenos">56</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS-57"><a href="#StratifiedKFoldSS-57"><span class="linenos">57</span></a>        <span class="k">for</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span id="StratifiedKFoldSS-58"><a href="#StratifiedKFoldSS-58"><span class="linenos">58</span></a>            <span class="c1"># Inverse train and test because train is big dataset</span>
+</span><span id="StratifiedKFoldSS-59"><a href="#StratifiedKFoldSS-59"><span class="linenos">59</span></a>            <span class="n">label</span> <span class="o">=</span> <span class="n">test</span>
+</span><span id="StratifiedKFoldSS-60"><a href="#StratifiedKFoldSS-60"><span class="linenos">60</span></a>            <span class="n">unlabel</span> <span class="o">=</span> <span class="n">train</span>
+</span><span id="StratifiedKFoldSS-61"><a href="#StratifiedKFoldSS-61"><span class="linenos">61</span></a>
+</span><span id="StratifiedKFoldSS-62"><a href="#StratifiedKFoldSS-62"><span class="linenos">62</span></a>            <span class="n">X_label</span><span class="p">,</span> <span class="n">y_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">label</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>\
+</span><span id="StratifiedKFoldSS-63"><a href="#StratifiedKFoldSS-63"><span class="linenos">63</span></a>                <span class="n">X</span><span class="p">[</span><span class="n">unlabel</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">unlabel</span><span class="p">))</span>
+</span><span id="StratifiedKFoldSS-64"><a href="#StratifiedKFoldSS-64"><span class="linenos">64</span></a>            <span class="n">X_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">X_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="StratifiedKFoldSS-65"><a href="#StratifiedKFoldSS-65"><span class="linenos">65</span></a>            <span class="n">y_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">y_label</span><span class="p">,</span> <span class="n">y_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="StratifiedKFoldSS-66"><a href="#StratifiedKFoldSS-66"><span class="linenos">66</span></a>
+</span><span id="StratifiedKFoldSS-67"><a href="#StratifiedKFoldSS-67"><span class="linenos">67</span></a>            <span class="k">yield</span> <span class="n">X_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">unlabel</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Stratified K-Folds cross-validator for semi-supervised learning.</p>
+
+<p>Provides label and unlabel indices for each split. Using the StratifiedKFold method from sklearn.
+The <code>test</code> set is the labeled set and the <code>train</code> set is the unlabeled set.</p>
+</div>
+
+
+                            <div id="StratifiedKFoldSS.__init__" class="classattr">
+                                        <input id="StratifiedKFoldSS.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="name">StratifiedKFoldSS</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span>, </span><span class="param"><span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span>, </span><span class="param"><span class="n">random_state</span><span class="o">=</span><span class="kc">None</span></span>)</span>
+
+                <label class="view-source-button" for="StratifiedKFoldSS.__init__-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#StratifiedKFoldSS.__init__"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="StratifiedKFoldSS.__init__-16"><a href="#StratifiedKFoldSS.__init__-16"><span class="linenos">16</span></a>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="StratifiedKFoldSS.__init__-17"><a href="#StratifiedKFoldSS.__init__-17"><span class="linenos">17</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS.__init__-18"><a href="#StratifiedKFoldSS.__init__-18"><span class="linenos">18</span></a><span class="sd">        Parameters</span>
+</span><span id="StratifiedKFoldSS.__init__-19"><a href="#StratifiedKFoldSS.__init__-19"><span class="linenos">19</span></a><span class="sd">        ----------</span>
+</span><span id="StratifiedKFoldSS.__init__-20"><a href="#StratifiedKFoldSS.__init__-20"><span class="linenos">20</span></a><span class="sd">        n_splits : int, default=5</span>
+</span><span id="StratifiedKFoldSS.__init__-21"><a href="#StratifiedKFoldSS.__init__-21"><span class="linenos">21</span></a><span class="sd">            Number of folds. Must be at least 2.</span>
+</span><span id="StratifiedKFoldSS.__init__-22"><a href="#StratifiedKFoldSS.__init__-22"><span class="linenos">22</span></a><span class="sd">        shuffle : bool, default=False</span>
+</span><span id="StratifiedKFoldSS.__init__-23"><a href="#StratifiedKFoldSS.__init__-23"><span class="linenos">23</span></a><span class="sd">            Whether to shuffle each class&#39;s samples before splitting into batches.</span>
+</span><span id="StratifiedKFoldSS.__init__-24"><a href="#StratifiedKFoldSS.__init__-24"><span class="linenos">24</span></a><span class="sd">        random_state : int or RandomState instance, default=None</span>
+</span><span id="StratifiedKFoldSS.__init__-25"><a href="#StratifiedKFoldSS.__init__-25"><span class="linenos">25</span></a><span class="sd">            When shuffle is True, random_state affects the ordering of the indices.</span>
+</span><span id="StratifiedKFoldSS.__init__-26"><a href="#StratifiedKFoldSS.__init__-26"><span class="linenos">26</span></a><span class="sd">            </span>
+</span><span id="StratifiedKFoldSS.__init__-27"><a href="#StratifiedKFoldSS.__init__-27"><span class="linenos">27</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS.__init__-28"><a href="#StratifiedKFoldSS.__init__-28"><span class="linenos">28</span></a>
+</span><span id="StratifiedKFoldSS.__init__-29"><a href="#StratifiedKFoldSS.__init__-29"><span class="linenos">29</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">ms</span><span class="o">.</span><span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="n">n_splits</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+</span><span id="StratifiedKFoldSS.__init__-30"><a href="#StratifiedKFoldSS.__init__-30"><span class="linenos">30</span></a>                                    <span class="n">random_state</span><span class="o">=</span><span class="n">random_state</span><span class="p">)</span>
+</span><span id="StratifiedKFoldSS.__init__-31"><a href="#StratifiedKFoldSS.__init__-31"><span class="linenos">31</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">n_splits</span> <span class="o">=</span> <span class="n">n_splits</span>
+</span><span id="StratifiedKFoldSS.__init__-32"><a href="#StratifiedKFoldSS.__init__-32"><span class="linenos">32</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">shuffle</span> <span class="o">=</span> <span class="n">shuffle</span>
+</span><span id="StratifiedKFoldSS.__init__-33"><a href="#StratifiedKFoldSS.__init__-33"><span class="linenos">33</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
+</span></pre></div>
+
+
+            <div class="docstring"><h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>n_splits</strong> (int, default=5):
+Number of folds. Must be at least 2.</li>
+<li><strong>shuffle</strong> (bool, default=False):
+Whether to shuffle each class's samples before splitting into batches.</li>
+<li><strong>random_state</strong> (int or RandomState instance, default=None):
+When shuffle is True, random_state affects the ordering of the indices.</li>
+</ul>
+</div>
+
+
+                            </div>
+                            <div id="StratifiedKFoldSS.split" class="classattr">
+                                        <input id="StratifiedKFoldSS.split-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">split</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">X</span>, </span><span class="param"><span class="n">y</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="StratifiedKFoldSS.split-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#StratifiedKFoldSS.split"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="StratifiedKFoldSS.split-35"><a href="#StratifiedKFoldSS.split-35"><span class="linenos">35</span></a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span id="StratifiedKFoldSS.split-36"><a href="#StratifiedKFoldSS.split-36"><span class="linenos">36</span></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a artificial dataset based on StratifiedKFold method</span>
+</span><span id="StratifiedKFoldSS.split-37"><a href="#StratifiedKFoldSS.split-37"><span class="linenos">37</span></a>
+</span><span id="StratifiedKFoldSS.split-38"><a href="#StratifiedKFoldSS.split-38"><span class="linenos">38</span></a><span class="sd">        Parameters</span>
+</span><span id="StratifiedKFoldSS.split-39"><a href="#StratifiedKFoldSS.split-39"><span class="linenos">39</span></a><span class="sd">        ----------</span>
+</span><span id="StratifiedKFoldSS.split-40"><a href="#StratifiedKFoldSS.split-40"><span class="linenos">40</span></a><span class="sd">        X : array-like of shape (n_samples, n_features)</span>
+</span><span id="StratifiedKFoldSS.split-41"><a href="#StratifiedKFoldSS.split-41"><span class="linenos">41</span></a><span class="sd">            Training data, where n_samples is the number of samples</span>
+</span><span id="StratifiedKFoldSS.split-42"><a href="#StratifiedKFoldSS.split-42"><span class="linenos">42</span></a><span class="sd">            and n_features is the number of features.</span>
+</span><span id="StratifiedKFoldSS.split-43"><a href="#StratifiedKFoldSS.split-43"><span class="linenos">43</span></a><span class="sd">        y : array-like of shape (n_samples,)</span>
+</span><span id="StratifiedKFoldSS.split-44"><a href="#StratifiedKFoldSS.split-44"><span class="linenos">44</span></a><span class="sd">            The target variable for supervised learning problems.</span>
+</span><span id="StratifiedKFoldSS.split-45"><a href="#StratifiedKFoldSS.split-45"><span class="linenos">45</span></a>
+</span><span id="StratifiedKFoldSS.split-46"><a href="#StratifiedKFoldSS.split-46"><span class="linenos">46</span></a><span class="sd">        Yields</span>
+</span><span id="StratifiedKFoldSS.split-47"><a href="#StratifiedKFoldSS.split-47"><span class="linenos">47</span></a><span class="sd">        -------</span>
+</span><span id="StratifiedKFoldSS.split-48"><a href="#StratifiedKFoldSS.split-48"><span class="linenos">48</span></a><span class="sd">        X : ndarray</span>
+</span><span id="StratifiedKFoldSS.split-49"><a href="#StratifiedKFoldSS.split-49"><span class="linenos">49</span></a><span class="sd">            The feature set.</span>
+</span><span id="StratifiedKFoldSS.split-50"><a href="#StratifiedKFoldSS.split-50"><span class="linenos">50</span></a><span class="sd">        y : ndarray</span>
+</span><span id="StratifiedKFoldSS.split-51"><a href="#StratifiedKFoldSS.split-51"><span class="linenos">51</span></a><span class="sd">            The label set, -1 for unlabel instance.</span>
+</span><span id="StratifiedKFoldSS.split-52"><a href="#StratifiedKFoldSS.split-52"><span class="linenos">52</span></a><span class="sd">        label : ndarray</span>
+</span><span id="StratifiedKFoldSS.split-53"><a href="#StratifiedKFoldSS.split-53"><span class="linenos">53</span></a><span class="sd">            The training set indices for split mark as labeled.</span>
+</span><span id="StratifiedKFoldSS.split-54"><a href="#StratifiedKFoldSS.split-54"><span class="linenos">54</span></a><span class="sd">        unlabel : ndarray</span>
+</span><span id="StratifiedKFoldSS.split-55"><a href="#StratifiedKFoldSS.split-55"><span class="linenos">55</span></a><span class="sd">            The training set indices for split mark as unlabeled.</span>
+</span><span id="StratifiedKFoldSS.split-56"><a href="#StratifiedKFoldSS.split-56"><span class="linenos">56</span></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="StratifiedKFoldSS.split-57"><a href="#StratifiedKFoldSS.split-57"><span class="linenos">57</span></a>        <span class="k">for</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span id="StratifiedKFoldSS.split-58"><a href="#StratifiedKFoldSS.split-58"><span class="linenos">58</span></a>            <span class="c1"># Inverse train and test because train is big dataset</span>
+</span><span id="StratifiedKFoldSS.split-59"><a href="#StratifiedKFoldSS.split-59"><span class="linenos">59</span></a>            <span class="n">label</span> <span class="o">=</span> <span class="n">test</span>
+</span><span id="StratifiedKFoldSS.split-60"><a href="#StratifiedKFoldSS.split-60"><span class="linenos">60</span></a>            <span class="n">unlabel</span> <span class="o">=</span> <span class="n">train</span>
+</span><span id="StratifiedKFoldSS.split-61"><a href="#StratifiedKFoldSS.split-61"><span class="linenos">61</span></a>
+</span><span id="StratifiedKFoldSS.split-62"><a href="#StratifiedKFoldSS.split-62"><span class="linenos">62</span></a>            <span class="n">X_label</span><span class="p">,</span> <span class="n">y_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">y_unlabel</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">label</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">label</span><span class="p">],</span>\
+</span><span id="StratifiedKFoldSS.split-63"><a href="#StratifiedKFoldSS.split-63"><span class="linenos">63</span></a>                <span class="n">X</span><span class="p">[</span><span class="n">unlabel</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">unlabel</span><span class="p">))</span>
+</span><span id="StratifiedKFoldSS.split-64"><a href="#StratifiedKFoldSS.split-64"><span class="linenos">64</span></a>            <span class="n">X_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">X_label</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="StratifiedKFoldSS.split-65"><a href="#StratifiedKFoldSS.split-65"><span class="linenos">65</span></a>            <span class="n">y_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">y_label</span><span class="p">,</span> <span class="n">y_unlabel</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</span><span id="StratifiedKFoldSS.split-66"><a href="#StratifiedKFoldSS.split-66"><span class="linenos">66</span></a>
+</span><span id="StratifiedKFoldSS.split-67"><a href="#StratifiedKFoldSS.split-67"><span class="linenos">67</span></a>            <span class="k">yield</span> <span class="n">X_</span><span class="p">,</span> <span class="n">y_</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">unlabel</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>Generate a artificial dataset based on StratifiedKFold method</p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>X</strong> (array-like of shape (n_samples, n_features)):
+Training data, where n_samples is the number of samples
+and n_features is the number of features.</li>
+<li><strong>y</strong> (array-like of shape (n_samples,)):
+The target variable for supervised learning problems.</li>
+</ul>
+
+<h6 id="yields">Yields</h6>
+
+<ul>
+<li><strong>X</strong> (ndarray):
+The feature set.</li>
+<li><strong>y</strong> (ndarray):
+The label set, -1 for unlabel instance.</li>
+<li><strong>label</strong> (ndarray):
+The training set indices for split mark as labeled.</li>
+<li><strong>unlabel</strong> (ndarray):
+The training set indices for split mark as unlabeled.</li>
+</ul>
+</div>
+
+
+                            </div>
                 </section>
     </main>
 <script>

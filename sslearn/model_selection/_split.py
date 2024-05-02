@@ -4,11 +4,16 @@ import numpy as np
 
 
 class StratifiedKFoldSS():
+    """
+    Stratified K-Folds cross-validator for semi-supervised learning.
+    
+    Provides label and unlabel indices for each split. Using the StratifiedKFold method from sklearn.
+    The `test` set is the labeled set and the `train` set is the unlabeled set.
+    """
+
+
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        """Stratified K-Folds cross-validator for semi-supervised learning.
-
-        Provides train/test indices to split data in train/test sets.
-
+        """
         Parameters
         ----------
         n_splits : int, default=5
