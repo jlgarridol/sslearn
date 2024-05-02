@@ -7,7 +7,7 @@ class StratifiedKFoldSS():
     """
     Stratified K-Folds cross-validator for semi-supervised learning.
     
-    Provides label and unlabel indices for each split. Using the StratifiedKFold method from sklearn.
+    Provides label and unlabel indices for each split. Using the `StratifiedKFold` method from `sklearn`.
     The `test` set is the labeled set and the `train` set is the unlabeled set.
     """
 

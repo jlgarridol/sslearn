@@ -28,17 +28,14 @@ Co-Forest
 Tri-training
 * [DeTriTraining](#DeTriTraining):
 Data Editing Tri-training
-* [WiWTriTraining](#WiWTriTraining):
-Who-Is-Who Tri-training
-
 
 """
 
 from ._co import (CoForest, CoTraining, CoTrainingByCommittee,
                   DemocraticCoLearning, Rasco, RelRasco)
 from ._self import SelfTraining, Setred
-from ._tritraining import DeTriTraining, TriTraining, WiWTriTraining
+from ._tritraining import DeTriTraining, TriTraining
 
 __all__ = ["SelfTraining", "Setred", "CoTraining", "CoTrainingByCommittee",
            "DemocraticCoLearning", "Rasco", "RelRasco", "CoForest",
-           "TriTraining", "DeTriTraining", "WiWTriTraining"]
+           "TriTraining", "DeTriTraining"]
