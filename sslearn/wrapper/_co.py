@@ -1467,7 +1467,7 @@ class CoForest(BaseCoTraining):
         for i in range(self.n_estimators):
             self.hypotheses.append(skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]))
             if "random_state" in dir(self.hypotheses[-1]):
-                self.hypotheses[-1].set_params(random_state=random_state.randint(0, 2 ** 32 - 1))
+                self.hypotheses[-1].set_params(random_state=random_state.randint(0, 2147483647))
             errors.append(0.5)
 
         self.hypotheses = Parallel(n_jobs=n_jobs)(
