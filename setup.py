@@ -12,7 +12,7 @@ def get_version():
 
 
 version = get_version()
-url = f"https://github.com/jlgarridol/sslearn/archive/refs/tags/f{version}.tar.gz"
+url = f"https://github.com/jlgarridol/sslearn/archive/refs/tags/{version}.tar.gz"
 
 setuptools.setup(
     name='sslearn',
@@ -25,12 +25,12 @@ setuptools.setup(
     url='https://github.com/jlgarridol/sslearn',
     license='new BSD',
     download_url=url,
-    install_requires=["joblib==1.2.0",
-                      "numpy==1.23.3",
-                      "pandas==1.4.3",
-                      "scikit_learn==1.2.0",
-                      "scipy==1.9.3",
-                      "statsmodels==0.13.2"],
+    install_requires=["joblib>=1.2.0",
+                      "numpy>=1.23.3",
+                      "pandas>=1.4.3",
+                      "scikit_learn>=1.2.0",
+                      "scipy>=1.10.1",
+                      "statsmodels>=0.13.2"],
     packages=setuptools.find_packages(exclude=("tests", "experiments")),
     include_package_data=True,
     classifiers=[
@@ -42,5 +42,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
     ]
 )

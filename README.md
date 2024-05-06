@@ -1,20 +1,24 @@
 Semi-Supervised Learning Library (sslearn)
 ===
 
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml)
+<!-- Insert logo in the middle -->
+<img width="100%" src="https://raw.githubusercontent.com/jlgarridol/sslearn/main/docs/sslearn.webp"/>
+
+![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability-percentage/jlgarridol/sslearn) ![Code Climate coverage](https://img.shields.io/codeclimate/coverage/jlgarridol/sslearn) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/jlgarridol/sslearn/python-package.yml) ![PyPI - Version](https://img.shields.io/pypi/v/sslearn) [![Static Badge](https://img.shields.io/badge/doc-available-blue?style=flat)](https://jlgarridol.github.io/sslearn/)
 
 The `sslearn` library is a Python package for machine learning over Semi-supervised datasets. It is an extension of [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
-Installation
----
+## Installation
+
+
 ### Dependencies
 
-* scikit_learn = 1.2.0
-* joblib = 1.2.0
-* numpy = 1.23.3
-* pandas = 1.4.3
-* scipy = 1.9.3
-* statsmodels = 0.13.2
+* joblib >= 1.2.0
+* numpy >= 1.23.3
+* pandas >= 1.4.3
+* scikit_learn >= 1.2.0
+* scipy >= 1.10.1
+* statsmodels >= 0.13.2
 * pytest = 7.2.0 (only for testing)
 
 ### `pip` installation
@@ -23,8 +27,9 @@ It can be installed using *Pypi*:
 
     pip install sslearn
 
-Code example
----
+## Code example
+
+
 ```python
 from sslearn.wrapper import TriTraining
 from sslearn.model_selection import artificial_ssl_dataset
@@ -37,20 +42,17 @@ model = TriTraining().fit(X, y)
 model.score(X_unlabel, true_label)
 ```
 
-Citing
----
+## Citing 
+
 ```bibtex
-@software{jose_luis_garrido_labrador_2023_7565222,
-  author       = {José Luis Garrido-Labrador and
-                  César García-Osorio and
-                  Juan J. Rodríguez and
-                  Jesus Maudes},
-  title        = {jlgarridol/sslearn: V1.0.2},
+@software{jose_luis_garrido_labrador_2024_10623889,
+  author       = {José Luis Garrido-Labrador},
+  title        = {jlgarridol/sslearn: v1.0.4},
   month        = feb,
-  year         = 2023,
+  year         = 2024,
   publisher    = {Zenodo},
-  version      = {1.0.2},
-  doi          = {10.5281/zenodo.7650049},
-  url          = {https://doi.org/10.5281/zenodo.7650049}
+  version      = {1.0.4},
+  doi          = {10.5281/zenodo.10623889},
+  url          = {https://doi.org/10.5281/zenodo.10623889}
 }
 ```

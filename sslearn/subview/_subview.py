@@ -10,6 +10,29 @@ from sklearn.utils import check_X_y
 
 
 class SubView(BaseEstimator):
+    """
+    A classifier that uses a subview of the data.
+    
+    Example
+    -------
+    ```python
+    from sklearn.model_selection import train_test_split
+    from sklearn.tree import DecisionTreeClassifier
+    from sslearn.subview import SubViewClassifier
+
+    # Mode 'include' will include all columns that contain `string`
+    clf = SubViewClassifier(DecisionTreeClassifier(), "sepal", mode="include")
+    clf.fit(X, y)
+
+    # Mode 'regex' will include all columns that match the regex
+    clf = SubViewClassifier(DecisionTreeClassifier(), "sepal.*", mode="regex")
+    clf.fit(X, y)
+
+    # Mode 'index' will include the columns at the index, useful for numpy arrays
+    clf = SubViewClassifier(DecisionTreeClassifier(), [0, 1], mode="index")
+    clf.fit(X, y)
+    ```
+    """
 
     def __init__(self, base_estimator, subview, mode="regex"):
         """Create a classifier that uses a subview of the data.

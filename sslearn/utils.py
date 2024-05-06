@@ -1,3 +1,27 @@
+"""
+Some utility functions
+
+This module contains utility functions that are used in different parts of the library.
+
+## Functions
+
+[safe_division](#safe_division):
+> Safely divide two numbers preventing division by zero.
+[confidence_interval](#confidence_interval):
+> Calculate the confidence interval of the predictions.
+[choice_with_proportion](#choice_with_proportion): 
+> Choice the best predictions according to the proportion of each class.
+[calculate_prior_probability](#calculate_prior_probability):
+> Calculate the priori probability of each label.
+[mode](#mode):
+> Calculate the mode of a list of values.
+[check_n_jobs](#check_n_jobs):
+> Check `n_jobs` parameter according to the scikit-learn convention.
+[check_classifier](#check_classifier):
+> Check if the classifier is a ClassifierMixin or a list of ClassifierMixin.
+
+"""
+
 import numpy as np
 import os
 import math
@@ -8,14 +32,51 @@ from statsmodels.stats.proportion import proportion_confint
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import ClassifierMixin
 
+__all__ = ["safe_division", "confidence_interval", "choice_with_proportion", "calculate_prior_probability",
+           "mode", "check_n_jobs", "check_classifier"]
+
 
 def safe_division(dividend, divisor, epsilon):
+    """Safely divide two numbers preventing division by zero
+
+    Parameters
+    ----------
+    dividend : numeric
+        Dividend value
+    divisor : numeric
+        Divisor value
+    epsilon : numeric
+        Close to zero value to be used in case of division by zero
+
+    Returns
+    -------
+    result : numeric
+        Result of the division
+    """
     if divisor == 0:
         return dividend / epsilon
     return dividend / divisor
 
 
 def confidence_interval(X, hyp, y, alpha=.95):
+    """Calculate the confidence interval of the predictions
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        The input samples.
+    hyp : classifier
+        The classifier to be used for prediction
+    y : array-like of shape (n_samples,)
+        The target values
+    alpha : float, optional
+        confidence (1 - significance), by default .95
+
+    Returns
+    -------
+    li, hi: float
+        lower and upper bound of the confidence interval
+    """
     data = hyp.predict(X)
 
     successes = np.count_nonzero(data == y)
@@ -25,6 +86,24 @@ def confidence_interval(X, hyp, y, alpha=.95):
 
 
 def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
+    """Choice the best predictions according to the proportion of each class.
+
+    Parameters
+    ----------
+    predictions : array-like of shape (n_samples,)
+        array of predictions
+    class_predicted : array-like of shape (n_samples,)
+        array of predicted classes
+    proportion : dict
+        dictionary with the proportion of each class
+    extra : int, optional
+        number of extra instances to be added, by default 0
+
+    Returns
+    -------
+    indices: array-like of shape (n_samples,)
+        array of indices of the best predictions
+    """
     n = len(predictions)
     for_each_class = {c: int(n * j) for c, j in proportion.items()}
     indices = np.zeros(0)

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<url><loc>https://pdoc.dev/docs/</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/subview.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/model_selection.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/base.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/datasets.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/wrapper.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/restricted.html</loc></url>
+<url><loc>https://pdoc.dev/docs/sslearn/utils.html</loc></url>
+</urlset>
