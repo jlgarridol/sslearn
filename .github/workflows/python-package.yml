@@ -38,7 +38,9 @@ jobs:
     - name: Test with pytest
       run: |
         coverage run -m pytest test
+    # Only if ubuntu-latest
     - name: Coverage
+      if: ${{ matrix.os }} == 'ubuntu-latest'
       run: |
         wget https://s3.amazonaws.com/codeclimate/test-reporter/test-reporter-latest-linux-amd64 -O reporter
         chmod +x reporter
