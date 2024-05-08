@@ -15,7 +15,7 @@ from statsmodels.stats.proportion import proportion_confint
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from sslearn.base import FakedProbaClassifier, OneVsRestSSLClassifier
 from sslearn.restricted import (WhoIsWhoClassifier, combine_predictions,
-                                conflict_rate)
+                                conflict_rate, probability_fusion, feature_fusion)
 from sslearn.utils import (calc_number_per_class, calculate_prior_probability,
                            check_n_jobs, choice_with_proportion,
                            confidence_interval, is_int, safe_division)
@@ -128,5 +128,28 @@ class TestRestricted():
 
         assert hyp.conflict_in_train == 1
         assert hyp.predict(X, group).tolist() == [0, 1, 0, 2, 1]
+
+    def test_probability_fusion(self):
+        X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
+        y = np.array([0, 1, 0, 1, 2])
+        cannot_link = {0: [0, 1], 1: [2, 3, 4]}
+        must_link = {1: [1, 3], 0: [0, 2], 4: [4]}
+
+        h = GaussianNB()
+        h.fit(X, y)
+
+        probability_fusion(h, X, must_link=must_link, cannot_link=cannot_link)
+
+    def test_feature_fusion(self):
+        X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
+        y = np.array([0, 1, 0, 1, 2])
+        cannot_link = {0: [0, 1], 1: [2, 3, 4]}
+        must_link = {1: [1, 3], 0: [0, 2], 4: [4]}
+
+        h = GaussianNB()
+        h.fit(X, y)
+
+        result = feature_fusion(h, X, must_link=must_link, cannot_link=cannot_link)
+
 
 
