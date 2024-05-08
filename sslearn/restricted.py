@@ -11,8 +11,15 @@ This module contains classes to train a classifier using the restricted set clas
 
 [conflict_rate](#conflict_rate): 
 > Compute the conflict rate of a prediction, given a set of restrictions.
+
 [combine_predictions](#combine_predictions): 
 > Combine the predictions of a group of instances to keep the restrictions.
+
+[feature_fusion](#feature_fusion):
+> Restricted Set Classification for the instances with pairwise constraints. Combine all instances that have the must-link constraint with the average of their features.
+
+[probability_fusion](#probability_fusion):
+> Restricted Set Classification for the instances with pairwise constraints. The class probability for each instance is defined as the mean of the probabilities reported by the classifier according to the must-link constraint.
 
 
 """
@@ -21,15 +28,9 @@ import numpy as np
 from sklearn.base import ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 from scipy.optimize import linear_sum_assignment
 import warnings
-from sklearn.base import clone
-from sklearn.feature_selection import VarianceThreshold
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from .base import get_dataset
 import pandas as pd
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-__all__ = ["conflict_rate", "combine_predictions", "WhoIsWhoClassifier", "feature_fusion", "probability_fusion"]
+__all__ = ["conflict_rate", "combine_predictions", "feature_fusion", "probability_fusion", "WhoIsWhoClassifier"]
  
     
 def feature_fusion(classifier, X, must_link, cannot_link):
@@ -37,7 +38,7 @@ def feature_fusion(classifier, X, must_link, cannot_link):
     Restricted Set Classification for the instances with pairwise constraints. 
     Combine all instances that have the must-link constraint with the average of their features.    
 
-    **Parameters**
+    Parameters
     ----------
     classifier : ClassifierMixin with predict_proba method
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -47,12 +48,42 @@ def feature_fusion(classifier, X, must_link, cannot_link):
     cannot_link : dict of {int: list of int}
         Dictionary with the cannot links, where the value is a list of instances that cannot have the same label.
 
-    **Returns**
+    Returns
     ----------
     y : ndarray of shape (n_samples,)
         Array with predicted labels.
 
-    **References**
+    Examples
+    ----------
+    ```python
+    from sslearn.restricted import feature_fusion
+    from sklearn.bayes import GaussianNB
+    import pandas as pd
+
+    dataset = pd.read_csv("dataset.csv")
+
+    must_link = pd.read_csv("must_link.csv", index_col=0).to_dict(orient='index')
+    # must_link = {0: [0, 2], 1: [1, 3]} -> 
+    # instances 0 and 2 must have the same label, 
+    # and instances 1 and 3 must have the same label
+
+    cannot_link = pd.read_csv("cannot_link.csv", index_col=0).to_dict(orient='index')
+    # cannot_link = {0: [0, 1], 1: [2, 3]} ->
+    # instances 0 and 1 cannot have the same label, 
+    # and instances 2 and 3 cannot have the same label
+
+    X, y = dataset.iloc[:, :-1].values, dataset.iloc[:, -1].values
+    X_label = X[y != y.dtype.type(-1)]
+    y_label = y[y != y.dtype.type(-1)]
+    X_unlabel = X[y == y.dtype.type(-1)]
+
+    classifier = GaussianNB()
+    classifier.fit(X_label, y_label)
+
+    y_pred = feature_fusion(classifier, X_unlabel, must_link, cannot_link)
+    ```
+
+    References
     ----------
     L.I. Kuncheva, J.L. Garrido-Labrador, I. Ramos-Pérez, S.L. Hennessey, J.J. Rodríguez (2024).<br>
     Semi-supervised classification with pairwise constraints: A case study on animal identification from video.<br>
@@ -71,7 +102,7 @@ def probability_fusion(classifier, X, must_link, cannot_link):
     Restricted Set Classification for the instances with pairwise constraints. 
     The class probability for each instance is defined as the mean of the probabilities reported by the classifier according to the must-link constraint.
 
-    **Parameters**
+    Parameters
     ----------
     classifier : ClassifierMixin with predict_proba method
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -81,12 +112,42 @@ def probability_fusion(classifier, X, must_link, cannot_link):
     cannot_link : dict of {int: list of int}
         Dictionary with the cannot links, where the value is a list of instances that cannot have the same label.
 
-    **Returns**
+    Returns
     ----------
     y : ndarray of shape (n_samples,)
         Array with predicted labels.
 
-    **References**
+    Examples
+    ----------
+    ```python
+    from sslearn.restricted import feature_fusion
+    from sklearn.bayes import GaussianNB
+    import pandas as pd
+
+    dataset = pd.read_csv("dataset.csv")
+
+    must_link = pd.read_csv("must_link.csv", index_col=0).to_dict(orient='index')
+    # must_link = {0: [0, 2], 1: [1, 3]} -> 
+    # instances 0 and 2 must have the same label, 
+    # and instances 1 and 3 must have the same label
+
+    cannot_link = pd.read_csv("cannot_link.csv", index_col=0).to_dict(orient='index')
+    # cannot_link = {0: [0, 1], 1: [2, 3]} ->
+    # instances 0 and 1 cannot have the same label, 
+    # and instances 2 and 3 cannot have the same label
+
+    X, y = dataset.iloc[:, :-1].values, dataset.iloc[:, -1].values
+    X_label = X[y != y.dtype.type(-1)]
+    y_label = y[y != y.dtype.type(-1)]
+    X_unlabel = X[y == y.dtype.type(-1)]
+
+    classifier = GaussianNB()
+    classifier.fit(X_label, y_label)
+
+    y_pred = probability_fusion(classifier, X_unlabel, must_link, cannot_link)
+    ```
+
+    References
     ----------
     L.I. Kuncheva, J.L. Garrido-Labrador, I. Ramos-Pérez, S.L. Hennessey, J.J. Rodríguez (2024).<br>
     Semi-supervised classification with pairwise constraints: A case study on animal identification from video.<br>
@@ -230,6 +291,25 @@ def conflict_rate(y_pred, restrictions, weighted=True):
         return (conflicted.y_pred / rcount.y_pred).sum()
 
 def combine_predictions(y_probas, instance_group, class_number, method="hungarian"):
+    """
+    Combine the predictions of a group of instances to keep the restrictions.
+
+    Parameters
+    ----------
+    y_probas : array-like of shape (n_samples, n_classes)
+        The class probabilities of the input samples.
+    instance_group : array-like of shape (n_samples)
+        The group. Two instances with the same label are not allowed to be in the same group.
+    class_number : int
+        The number of classes.
+    method : str, optional
+        The method to use to assing class, it can be `greedy` to first-look or `hungarian` to use the Hungarian algorithm, by default "hungarian"
+
+    Returns
+    -------
+    array-like of shape (n_samples,)
+        The predicted labels.
+    """
     y_predicted = []
     for group in np.unique(instance_group):
            
