@@ -1,12 +1,19 @@
 import os
 import sys
 import numpy as np
+import pandas as pd
 import pytest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 from sslearn.model_selection import (artificial_ssl_dataset, StratifiedKFoldSS)
 from sklearn.datasets import load_iris
+
+def test_artificial_ssl_dataset_with_pandas():
+    X, y = load_iris(return_X_y=True)
+    X, y, X_unlabel, true_label = artificial_ssl_dataset(pd.DataFrame(X), pd.Series(y), label_rate=0.1)
+    assert X_unlabel.shape[0] == true_label.shape[0]
+    assert X_unlabel.shape[0]/X.shape[0] == pytest.approx(0.9)
 
 def test_artificial_ssl_dataset():
     X, y = load_iris(return_X_y=True)
