@@ -1,6 +1,7 @@
 import sklearn.model_selection as ms
 from sklearn.utils import check_random_state
 import numpy as np
+import pandas as pd
 
 
 class StratifiedKFoldSS():
@@ -108,6 +109,16 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, force_minimu
         "Label rate must be in (0, 1)."
     assert "test_size" not in kwards and "train_size" not in kwards,\
         "Test size and train size are illegal parameters in this method."
+    
+    columns = None
+    is_df = False
+    if hasattr(X, "iloc"):
+        is_df = True
+        columns = X.columns
+        X = X.values
+    if hasattr(y, "iloc"):
+        is_df = True
+        y = y.values
 
     indices = np.arange(len(y))
 
@@ -134,6 +145,10 @@ def artificial_ssl_dataset(X, y, label_rate=0.1, random_state=None, force_minimu
     # Create the artificial dataset
     X = np.concatenate((X_label, X_unlabel), axis=0)
     y = np.concatenate((y_label, y_unlabel), axis=0)
+
+    if is_df:
+        X = pd.DataFrame(X, columns=columns)
+        y = pd.Series(y)
 
     if indexes:
         return X, y, X_unlabel, y_unlabel, label, unlabel

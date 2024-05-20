@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, MetaEstimatorMixin
 from sklearn.base import clone as skclone
 from sklearn.neighbors import KNeighborsClassifier, kneighbors_graph
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import check_random_state, resample
+from sklearn.metrics import accuracy_score
 
 from sslearn.utils import calculate_prior_probability, check_classifier
 
@@ -124,7 +125,7 @@ class SelfTraining(SelfTrainingClassifier):
         return super().fit(X, y_adapted)
 
 
-class Setred(ClassifierMixin, BaseEstimator):
+class Setred(BaseEstimator, MetaEstimatorMixin):
     """
     **Self-training with Editing.**
     ----------------------------
@@ -365,3 +366,29 @@ class Setred(ClassifierMixin, BaseEstimator):
             The predicted classes
         """
         return self._base_estimator.predict_proba(X, **kwards)
+    
+    def score(self, X, y, sample_weight=None):
+        """
+        Return the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Test samples.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            True labels for `X`.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
+        """
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)

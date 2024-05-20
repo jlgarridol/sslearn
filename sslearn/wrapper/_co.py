@@ -109,8 +109,6 @@ class BaseCoTraining(BaseEnsemble):
         score : float
             Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
-        from .metrics import accuracy_score
-
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
