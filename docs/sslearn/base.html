@@ -78,6 +78,9 @@
                         <li>
                                 <a class="function" href="#FakedProbaClassifier.predict_proba">predict_proba</a>
                         </li>
+                        <li>
+                                <a class="function" href="#FakedProbaClassifier.set_score_request">set_score_request</a>
+                        </li>
                 </ul>
 
             </li>
@@ -95,6 +98,12 @@
                         </li>
                         <li>
                                 <a class="function" href="#OneVsRestSSLClassifier.predict_proba">predict_proba</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#OneVsRestSSLClassifier.set_partial_fit_request">set_partial_fit_request</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#OneVsRestSSLClassifier.set_score_request">set_score_request</a>
                         </li>
                 </ul>
 
@@ -849,6 +858,58 @@ Array with predicted probabilities.</li>
 
 
                             </div>
+                            <div id="FakedProbaClassifier.set_score_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#FakedProbaClassifier.set_score_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -859,6 +920,10 @@ Array with predicted probabilities.</li>
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="FakedProbaClassifier.get_params" class="function">get_params</dd>
                 <dd id="FakedProbaClassifier.set_params" class="function">set_params</dd>
+
+            </div>
+            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
+                                <dd id="FakedProbaClassifier.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -1087,6 +1152,14 @@ Data.</li>
 <li><strong>y</strong> ({array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)):
 Multi-class targets. An indicator matrix turns on multilabel
 classification.</li>
+<li><p><strong>**fit_params</strong> (dict):
+Parameters passed to the <code>estimator.fit</code> method of each
+sub-estimator.</p>
+
+<p><em>New in version 1.4:</em>
+Only available if <code>enable_metadata_routing=True</code>. See
+:ref:<code>Metadata Routing User Guide &lt;metadata_routing&gt;</code> for more
+details.</p></li>
 </ul>
 
 <h6 id="returns">Returns</h6>
@@ -1219,6 +1292,110 @@ where classes are ordered as they are in <code>self.classes_</code>.</li>
 
 
                             </div>
+                            <div id="OneVsRestSSLClassifier.set_partial_fit_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_partial_fit_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#OneVsRestSSLClassifier.set_partial_fit_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
+                            <div id="OneVsRestSSLClassifier.set_score_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#OneVsRestSSLClassifier.set_score_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -1227,6 +1404,7 @@ where classes are ordered as they are in <code>self.classes_</code>.</li>
                 <dd id="OneVsRestSSLClassifier.decision_function" class="function">decision_function</dd>
                 <dd id="OneVsRestSSLClassifier.multilabel_" class="variable">multilabel_</dd>
                 <dd id="OneVsRestSSLClassifier.n_classes_" class="variable">n_classes_</dd>
+                <dd id="OneVsRestSSLClassifier.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.ClassifierMixin</dt>
