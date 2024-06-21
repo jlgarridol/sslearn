@@ -90,6 +90,15 @@
                         <li>
                                 <a class="function" href="#WhoIsWhoClassifier.predict_proba">predict_proba</a>
                         </li>
+                        <li>
+                                <a class="function" href="#WhoIsWhoClassifier.set_fit_request">set_fit_request</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#WhoIsWhoClassifier.set_predict_request">set_predict_request</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#WhoIsWhoClassifier.set_score_request">set_score_request</a>
+                        </li>
                 </ul>
 
             </li>
@@ -1155,11 +1164,49 @@ Semi-supervised classification with pairwise constraints: A case study on animal
 
             <div class="docstring"><p>Base class for all estimators in scikit-learn.</p>
 
+<p>Inheriting from this class provides default implementations of:</p>
+
+<ul>
+<li>setting and getting parameters used by <code>GridSearchCV</code> and friends;</li>
+<li>textual and HTML representation displayed in terminals and IDEs;</li>
+<li>estimator serialization;</li>
+<li>parameters validation;</li>
+<li>data validation;</li>
+<li>feature names validation.</li>
+</ul>
+
+<p>Read more in the :ref:<code>User Guide &lt;rolling_your_own_estimator&gt;</code>.</p>
+
 <h6 id="notes">Notes</h6>
 
 <p>All estimators should specify all the parameters that can be set
 at the class level in their <code><a href="#WhoIsWhoClassifier.__init__">__init__</a></code> as explicit keyword
 arguments (no <code>*args</code> or <code>**kwargs</code>).</p>
+
+<h6 id="examples">Examples</h6>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sklearn.base</span> <span class="kn">import</span> <span class="n">BaseEstimator</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">MyEstimator</span><span class="p">(</span><span class="n">BaseEstimator</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="bp">self</span><span class="o">.</span><span class="n">is_fitted_</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="bp">self</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+<span class="gp">... </span>        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fill_value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span> <span class="o">=</span> <span class="n">MyEstimator</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span><span class="o">.</span><span class="n">get_params</span><span class="p">()</span>
+<span class="go">{&#39;param&#39;: 2}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="go">array([2, 2, 2])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">estimator</span><span class="o">.</span><span class="n">set_params</span><span class="p">(</span><span class="n">param</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+<span class="go">array([3, 3, 3])</span>
+</code></pre>
+</div>
 </div>
 
 
@@ -1420,12 +1467,172 @@ The input samples.</li>
 
 
                             </div>
+                            <div id="WhoIsWhoClassifier.set_fit_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_fit_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#WhoIsWhoClassifier.set_fit_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code><a href="#WhoIsWhoClassifier.set_fit_request">set_fit_request</a></code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
+                            <div id="WhoIsWhoClassifier.set_predict_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_predict_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#WhoIsWhoClassifier.set_predict_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code><a href="#WhoIsWhoClassifier.set_fit_request">set_fit_request</a></code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
+                            <div id="WhoIsWhoClassifier.set_score_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#WhoIsWhoClassifier.set_score_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code><a href="#WhoIsWhoClassifier.set_fit_request">set_fit_request</a></code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
                                     <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="WhoIsWhoClassifier.get_params" class="function">get_params</dd>
                 <dd id="WhoIsWhoClassifier.set_params" class="function">set_params</dd>
+
+            </div>
+            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
+                                <dd id="WhoIsWhoClassifier.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.ClassifierMixin</dt>

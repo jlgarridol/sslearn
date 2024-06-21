@@ -38,7 +38,7 @@ if __name__ == "__main__":
     )
 
     pdoc.pdoc(
-        here / "sslearn",
+        here / "src" / "sslearn",
         output_directory=here / "docs",
     )
 
