@@ -90,9 +90,6 @@
                         <li>
                                 <a class="function" href="#Setred.score">score</a>
                         </li>
-                        <li>
-                                <a class="function" href="#Setred.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -113,18 +110,6 @@
                         </li>
                         <li>
                                 <a class="function" href="#CoTraining.score">score</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#CoTraining.set_fit_request">set_fit_request</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#CoTraining.set_predict_request">set_predict_request</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#CoTraining.set_predict_proba_request">set_predict_proba_request</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#CoTraining.set_score_request">set_score_request</a>
                         </li>
                 </ul>
 
@@ -147,9 +132,6 @@
                         <li>
                                 <a class="function" href="#CoTrainingByCommittee.score">score</a>
                         </li>
-                        <li>
-                                <a class="function" href="#CoTrainingByCommittee.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -165,12 +147,6 @@
                         <li>
                                 <a class="function" href="#DemocraticCoLearning.predict_proba">predict_proba</a>
                         </li>
-                        <li>
-                                <a class="function" href="#DemocraticCoLearning.set_fit_request">set_fit_request</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#DemocraticCoLearning.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -183,9 +159,6 @@
                         <li>
                                 <a class="function" href="#Rasco.fit">fit</a>
                         </li>
-                        <li>
-                                <a class="function" href="#Rasco.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -194,9 +167,6 @@
                             <ul class="memberlist">
                         <li>
                                 <a class="function" href="#RelRasco.__init__">RelRasco</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#RelRasco.set_score_request">set_score_request</a>
                         </li>
                 </ul>
 
@@ -210,9 +180,6 @@
                         <li>
                                 <a class="function" href="#CoForest.fit">fit</a>
                         </li>
-                        <li>
-                                <a class="function" href="#CoForest.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -225,9 +192,6 @@
                         <li>
                                 <a class="function" href="#TriTraining.fit">fit</a>
                         </li>
-                        <li>
-                                <a class="function" href="#TriTraining.set_score_request">set_score_request</a>
-                        </li>
                 </ul>
 
             </li>
@@ -239,9 +203,6 @@
                         </li>
                         <li>
                                 <a class="function" href="#DeTriTraining.fit">fit</a>
-                        </li>
-                        <li>
-                                <a class="function" href="#DeTriTraining.set_score_request">set_score_request</a>
                         </li>
                 </ul>
 
@@ -678,10 +639,6 @@ Returns an instance of self.</li>
                 <dd id="SelfTraining.decision_function" class="function">decision_function</dd>
                 <dd id="SelfTraining.predict_log_proba" class="function">predict_log_proba</dd>
                 <dd id="SelfTraining.score" class="function">score</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._RoutingNotSupportedMixin</dt>
-                                <dd id="SelfTraining.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.BaseEstimator</dt>
@@ -1418,68 +1375,12 @@ Mean accuracy of <code>self.predict(X)</code> w.r.t. <code>y</code>.</li>
 
 
                             </div>
-                            <div id="Setred.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#Setred.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
                                     <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="Setred.get_params" class="function">get_params</dd>
                 <dd id="Setred.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="Setred.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -2316,224 +2217,12 @@ Mean accuracy of <code>self.predict(X)</code> wrt. <code>y</code>.</li>
 
 
                             </div>
-                            <div id="CoTraining.set_fit_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_fit_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#CoTraining.set_fit_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code><a href="#CoTraining.set_fit_request">set_fit_request</a></code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
-                            <div id="CoTraining.set_predict_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_predict_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#CoTraining.set_predict_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code><a href="#CoTraining.set_fit_request">set_fit_request</a></code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
-                            <div id="CoTraining.set_predict_proba_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_predict_proba_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#CoTraining.set_predict_proba_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code><a href="#CoTraining.set_fit_request">set_fit_request</a></code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
-                            <div id="CoTraining.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#CoTraining.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code><a href="#CoTraining.set_fit_request">set_fit_request</a></code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
                                     <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="CoTraining.get_params" class="function">get_params</dd>
                 <dd id="CoTraining.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="CoTraining.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -3169,68 +2858,12 @@ Mean accuracy of self.predict(X) wrt. y.</li>
 
 
                             </div>
-                            <div id="CoTrainingByCommittee.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#CoTrainingByCommittee.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
                                     <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="CoTrainingByCommittee.get_params" class="function">get_params</dd>
                 <dd id="CoTrainingByCommittee.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="CoTrainingByCommittee.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -3984,110 +3617,6 @@ Array with prediction probabilities.</li>
 
 
                             </div>
-                            <div id="DemocraticCoLearning.set_fit_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_fit_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#DemocraticCoLearning.set_fit_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code><a href="#DemocraticCoLearning.set_fit_request">set_fit_request</a></code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
-                            <div id="DemocraticCoLearning.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#DemocraticCoLearning.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code><a href="#DemocraticCoLearning.set_fit_request">set_fit_request</a></code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -4102,10 +3631,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="DemocraticCoLearning.get_params" class="function">get_params</dd>
                 <dd id="DemocraticCoLearning.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="DemocraticCoLearning.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -4538,58 +4063,6 @@ Fitted estimator.</li>
 
 
                             </div>
-                            <div id="Rasco.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#Rasco.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -4605,10 +4078,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="Rasco.get_params" class="function">get_params</dd>
                 <dd id="Rasco.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="Rasco.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -4843,58 +4312,6 @@ The number of jobs to run in parallel. -1 means using all processors., by defaul
 
 
                             </div>
-                            <div id="RelRasco.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#RelRasco.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -4914,10 +4331,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="RelRasco.get_params" class="function">get_params</dd>
                 <dd id="RelRasco.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="RelRasco.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -5437,58 +4850,6 @@ Fitted estimator.</li>
 
 
                             </div>
-                            <div id="CoForest.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#CoForest.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -5504,10 +4865,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="CoForest.get_params" class="function">get_params</dd>
                 <dd id="CoForest.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="CoForest.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -6035,58 +5392,6 @@ Fitted estimator.</li>
 
 
                             </div>
-                            <div id="TriTraining.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#TriTraining.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -6102,10 +5407,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="TriTraining.get_params" class="function">get_params</dd>
                 <dd id="TriTraining.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="TriTraining.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>
@@ -6637,58 +5938,6 @@ Fitted estimator.</li>
 
 
                             </div>
-                            <div id="DeTriTraining.set_score_request" class="classattr">
-                                <div class="attr function">
-            
-        <span class="def">def</span>
-        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
-
-        
-    </div>
-    <a class="headerlink" href="#DeTriTraining.set_score_request"></a>
-    
-            <div class="docstring"><p>A descriptor for request methods.</p>
-
-<p><em>New in version 1.3.</em></p>
-
-<h6 id="parameters">Parameters</h6>
-
-<ul>
-<li><strong>name</strong> (str):
-The name of the method for which the request function should be
-created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
-<li><strong>keys</strong> (list of str):
-A list of strings which are accepted parameters by the created
-function, e.g. <code>["sample_weight"]</code> if the corresponding method
-accepts it as a metadata.</li>
-<li><strong>validate_keys</strong> (bool, default=True):
-Whether to check if the requested parameters fit the actual parameters
-of the method.</li>
-</ul>
-
-<h6 id="notes">Notes</h6>
-
-<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
-the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
-
-<h6 id="references">References</h6>
-
-<div class="footnotes">
-<hr />
-<ol>
-<li id="fn-1">
-<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
-</li>
-
-<li id="fn-2">
-<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
-</li>
-</ol>
-</div>
-</div>
-
-
-                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -6704,10 +5953,6 @@ the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="DeTriTraining.get_params" class="function">get_params</dd>
                 <dd id="DeTriTraining.set_params" class="function">set_params</dd>
-
-            </div>
-            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
-                                <dd id="DeTriTraining.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
                                 </dl>

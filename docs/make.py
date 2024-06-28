@@ -23,7 +23,9 @@ if __name__ == "__main__":
     favicon = base64.b64encode(favicon).decode("utf8")
     logo = (here / "docs" / "sslearn.webp").read_bytes()
     logo = base64.b64encode(logo).decode("utf8")
-
+    print("#"*100)
+    print(here / "src" / "sslearn")
+    print("#"*100)
     # Render main docs
     pdoc.render.configure(
 
@@ -36,14 +38,13 @@ if __name__ == "__main__":
         include_undocumented=False,
         docformat="numpy",
     )
-
     pdoc.pdoc(
         here / "src" / "sslearn",
         output_directory=here / "docs",
     )
 
     
-    with (here / "sitemap.xml").open("w", newline="\n") as f:
+    with (here / "docs" / "sitemap.xml").open("w", newline="\n") as f:
         f.write(
             textwrap.dedent(
                 """
