@@ -29,7 +29,6 @@ from sklearn.base import ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 from scipy.optimize import linear_sum_assignment
 import warnings
 import pandas as pd
-
 __all__ = ["conflict_rate", "combine_predictions", "feature_fusion", "probability_fusion", "WhoIsWhoClassifier"]
  
     
@@ -276,11 +275,10 @@ def conflict_rate(y_pred, restrictions, weighted=True):
     conflict rate : float
         The conflict rate.
     """
-    
-    # Check that y_pred and restrictions have the same length
-    if len(y_pred) != len(restrictions):
-        raise ValueError("y_pred and restrictions must have the same length.")
-    
+    return __conflict_measure_cl(y_pred, restrictions, weighted)
+
+def __conflict_measure_cl(y_pred, restrictions, weighted=True):
+
     restricted_df = pd.DataFrame({'y_pred': y_pred, 'restrictions': restrictions})
 
     conflicted = restricted_df.groupby('restrictions').agg({'y_pred': lambda x: np.unique(x, return_counts=True)[1][np.unique(x, return_counts=True)[1]>1].sum()})
@@ -288,7 +286,8 @@ def conflict_rate(y_pred, restrictions, weighted=True):
         return conflicted.sum().y_pred / len(y_pred)
     else:
         rcount = restricted_df.groupby('restrictions').count()
-        return (conflicted.y_pred / rcount.y_pred).sum()
+        return (conflicted.y_pred / rcount.y_pred).sum() / len(rcount)
+    
 
 def combine_predictions(y_probas, instance_group, class_number, method="hungarian"):
     """
@@ -421,8 +420,7 @@ def __restricted_set_classification(y_probs, instances_by_frame, classes):
     for fr, group in instances_by_frame.items():
         if len(group) == 0:
             continue
-        first, last = group[0], group[-1]
-        group_probs = y_probs[first:last + 1]
+        group_probs = y_probs[group]
         conflict, group_pred = __restricted_set_hungarian(group_probs, classes)
         restricted_pred.extend(group_pred)
         num_conflicts += conflict
