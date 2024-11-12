@@ -148,7 +148,7 @@ The wrappers that support multi-learning can be used with the subview adapters. 
 The RSC algorithms support datasets with pairwise constraints. The library provides the `WhoIsWhoClassifier`, the `feature_fusion` and `probability_fusion` methods.
 `WhoIsWhoClassifier` is a wrapper that uses the RSC algorithms and supports only cannot-link constraints. The `feature_fusion` and `probability_fusion` methods supports both constraints but only in prediction time. All algorithms are in the `sslearn.restriced` module.
 
-The complete example is avaliable in the [Jupyter Notebook](https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=mF32Wps3pIR5). Here is a snippet of the code with the dataset and the constraints already loaded.
+The complete example is avaliable in the [Jupyter Notebook](https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#sandboxMode=true&scrollTo=sN3XUw4K_it-). Here is a snippet of the code with the dataset and the constraints already loaded.
 
 ```python
 wiw = WhoIsWhoClassifier(base_estimator=DecisionTreeClassifier(random_state=10),
