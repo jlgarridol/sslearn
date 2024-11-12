@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.10'
 
       # ADJUST THIS: install all dependencies (including pdoc)
       - run: python -m pip install --upgrade pip
@@ -29,7 +29,7 @@ jobs:
       - run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - run: python -m pip install -U pip setuptools
       - run: pip install wheel
-      - run: python -m pip install https://files.pythonhosted.org/packages/4c/64/a1e6e92b850b39200c82e3bc54d556b2c634b3904c39ac5cdb10b1c5765f/scikit_learn-1.2.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+      - run: python -m pip install https://files.pythonhosted.org/packages/fa/1e/36d7609e84b50d4a2e5bc43cd5013d9ea885799e5813a1e9cf5bb1afd3f4/scikit_learn-1.2.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - run: python -m pip install numpy==1.26.4
       # ADJUST THIS: build your documentation into docs/.
       # We use a custom build script for pdoc itself, ideally you just run `pdoc -o docs/ ...` here.
