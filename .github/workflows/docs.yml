@@ -27,7 +27,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: python -m pip install pdoc
       - run: if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - run: python -p pip install -U pip setuptools
+      - run: python -m pip install -U pip setuptools
       - run: pip install wheel
       - run: python -m pip install https://files.pythonhosted.org/packages/4c/64/a1e6e92b850b39200c82e3bc54d556b2c634b3904c39ac5cdb10b1c5765f/scikit_learn-1.2.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - run: python -m pip install numpy==1.26.4
