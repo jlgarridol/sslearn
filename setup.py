@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 
 def get_version():
-    with open('sslearn/__init__.py') as f:
+    with open('src/sslearn/__init__.py') as f:
         for line in f:
             if line.startswith('__version__'):
                 return line.split('=')[1].strip().strip("'")
@@ -31,7 +31,8 @@ setuptools.setup(
                       "scikit_learn>=1.2.0",
                       "scipy>=1.10.1",
                       "statsmodels>=0.13.2"],
-    packages=setuptools.find_packages(exclude=("tests", "experiments")),
+    #packages=setuptools.find_packages(exclude=("tests", "experiments")),
+    package_dir = {"": "src"},
     include_package_data=True,
     classifiers=[
         'Development Status :: 5 - Production/Stable',
