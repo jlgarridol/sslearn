@@ -27,21 +27,6 @@ It can be installed using *Pypi*:
 
     pip install sslearn
 
-## Code example
-
-
-```python
-from sslearn.wrapper import TriTraining
-from sslearn.model_selection import artificial_ssl_dataset
-from sklearn.datasets import load_iris
-
-X, y = load_iris(return_X_y=True)
-X, y, X_unlabel, true_label = artificial_ssl_dataset(X, y, label_rate=0.1)
-
-model = TriTraining().fit(X, y)
-model.score(X_unlabel, true_label)
-```
-
 ## Citing 
 
 ```bibtex

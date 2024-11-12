@@ -9,6 +9,7 @@ elif os.path.exists("README.md"):
 else:
     __doc__ = "Semi-Supervised Learning (SSL) is a Python package that provides tools to train and evaluate semi-supervised learning models."
 
+__doc__ = __doc__ + "\n.. include:: ../../docs/examples.md\n" 
 
 __version__='1.0.5.2'
 __AUTHOR__="José Luis Garrido-Labrador"  # Author of the package

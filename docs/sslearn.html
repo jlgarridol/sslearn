@@ -50,10 +50,10 @@
   <li><a href="#semi-supervised-learning-library-sslearn">Semi-Supervised Learning Library (sslearn)</a>
   <ul>
     <li><a href="#installation">Installation</a></li>
-    <li><a href="#code-example">Code example</a></li>
     <li><a href="#citing">Citing</a></li>
     <li><a href="#fundings">Fundings</a></li>
   </ul></li>
+  <li><a href="#examples">Examples</a></li>
 </ul>
 
 
@@ -117,21 +117,6 @@ sslearn    </h1>
 <pre><code>pip install sslearn
 </code></pre>
 
-<h2 id="code-example">Code example</h2>
-
-<div class="pdoc-code codehilite">
-<pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/wrapper.html">sslearn.wrapper</a></span> <span class="kn">import</span> <span class="n">TriTraining</span>
-<span class="kn">from</span> <span class="nn"><a href="sslearn/model_selection.html">sslearn.model_selection</a></span> <span class="kn">import</span> <span class="n">artificial_ssl_dataset</span>
-<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">load_iris</span>
-
-<span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">load_iris</span><span class="p">(</span><span class="n">return_X_y</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">X_unlabel</span><span class="p">,</span> <span class="n">true_label</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">TriTraining</span><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_unlabel</span><span class="p">,</span> <span class="n">true_label</span><span class="p">)</span>
-</code></pre>
-</div>
-
 <h2 id="citing">Citing</h2>
 
 <div class="pdoc-code codehilite">
@@ -153,6 +138,190 @@ sslearn    </h1>
 <p><!--Add the funding picture-->
 <img width="100%" src="https://raw.githubusercontent.com/admirable-ubu/DN-SSL/main/funding/funding_project.svg" />
 <img width="100%" src="https://raw.githubusercontent.com/admirable-ubu/DN-SSL/main/funding/funding_project_cyl.svg" /></p>
+
+<hr />
+
+<hr />
+
+<h1 id="examples">Examples</h1>
+
+<p>In this page we provide some code examples to show how to use the library. Also, exists a <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=KS-6GNxCayxf">Jupyter Notebook</a> with the same examples to run in Google Colab.</p>
+
+<h6 id="datasets-manipulation">Datasets manipulation</h6>
+
+<p>SSLearn include tools for loading csv and dat (KEEL) datasets. Also, it provides a function to generate a semi-supervised dataset from a labeled dataset.</p>
+
+<h3 id="load-a-csv-or-a-dat-keel-dataset">Load a CSV or a DAT (KEEL)  dataset</h3>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/datasets.html">sslearn.datasets</a></span> <span class="kn">import</span> <span class="n">read_csv</span><span class="p">,</span> <span class="n">read_keel</span>
+
+<span class="c1"># The CSV file must have the target column in the last position by default.</span>
+<span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;iris.csv&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;numpy&#39;</span><span class="p">)</span> <span class="c1"># Format can be &#39;numpy&#39; or &#39;pandas&#39;</span>
+
+<span class="c1"># The DAT file must have the target column in the first position by default. Also, the instances with class &quot;unlabeled&quot; will change to -1.</span>
+<span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span> <span class="o">=</span> <span class="n">read_keel</span><span class="p">(</span><span class="s1">&#39;iris.dat&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;numpy&#39;</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<h3 id="generate-a-unsupervised-dataset-from-a-labeled-dataset">Generate a unsupervised dataset from a labeled dataset</h3>
+
+<p>To test the semi-supervised algorithms, we need to generate a dataset with some instances without labels. The library provides a function to do this. </p>
+
+<p>Exists two ways to generate the dataset:</p>
+
+<ol>
+<li>Randomly select some instances to be unlabeled giving a percentage of labeled instances.</li>
+<li>Generate folds where one fold is the labeled dataset and the others are unlabeled.</li>
+</ol>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/model_selection.html">sslearn.model_selection</a></span> <span class="kn">import</span> <span class="n">artificial_ssl_dataset</span>
+
+<span class="c1"># Using the previous dataset &quot;X_iris&quot; and &quot;y_iris&quot;</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_u</span><span class="p">,</span> <span class="n">y_y</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span> <span class="c1"># 80% of the instances are unlabeled</span>
+<span class="c1"># or if you want also get the indexes of the instances</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">X_u</span><span class="p">,</span> <span class="n">y_y</span><span class="p">,</span> <span class="n">idx_label</span><span class="p">,</span> <span class="n">idx_u</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">indexes</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p><code>artificial_ssl_dataset</code> supports stratify and shuffle as it works in <code>train_test_split</code> from <code>sklearn.model_selection</code>. Also, a minimum number of instances per class can be set with the parameter <code>force_minimum</code>.</p>
+
+<p>The other way to generate the dataset is using the <code>StratifiedKFoldSS</code> class.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/model_selection.html">sslearn.model_selection</a></span> <span class="kn">import</span> <span class="n">StratifiedKFoldSS</span>
+
+<span class="n">skss</span> <span class="o">=</span> <span class="n">StratifiedKFoldSS</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span> <span class="c1"># 10 folds, that implies 10% of the instances are labeled</span>
+
+<span class="k">for</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">label_indices</span><span class="p">,</span> <span class="n">unlabel_indices</span> <span class="ow">in</span> <span class="n">skss</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span><span class="p">):</span>
+    <span class="c1"># It works like the StratifiedKFold from sklearn.model_selection</span>
+    <span class="k">pass</span> <span class="c1"># Here you can use the labeled and unlabeled instances</span>
+</code></pre>
+</div>
+
+<p><code>X_train</code> and <code>y_train</code> are the set ready to be used in a semi-supervised algorithm, with the "-1" in the target column for the unlabeled instances.</p>
+
+<h6 id="wrappers">Wrappers</h6>
+
+<p>The wrappers are the most widely used algorithms in the semi-supervised learning field. The library includes the most popular ones. The algorithms included are:</p>
+
+<ul>
+<li><code>SelfTraining</code>: Self-training algorithm for one classifier.</li>
+<li><code>Setred</code>: Self-training with data amendment.</li>
+<li><code>CoTraining</code>: The co-training algorithm for two views, supports multi-learning and requires two views.</li>
+<li><code>Rasco</code>: Random subspace co-training, supports multi-learning.</li>
+<li><code>RelRasco</code>: Relevant random subspace co-training, supports multi-learning.</li>
+<li><code>DemocraticCoLearning</code>: Democratic co-learning algorithm, only for multi-learning.</li>
+<li><code>CoForest</code>: Co-training version of Random Forest.</li>
+<li><code>CoTrainingByCommittee</code>: Co-training by committee algorithm, a.k.a. CoBagging or CoBoosting depending on the base classifier in the literature.</li>
+<li><code>TriTraining</code>: Tri-training algorithm, supports multi-learning.</li>
+<li><code>DeTriTraining</code>: Tri-training with data amendment, supports multi-learning.</li>
+</ul>
+
+<p>The wrappers follow the same structure as the classifiers in scikit-learn. Use <code>fit</code> to train the model and <code>predict</code> to predict the target column. Also, the <code>score</code> method is available to get the accuracy of the model.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="c1"># Using the previous dataset &quot;X_train&quot; and &quot;y_train&quot; </span>
+
+<span class="kn">from</span> <span class="nn"><a href="sslearn/wrapper.html">sslearn.wrapper</a></span> <span class="kn">import</span> <span class="n">CoForest</span>
+<span class="kn">from</span> <span class="nn">sklearn.tree</span> <span class="kn">import</span> <span class="n">DecisionTreeClassifier</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">accuracy_score</span>
+
+<span class="kn">from</span> <span class="nn">sklearn</span>
+
+<span class="c1"># Load dataset</span>
+<span class="n">X_iris_train</span><span class="p">,</span> <span class="n">y_iris_train</span><span class="p">,</span> <span class="n">X_iris_U</span><span class="p">,</span> <span class="n">y_iris_U</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="c1"># Create the wrapper</span>
+<span class="n">coforest</span> <span class="o">=</span> <span class="n">CoForest</span><span class="p">(</span><span class="n">base_estimator</span><span class="o">=</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="c1"># Train</span>
+<span class="n">coforest</span><span class="o">.</span><span class="n">fir</span><span class="p">(</span><span class="n">X_iris_train</span><span class="p">,</span> <span class="n">y_iris_train</span><span class="p">)</span>
+<span class="c1"># Predict</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="n">coforest</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_iris_U</span><span class="p">)</span>
+<span class="c1"># Score</span>
+<span class="n">accuracy</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_iris_U</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Each wrapper has its parameters, some of them need different views, have specific parameters, or need a kind of base classifiers. The documentation of each wrapper explains the parameters and the requirements and provides examples of how to use them.</p>
+
+<p>The wrappers that supports multi-learning can recive differents algorithms as base classifiers. The base classifiers must be a list of classifiers. </p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/wrapper.html">sslearn.wrapper</a></span> <span class="kn">import</span> <span class="n">DemocraticCoLearning</span>
+<span class="kn">from</span> <span class="nn">sklearn.tree</span> <span class="kn">import</span> <span class="n">DecisionTreeClassifier</span>
+<span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">KNeighborsClassifier</span>
+<span class="kn">from</span> <span class="nn">sklearn.naive_bayes</span> <span class="kn">import</span> <span class="n">GaussianNB</span>
+
+<span class="c1"># Load dataset</span>
+<span class="n">X_iris_train</span><span class="p">,</span> <span class="n">y_iris_train</span><span class="p">,</span> <span class="n">X_iris_U</span><span class="p">,</span> <span class="n">y_iris_U</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X_iris</span><span class="p">,</span> <span class="n">y_iris</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="c1"># Create the wrapper</span>
+<span class="n">democratic</span> <span class="o">=</span> <span class="n">DemocraticCoLearning</span><span class="p">(</span><span class="n">base_estimator</span><span class="o">=</span><span class="p">[</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="n">KNeighborsClassifier</span><span class="p">(),</span> <span class="n">GaussianNB</span><span class="p">()],</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="c1"># Train</span>
+<span class="n">democratic</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_iris_train</span><span class="p">,</span> <span class="n">y_iris_train</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<h3 id="the-multiview-adapters">The multiview adapters</h3>
+
+<p><code>CoTraining</code> is the only wrapper that supports different views. But, the library provides an adapter to provide a different view to the other wrappers. The adapters are in the <code><a href="sslearn/subview.html">sslearn.subview</a></code> module. Supports classification and regression problems.</p>
+
+<p>That adapter create a subview for the dataset, and when the wrapper train the base classifiers, each will be trained with the view defined in the adapter. It supports three modes of create subviews: </p>
+
+<ul>
+<li><code>regex</code>: The columns that match the regex will be in the subview.</li>
+<li><code>columns</code>: The columns that are in the list will be in the subview.</li>
+<li><code>include</code>: The columns whose names are in the list will be in the subview. </li>
+</ul>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="kn">from</span> <span class="nn"><a href="sslearn/subview.html">sslearn.subview</a></span> <span class="kn">import</span> <span class="n">SubViewClassifier</span>
+<span class="kn">from</span> <span class="nn">sklearn.tree</span> <span class="kn">import</span> <span class="n">DecisionTreeClassifier</span>
+
+<span class="c1"># Load dataset </span>
+<span class="n">X_breast</span><span class="p">,</span> <span class="n">y_breast</span> <span class="o">=</span> <span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;breast-cancer.csv&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;numpy&#39;</span><span class="p">)</span>
+<span class="n">X_breast_train</span><span class="p">,</span> <span class="n">y_breast_train</span><span class="p">,</span> <span class="n">X_breast_U</span><span class="p">,</span> <span class="n">y_breast_U</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X_breast</span><span class="p">,</span> <span class="n">y_breast</span><span class="p">,</span> <span class="n">label_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span> 
+<span class="c1"># Create the the adapter</span>
+<span class="n">subview1</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="s2">&quot;breast&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;include&#39;</span><span class="p">)</span> <span class="c1"># The columns `breast` and `breast-quad`</span>
+<span class="n">subview2</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="p">[</span><span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;menopause&quot;</span><span class="p">,</span> <span class="s2">&quot;irradiant&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;columns&#39;</span><span class="p">)</span> <span class="c1"># The columns `age`, `menopause`, and `irradiant`</span>
+<span class="n">subview3</span> <span class="o">=</span> <span class="n">SubViewClassifier</span><span class="p">(</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span> <span class="s2">&quot;.*&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;regex&#39;</span><span class="p">)</span> <span class="c1"># All the columns</span>
+<span class="c1"># Create a TriTraining wrapper with the subviews</span>
+<span class="n">tritraining</span> <span class="o">=</span> <span class="n">TriTraining</span><span class="p">(</span><span class="n">base_estimator</span><span class="o">=</span><span class="p">[</span><span class="n">subview1</span><span class="p">,</span> <span class="n">subview2</span><span class="p">,</span> <span class="n">subview3</span><span class="p">],</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>The wrappers that support multi-learning can be used with the subview adapters. The adapters are in the <code><a href="sslearn/subview.html">sslearn.subview</a></code> module. </p>
+
+<h3 id="restricted-set-classification">Restricted set classification</h3>
+
+<p>The RSC algorithms support datasets with pairwise constraints. The library provides the <code>WhoIsWhoClassifier</code>, the <code>feature_fusion</code> and <code>probability_fusion</code> methods.
+<code>WhoIsWhoClassifier</code> is a wrapper that uses the RSC algorithms and supports only cannot-link constraints. The <code>feature_fusion</code> and <code>probability_fusion</code> methods supports both constraints but only in prediction time. All algorithms are in the <code>sslearn.restriced</code> module.</p>
+
+<p>The complete example is avaliable in the <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=mF32Wps3pIR5">Jupyter Notebook</a>. Here is a snippet of the code with the dataset and the constraints already loaded.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="n">wiw</span> <span class="o">=</span> <span class="n">WhoIsWhoClassifier</span><span class="p">(</span><span class="n">base_estimator</span><span class="o">=</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
+                         <span class="n">method</span><span class="o">=</span><span class="s2">&quot;hungarian&quot;</span><span class="p">)</span>  <span class="c1"># The method can ben `hungarian` and `greedy`</span>
+<span class="n">wiw</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">cannot_link_train</span><span class="p">)</span>
+<span class="n">y_predicted</span> <span class="o">=</span> <span class="n">wiw</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">cannot_link_test</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>For <code>WhoIsWhoClassifier</code> the cannot-link constraints must be an array that the size is the number of instances in the dataset. Each index is mapped to the instance in the dataset. If two instances or more cannot-link the value must be the same in the array.</p>
+
+<p>For the <code>feature_fusion</code> and <code>probability_fusion</code> methods, the constraints must be in dictionary format. The values are the instances that cannot-link or must-link. The keys represent the group of instances, but normaly is the first instance in the group (to ensure differents groups not have the same key). That methods requires a pre-trained model.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="n">estimator</span> <span class="o">=</span> <span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">estimator</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">y_predicted_f</span> <span class="o">=</span> <span class="n">feature_fusion</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">must_link_test_dict</span><span class="p">,</span> <span class="n">cannot_link_test_dict</span><span class="p">)</span>
+<span class="n">y_predicted_p</span> <span class="o">=</span> <span class="n">probability_fusion</span><span class="p">(</span><span class="n">estimator</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">must_link_test_dict</span><span class="p">,</span> <span class="n">cannot_link_test_dict</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p><code>feature_fusion</code> combine the features of the instances that must-link replacing the features for the average of the features in the group. With <code>probability_fusion</code> the post-probabilities of the instances that must-link are averaged. In both cases it uses the hungarian algorithm to solve the cannot-link constraints.</p>
 </div>
 
                         <input id="mod-sslearn-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
@@ -170,11 +339,12 @@ sslearn    </h1>
 </span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="k">else</span><span class="p">:</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>    <span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;Semi-Supervised Learning (SSL) is a Python package that provides tools to train and evaluate semi-supervised learning models.&quot;</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="n">__version__</span><span class="o">=</span><span class="s1">&#39;1.0.5.2&#39;</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="n">__AUTHOR__</span><span class="o">=</span><span class="s2">&quot;José Luis Garrido-Labrador&quot;</span>  <span class="c1"># Author of the package</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="n">__AUTHOR_EMAIL__</span><span class="o">=</span><span class="s2">&quot;jlgarrido@ubu.es&quot;</span>  <span class="c1"># Author&#39;s email</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="n">__URL__</span><span class="o">=</span><span class="s2">&quot;https://pypi.org/project/sslearn/&quot;</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="vm">__doc__</span> <span class="o">=</span> <span class="vm">__doc__</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">.. include:: ../../docs/examples.md</span><span class="se">\n</span><span class="s2">&quot;</span> 
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="n">__version__</span><span class="o">=</span><span class="s1">&#39;1.0.5.2&#39;</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="n">__AUTHOR__</span><span class="o">=</span><span class="s2">&quot;José Luis Garrido-Labrador&quot;</span>  <span class="c1"># Author of the package</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="n">__AUTHOR_EMAIL__</span><span class="o">=</span><span class="s2">&quot;jlgarrido@ubu.es&quot;</span>  <span class="c1"># Author&#39;s email</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="n">__URL__</span><span class="o">=</span><span class="s2">&quot;https://pypi.org/project/sslearn/&quot;</span>
 </span></pre></div>
 
 
