@@ -53,7 +53,12 @@
     <li><a href="#citing">Citing</a></li>
     <li><a href="#fundings">Fundings</a></li>
   </ul></li>
-  <li><a href="#examples">Examples</a></li>
+  <li><a href="#examples">Examples</a>
+  <ul>
+    <li><a href="#datasets-manipulation">Datasets manipulation</a></li>
+    <li><a href="#wrappers">Wrappers</a></li>
+    <li><a href="#restricted-set-classification">Restricted set classification</a></li>
+  </ul></li>
 </ul>
 
 
@@ -147,7 +152,7 @@ sslearn    </h1>
 
 <p>In this page we provide some code examples to show how to use the library. Also, exists a <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=KS-6GNxCayxf">Jupyter Notebook</a> with the same examples to run in Google Colab.</p>
 
-<h6 id="datasets-manipulation">Datasets manipulation</h6>
+<h2 id="datasets-manipulation">Datasets manipulation</h2>
 
 <p>SSLearn include tools for loading csv and dat (KEEL) datasets. Also, it provides a function to generate a semi-supervised dataset from a labeled dataset.</p>
 
@@ -202,7 +207,7 @@ sslearn    </h1>
 
 <p><code>X_train</code> and <code>y_train</code> are the set ready to be used in a semi-supervised algorithm, with the "-1" in the target column for the unlabeled instances.</p>
 
-<h6 id="wrappers">Wrappers</h6>
+<h2 id="wrappers">Wrappers</h2>
 
 <p>The wrappers are the most widely used algorithms in the semi-supervised learning field. The library includes the most popular ones. The algorithms included are:</p>
 
@@ -294,12 +299,123 @@ sslearn    </h1>
 
 <p>The wrappers that support multi-learning can be used with the subview adapters. The adapters are in the <code><a href="sslearn/subview.html">sslearn.subview</a></code> module. </p>
 
-<h3 id="restricted-set-classification">Restricted set classification</h3>
+<h3 id="comparison-example">Comparison example</h3>
+
+<p>A comparison example is available in the <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#sandboxMode=true&scrollTo=L4vJsnE0AwVE">Jupyter Notebook</a>. Here is a snippet of the code with the dataset already loaded.</p>
+
+<p>The propose of this code is compare the accuracy of the algorithms in a semi-supervised dataset. It is used a 10-fold cross-validation to get the accuracy of each algorithm, and with the 10%, 20%, 30%, and 40% of the instances labeled.</p>
+
+<div class="pdoc-code codehilite">
+<pre><span></span><code><span class="c1"># The dataset is already loaded, the models are built and the results objects have been created.</span>
+
+<span class="c1"># First statified k-fold</span>
+<span class="n">skf</span> <span class="o">=</span> <span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">train_index</span><span class="p">,</span> <span class="n">test_index</span> <span class="ow">in</span> <span class="n">skf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">test_index</span><span class="p">]</span>
+    <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">train_index</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">test_index</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">lr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">]):</span>
+      <span class="c1"># Create the semi-supervised dataset</span>
+      <span class="n">X_ss</span><span class="p">,</span> <span class="n">y_ss</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">artificial_ssl_dataset</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">lr</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">models</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Fit the model</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_ss</span><span class="p">,</span> <span class="n">y_ss</span><span class="p">)</span>
+        <span class="c1"># Score the results and save it</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>The average results are:</p>
+
+<table>
+<thead>
+<tr>
+  <th></th>
+  <th>10%</th>
+  <th>20%</th>
+  <th>30%</th>
+  <th>40%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Self-Training</td>
+  <td>89.99%</td>
+  <td>90.52%</td>
+  <td>91.05%</td>
+  <td>89.81%</td>
+</tr>
+<tr>
+  <td>Setred</td>
+  <td>88.76%</td>
+  <td>90.86%</td>
+  <td>90.86%</td>
+  <td>91.04%</td>
+</tr>
+<tr>
+  <td>Co-Training</td>
+  <td>90.69%</td>
+  <td>92.27%</td>
+  <td>91.75%</td>
+  <td>91.75%</td>
+</tr>
+<tr>
+  <td>Co-Training by Committee</td>
+  <td>91.22%</td>
+  <td>92.62%</td>
+  <td>91.75%</td>
+  <td>91.75%</td>
+</tr>
+<tr>
+  <td>Democratic Co-Learning</td>
+  <td>91.92%</td>
+  <td>92.80%</td>
+  <td>93.68%</td>
+  <td>94.20%</td>
+</tr>
+<tr>
+  <td>RASCO</td>
+  <td>90.86%</td>
+  <td>91.74%</td>
+  <td>94.38%</td>
+  <td>93.33%</td>
+</tr>
+<tr>
+  <td>RelRASCO</td>
+  <td>90.87%</td>
+  <td>93.15%</td>
+  <td>92.45%</td>
+  <td>93.50%</td>
+</tr>
+<tr>
+  <td>CoForest</td>
+  <td>91.39%</td>
+  <td>92.80%</td>
+  <td>92.63%</td>
+  <td>92.45%</td>
+</tr>
+<tr>
+  <td>TriTraining</td>
+  <td>91.56%</td>
+  <td>90.68%</td>
+  <td>91.04%</td>
+  <td>91.75%</td>
+</tr>
+<tr>
+  <td>DeTriTraining</td>
+  <td>85.24%</td>
+  <td>85.06%</td>
+  <td>85.06%</td>
+  <td>85.24%</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="restricted-set-classification">Restricted set classification</h2>
 
 <p>The RSC algorithms support datasets with pairwise constraints. The library provides the <code>WhoIsWhoClassifier</code>, the <code>feature_fusion</code> and <code>probability_fusion</code> methods.
 <code>WhoIsWhoClassifier</code> is a wrapper that uses the RSC algorithms and supports only cannot-link constraints. The <code>feature_fusion</code> and <code>probability_fusion</code> methods supports both constraints but only in prediction time. All algorithms are in the <code>sslearn.restriced</code> module.</p>
 
-<p>The complete example is avaliable in the <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=mF32Wps3pIR5">Jupyter Notebook</a>. Here is a snippet of the code with the dataset and the constraints already loaded.</p>
+<p>The complete example is avaliable in the <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#sandboxMode=true&scrollTo=sN3XUw4K_it-">Jupyter Notebook</a>. Here is a snippet of the code with the dataset and the constraints already loaded.</p>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="n">wiw</span> <span class="o">=</span> <span class="n">WhoIsWhoClassifier</span><span class="p">(</span><span class="n">base_estimator</span><span class="o">=</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>

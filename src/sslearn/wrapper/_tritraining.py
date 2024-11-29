@@ -631,7 +631,7 @@ class DeTriTraining(TriTraining):
         init = time.time()
         knn = KNeighborsClassifier(n_neighbors=self.k_neighbors, n_jobs=self.n_jobs)
         valid = knn.fit(*S).predict(S[0]) == S[1]
-        print(f"Depure time: {time.time() - init}")
+        #print(f"Depure time: {time.time() - init}")
         return S[0][valid], S[1][valid]
 
     def _clustering(self, S, X):
