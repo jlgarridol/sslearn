@@ -11,7 +11,7 @@ else:
 
 __doc__ = __doc__ + "\n.. include:: ../../docs/examples.md\n" 
 
-__version__='1.0.5.2'
+__version__='1.0.5.3'
 __AUTHOR__="José Luis Garrido-Labrador"  # Author of the package
 __AUTHOR_EMAIL__="jlgarrido@ubu.es"  # Author's email
 __URL__="https://pypi.org/project/sslearn/"
