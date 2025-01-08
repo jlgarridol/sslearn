@@ -30,13 +30,15 @@ It can be installed using *Pypi*:
 ## Citing 
 
 ```bibtex
-@software{garrido2024sslearn,
-  author       = {José Luis Garrido-Labrador},
-  title        = {jlgarridol/sslearn},
-  month        = feb,
-  year         = 2024,
-  publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.7565221},
+@article{sslearn2025garrido,
+    title = {SSLearn: A Semi-Supervised Learning library for Python},
+    journal = {SoftwareX},
+    volume = {29},
+    pages = {102024},
+    year = {2025},
+    issn = {2352-7110},
+    doi = {https://doi.org/10.1016/j.softx.2024.102024},
+    author = {José L. Garrido-Labrador and Jesús M. Maudes-Raedo and Juan J. Rodríguez and César I. García-Osorio},
 }
 ```
 
