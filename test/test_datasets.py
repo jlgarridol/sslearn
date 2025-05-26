@@ -5,11 +5,11 @@ import pytest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyClassifier, DummyRegressor
 
-from sslearn.base import get_dataset
+from sslearn.base import get_dataset, get_dataset_regression
 from sslearn.datasets import read_csv, read_keel, save_keel, secure_dataset
-from sslearn.wrapper import SelfTraining
+from sslearn.wrapper import SelfTraining, TriTrainingRegressor
 
 
 def folder():
@@ -23,6 +23,15 @@ def posterior(X, y):
     clf = SelfTraining(DummyClassifier(strategy="most_frequent"))
     clf.fit(X, y)
 
+def posterior_regression(X, y): 
+    X_label, y_label, X_unlabel = get_dataset_regression(X, y)
+    assert X_unlabel.shape[0] != 0
+    reg = DummyRegressor(strategy="mean")
+    reg.fit(X_label, y_label)
+    reg = TriTrainingRegressor(DummyRegressor(strategy="mean"))
+    reg.fit(X, y)
+
+
 class TestDataset:
     
     def test_read_csv(self):
@@ -31,12 +40,24 @@ class TestDataset:
         X, y = read_csv(os.path.join(folder(),"abalone.csv"), format="numpy")
         posterior(X, y)
 
+    def test_read_csv_regression(self): 
+        X, y = read_csv(os.path.join(folder(), "abalone_regression.csv"), format="pandas", is_regression=True)
+        posterior_regression(X, y)
+        X, y = read_csv(os.path.join(folder(), "abalone_regression.csv"), format="numpy", is_regression=True)
+        posterior_regression(X, y)
+
 
     def test_read_keel(self):
         X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="pandas")
         posterior(X, y)
         X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="numpy")
         posterior(X, y)
+
+    def test_read_keel_regression(self):
+        X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="pandas", is_regression=True)
+        posterior_regression(X, y)
+        X, y = read_keel(os.path.join(folder(),"abalone.dat"), format="numpy", is_regression=True)
+        posterior_regression(X, y)
 
     def test_secure_dataset(self):
         X, y = read_csv(os.path.join(folder(),"abalone.csv"), format="pandas")

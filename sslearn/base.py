@@ -83,6 +83,48 @@ def get_dataset(X, y):
 
     return X_label, y_label, X_unlabel
 
+def get_dataset_regression(X, y): 
+    """Check and divide regression dataset between labeled and unlabeled data.
+
+    Parameters
+    ----------
+    X : ndarray or DataFrame of shape (n_samples, n_features)
+        Features matrix.
+    y : ndarray of shape (n_samples,)
+        Target vector.
+
+    Returns
+    -------
+    X_label : ndarray or DataFrame of shape (n_label, n_features)
+        Labeled features matrix.
+    y_label : ndarray or Serie of shape (n_label,)
+        Labeled target vector.
+    X_unlabel : ndarray or Serie DataFrame of shape (n_unlabel, n_features)
+        Unlabeled features matrix.
+    """
+    is_df = False
+    if isinstance(X, pd.DataFrame): 
+        is_df = True
+        columns = X.columns
+
+    X = check_array(X)
+
+    if is_df: 
+        X_label = X[~np.isnan(y.to_numpy(dtype='float64'))]
+        y_label = y[~np.isnan(y.to_numpy(dtype='float64'))]
+        X_unlabel = X[np.isnan(y.to_numpy(dtype='float64'))]
+    else: 
+        X_label = X[~np.isnan(y)]
+        y_label = y[~np.isnan(y)]
+        X_unlabel = X[np.isnan(y)]
+
+    X_label, y_label = check_X_y(X_label, y_label)
+
+    if is_df: 
+        X_label = pd.DataFrame(X_label, columns=columns)
+        X_unlabel = pd.DataFrame(X_unlabel, columns=columns)
+
+    return X_label, y_label, X_unlabel
 
 class BaseEnsemble(ABC, MetaEstimatorMixin, BaseEstimator):
 

@@ -7,22 +7,25 @@ import pytest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.datasets import load_breast_cancer
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.datasets import load_breast_cancer, load_diabetes
 
 from sslearn.datasets import read_csv
 from sslearn.model_selection import artificial_ssl_dataset
 from sslearn.wrapper import (
-    CoTraining, CoForest, CoTrainingByCommittee, DemocraticCoLearning, Rasco, RelRasco,
-    SelfTraining, Setred, TriTraining, DeTriTraining    
+    CoTraining, CoForest, CoTrainingByCommittee, DemocraticCoLearning, Rasco, RelRasco, CoReg,
+    SelfTraining, Setred, TriTraining, DeTriTraining, TriTrainingRegressor
 )
 
 X, y = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone.csv"), format="pandas")
 X2, y2 = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone.csv"), format="numpy")
+X3, y3 = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone_regression.csv"), format="pandas", is_regression=True)
+X4, y4 = read_csv(os.path.join(os.path.dirname(os.path.realpath(__file__)), "example_files", "abalone_regression.csv"), format="numpy", is_regression=True)
 
 X_l, y_l = load_breast_cancer(return_X_y=True)
+X_l2, y_l2 = load_diabetes(return_X_y=True)
 
 
 multiples_estimator = [
@@ -33,6 +36,13 @@ multiples_estimator = [
             KNeighborsClassifier(n_neighbors=3),
         ]
 
+multiples_estimator_regression = [
+    DecisionTreeRegressor(max_depth=1),
+    DecisionTreeRegressor(max_depth=2),
+    KNeighborsRegressor(n_neighbors=5),
+    KNeighborsRegressor(n_neighbors=3),
+]
+
 def check_random(estimator, estimator_key="base_estimator", **kwargs):
     for i in range(5):
         clf = eval(f"estimator({estimator_key}=KNeighborsClassifier(), random_state=i, **kwargs)")
@@ -42,6 +52,16 @@ def check_random(estimator, estimator_key="base_estimator", **kwargs):
         clf.fit(X, y)
         y2 = clf.predict(X)
         assert np.all(y1 == y2)
+
+def check_random_regression(estimator, estimator_key="base_estimator", **kwargs): 
+    for i in range(5): 
+        reg = eval(f"estimator({estimator_key}=KNeighborsRegressor(), random_state=i, **kwargs)")
+        reg.fit(X3, y3)
+        y1 = reg.predict(X3)
+        reg = eval(f"estimator({estimator_key}=KNeighborsRegressor(), random_state=i, **kwargs)")
+        reg.fit(X3, y3)
+        y2 = reg.predict(X3)
+        assert np.all(y2 == y2)
 
 def check_multiple(estimator, **kwargs):
     clf = estimator(base_estimator=multiples_estimator, n_estimators=5, **kwargs)
@@ -54,6 +74,11 @@ def check_all_label(estimator, **kwargs):
     clf.fit(X_l, y_l)
     clf.predict(X_l)
     clf.predict_proba(X_l)
+
+def check_all_label_regression(estimator, **kwargs): 
+    reg = estimator(**kwargs)
+    reg.fit(X_l2, y_l2)
+    reg.predict(X_l2)
 
 def check_pandas(estimator, **kwargs):
     clf = estimator(**kwargs)
@@ -70,6 +95,20 @@ def check_numpy(estimator, **kwargs):
 def check_basic(estimator, **kwargs):
     check_pandas(estimator, **kwargs)
     check_numpy(estimator, **kwargs)
+
+def check_pandas_regression(estimator, **kwargs): 
+    reg = estimator(**kwargs)
+    reg.fit(X3, y3)
+    reg.predict(X3)
+
+def check_numpy_regression(estimator, **kwargs): 
+    reg = estimator(**kwargs)
+    reg.fit(X4, y4)
+    reg.predict(X4)
+
+def check_basic_regression(estimator, **kwargs): 
+    check_pandas_regression(estimator, **kwargs)
+    check_numpy_regression(estimator, **kwargs)
 
 
 class TestCoForest:
@@ -230,6 +269,49 @@ class TestDeTriTraining:
 
     def test_all_label(self):
         check_all_label(DeTriTraining, max_iterations=1)
+
+class TestTriTrainingRegressor: 
+    def test_basic(self): 
+        check_basic_regression(TriTrainingRegressor)
+
+    def test_random_state(self):
+        check_random_regression(TriTrainingRegressor)
+
+    def test_multiple(self):
+        clf = TriTrainingRegressor(base_estimator=[DecisionTreeRegressor(max_depth=1), DecisionTreeRegressor(max_depth=2), DecisionTreeRegressor(max_depth=3)])
+        clf.fit(X, y)
+        clf.predict(X)
+
+    def test_no_more_three(self):
+        with pytest.raises(AttributeError):
+            _ =  TriTrainingRegressor(base_estimator=multiples_estimator_regression)
+
+    def test_all_label(self):
+        check_all_label_regression(TriTrainingRegressor)
+
+class TestCoReg: 
+    def test_basic(self): 
+        check_basic_regression(CoReg, max_iterations=10)
+
+    def test_multiview(self):
+        reg = CoReg(max_iterations=10)
+        reg.fit(X3.iloc[:, :len(X3.columns)//2], y3, X2=X3.iloc[:, len(X3.columns)//2:])
+        reg.predict(X3.iloc[:, :len(X3.columns)//2], X2=X3.iloc[:, len(X3.columns)//2:])
+
+    def test_random_state(self):
+        estimator = CoReg 
+        for i in range(5): 
+            reg = eval(f"estimator(max_iterations=10, random_state=i)")
+            reg.fit(X3, y3)
+            y1 = reg.predict(X3)
+            reg = eval(f"estimator(max_iterations=10, random_state=i)")
+            reg.fit(X3, y3)
+            y2 = reg.predict(X3)
+            assert np.all(y2 == y2)
+
+    def test_all_label(self): 
+        check_all_label_regression(CoReg)
+
 
 # Create a fake groups
 groups = list()
