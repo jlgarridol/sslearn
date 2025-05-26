@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import warnings
 from ._preprocess import secure_dataset
+pd.options.mode.chained_assignment = None 
 
 keel_type_cheat = {
     "string": "string",
@@ -133,6 +134,12 @@ def read_csv(path, format="pandas", secure=False, target_col=-1, is_regression=F
 
     if not is_regression and secure:
         X, y = secure_dataset(X, y)
+
+    if is_regression: 
+        y[y == "None"] = np.NaN
+        y = y.astype(float)
+        # Transform of the Series x all values that is None to NaN
+        
 
     if format == "numpy":
         X = X.to_numpy()

@@ -39,7 +39,7 @@ from sklearn.utils.metaestimators import available_if
 from sklearn.ensemble._base import _set_random_states
 from sklearn.utils import check_random_state
 
-__all__ = ["get_dataset", "FakedProbaClassifier", "OneVsRestSSLClassifier"]
+__all__ = ["get_dataset", "get_dataset_regression", "FakedProbaClassifier", "OneVsRestSSLClassifier"]
 
 
 
@@ -109,10 +109,10 @@ def get_dataset_regression(X, y):
 
     X = check_array(X)
 
-    if is_df: 
-        X_label = X[~np.isnan(y.to_numpy(dtype='float64'))]
-        y_label = y[~np.isnan(y.to_numpy(dtype='float64'))]
-        X_unlabel = X[np.isnan(y.to_numpy(dtype='float64'))]
+    if is_df:
+        X_label = X[~np.isnan(y.to_numpy(dtype='float32'))]
+        y_label = y[~np.isnan(y.to_numpy(dtype='float32'))]
+        X_unlabel = X[np.isnan(y.to_numpy(dtype='float32'))]
     else: 
         X_label = X[~np.isnan(y)]
         y_label = y[~np.isnan(y)]

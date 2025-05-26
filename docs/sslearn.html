@@ -120,13 +120,15 @@ sslearn    </h1>
 <h2 id="citing">Citing</h2>
 
 <div class="pdoc-code codehilite">
-<pre><span></span><code><span class="nc">@software</span><span class="p">{</span><span class="nl">garrido2024sslearn</span><span class="p">,</span>
-<span class="w">  </span><span class="na">author</span><span class="w">       </span><span class="p">=</span><span class="w"> </span><span class="s">{José Luis Garrido-Labrador}</span><span class="p">,</span>
-<span class="w">  </span><span class="na">title</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="s">{jlgarridol/sslearn}</span><span class="p">,</span>
-<span class="w">  </span><span class="na">month</span><span class="w">        </span><span class="p">=</span><span class="w"> </span><span class="nv">feb</span><span class="p">,</span>
-<span class="w">  </span><span class="na">year</span><span class="w">         </span><span class="p">=</span><span class="w"> </span><span class="m">2024</span><span class="p">,</span>
-<span class="w">  </span><span class="na">publisher</span><span class="w">    </span><span class="p">=</span><span class="w"> </span><span class="s">{Zenodo}</span><span class="p">,</span>
-<span class="w">  </span><span class="na">doi</span><span class="w">          </span><span class="p">=</span><span class="w"> </span><span class="s">{10.5281/zenodo.7565221}</span><span class="p">,</span>
+<pre><span></span><code><span class="nc">@article</span><span class="p">{</span><span class="nl">sslearn2025garrido</span><span class="p">,</span>
+<span class="w">    </span><span class="na">title</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{SSLearn: A Semi-Supervised Learning library for Python}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">journal</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{SoftwareX}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">volume</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{29}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">pages</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{102024}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">year</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{2025}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">issn</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{2352-7110}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">doi</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{https://doi.org/10.1016/j.softx.2024.102024}</span><span class="p">,</span>
+<span class="w">    </span><span class="na">author</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{José L. Garrido-Labrador and Jesús M. Maudes-Raedo and Juan J. Rodríguez and César I. García-Osorio}</span><span class="p">,</span>
 <span class="p">}</span>
 </code></pre>
 </div>
@@ -299,7 +301,7 @@ sslearn    </h1>
 <p>The RSC algorithms support datasets with pairwise constraints. The library provides the <code>WhoIsWhoClassifier</code>, the <code>feature_fusion</code> and <code>probability_fusion</code> methods.
 <code>WhoIsWhoClassifier</code> is a wrapper that uses the RSC algorithms and supports only cannot-link constraints. The <code>feature_fusion</code> and <code>probability_fusion</code> methods supports both constraints but only in prediction time. All algorithms are in the <code>sslearn.restriced</code> module.</p>
 
-<p>The complete example is avaliable in the <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=mF32Wps3pIR5">Jupyter Notebook</a>. Here is a snippet of the code with the dataset and the constraints already loaded.</p>
+<p>The complete example is avaliable in the <a href="https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#sandboxMode=true&scrollTo=sN3XUw4K_it-">Jupyter Notebook</a>. Here is a snippet of the code with the dataset and the constraints already loaded.</p>
 
 <div class="pdoc-code codehilite">
 <pre><span></span><code><span class="n">wiw</span> <span class="o">=</span> <span class="n">WhoIsWhoClassifier</span><span class="p">(</span><span class="n">base_estimator</span><span class="o">=</span><span class="n">DecisionTreeClassifier</span><span class="p">(</span><span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">),</span>
@@ -341,7 +343,7 @@ sslearn    </h1>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="vm">__doc__</span> <span class="o">=</span> <span class="vm">__doc__</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">.. include:: ../../docs/examples.md</span><span class="se">\n</span><span class="s2">&quot;</span> 
 </span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="n">__version__</span><span class="o">=</span><span class="s1">&#39;1.0.5.2&#39;</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a><span class="n">__version__</span><span class="o">=</span><span class="s1">&#39;1.1.0&#39;</span>
 </span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a><span class="n">__AUTHOR__</span><span class="o">=</span><span class="s2">&quot;José Luis Garrido-Labrador&quot;</span>  <span class="c1"># Author of the package</span>
 </span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a><span class="n">__AUTHOR_EMAIL__</span><span class="o">=</span><span class="s2">&quot;jlgarrido@ubu.es&quot;</span>  <span class="c1"># Author&#39;s email</span>
 </span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a><span class="n">__URL__</span><span class="o">=</span><span class="s2">&quot;https://pypi.org/project/sslearn/&quot;</span>

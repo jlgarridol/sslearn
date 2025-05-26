@@ -4,15 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0.0] - 2024-xx-xx
+## [1.1.0.0] - 2025-05-26
 
 ### Added
+- Included `get_dataset_regresion` for separation of labeled and unlabeled data. For the regresion dataset the unlabeled instances is marked with `NaN`; by @aliciaolivaresgil.
+- Includes `check_regressor` in the `sslearn.utils` module to check if the estimator is a regressor or not; by @aliciaolivaresgil.
+- The regressor `CoReg` is now included, described in the paper "Semi-supervised regression with co-training" by Zhi-Hua Zhou and Ming Li. Implemented in the `sslearn.wrapper` module; by @aliciaolivaresgil.
+- The regresion `TriTrainingRegressor` is now included, made by adapting the `TriTraining` method to regression tasks created by Alicia Olivares Gil. Implemented in the `sslearn.wrapper` module; by @aliciaolivaresgil.
 
-
+### Changed
+- The functions `read_keel` and `read_csv` from the `sslearn.datasets` module now has a new parameter `is_regression` to indicate if the dataset is for regression or classification. This will change the way the dataset is processed and returned; by @aliciaolivaresgil.
 
 ### Fixed
 
 - Repaired `restricted.feature_fusion` and `restricted.probability_fusion` when the instances that cannot link are not consecutives.
+
+### Testing 
+- Added tests for the new regression methods and the changes in the dataset reading functions; by @aliciaolivaresgil.
 
 ## [1.0.5.2] - 2024-05-27
 
