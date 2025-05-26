@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import warnings
 from ._preprocess import secure_dataset
 
@@ -10,7 +11,7 @@ keel_type_cheat = {
 }
 
 
-def read_keel(path, format="pandas", secure=False, target_col=None, encoding="utf-8", **kwards):
+def read_keel(path, format="pandas", secure=False, target_col=None, encoding="utf-8", is_regression=False, **kwards):
     """Read a .dat file from KEEL (http://www.keel.es/)
 
     Parameters
@@ -25,6 +26,8 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
         Column name or index to select class column, if None use the default value stored in the file, by default None
     encoding: str, optional
         Encoding of file, by default "utf-8"
+    is_regression: bool, optional
+        Indicates if the data set is for regression, if True, target value of unlabeled instances is set to np.NaN, by default False
 
     Returns
     -------
@@ -78,19 +81,24 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
         X = data[att_columns]
         y = data[target_col]
 
-        y[y == "unlabeled"] = y.dtype.type(-1)
-        if secure:
-            X, y = secure_dataset(X, y)
+        if is_regression: 
+            y[y == "unlabeled"] = np.NaN
+            y = y.astype(float)
+        else: 
+            y[y == "unlabeled"] = y.dtype.type(-1)
+            if secure:
+                X, y = secure_dataset(X, y)
 
     if format == "numpy":
         X = X.to_numpy().astype(float)
         y = y.to_numpy()
         if y.dtype == object:
             y = y.astype("str")
+
     return X, y
 
 
-def read_csv(path, format="pandas", secure=False, target_col=-1, **kwards):
+def read_csv(path, format="pandas", secure=False, target_col=-1, is_regression=False, **kwards):
     """Read a .csv file
 
     Parameters
@@ -103,6 +111,8 @@ def read_csv(path, format="pandas", secure=False, target_col=-1, **kwards):
         It guarantees that the dataset has not  `-1` as valid class, in order to make it semi-supervised after, by default False
     target_col : {str, int, None}, optional
         Column name or index to select class column, if None use the default value stored in the file, by default None
+    is_regression: bool, optional
+        Indicates if the data set is for regression, if True, target value of unlabeled instances must be None in the csv, by default False
 
     Returns
     -------
@@ -121,8 +131,9 @@ def read_csv(path, format="pandas", secure=False, target_col=-1, **kwards):
     X = data.iloc[:, data.columns != data.columns[target_col]]
     y = data.iloc[:, target_col]
 
-    if secure:
+    if not is_regression and secure:
         X, y = secure_dataset(X, y)
+
     if format == "numpy":
         X = X.to_numpy()
         y = y.to_numpy()
