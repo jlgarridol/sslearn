@@ -65,6 +65,9 @@
                         <li>
                                 <a class="function" href="#SubViewClassifier.predict_proba">predict_proba</a>
                         </li>
+                        <li>
+                                <a class="function" href="#SubViewClassifier.set_score_request">set_score_request</a>
+                        </li>
                 </ul>
 
             </li>
@@ -73,6 +76,9 @@
                             <ul class="memberlist">
                         <li>
                                 <a class="function" href="#SubViewRegressor.predict">predict</a>
+                        </li>
+                        <li>
+                                <a class="function" href="#SubViewRegressor.set_score_request">set_score_request</a>
                         </li>
                 </ul>
 
@@ -251,6 +257,58 @@ The class probabilities of the input samples.</li>
 
 
                             </div>
+                            <div id="SubViewClassifier.set_score_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#SubViewClassifier.set_score_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -263,6 +321,10 @@ The class probabilities of the input samples.</li>
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="SubViewClassifier.get_params" class="function">get_params</dd>
                 <dd id="SubViewClassifier.set_params" class="function">set_params</dd>
+
+            </div>
+            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
+                                <dd id="SubViewClassifier.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.ClassifierMixin</dt>
@@ -374,6 +436,58 @@ The predicted values.</li>
 
 
                             </div>
+                            <div id="SubViewRegressor.set_score_request" class="classattr">
+                                <div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">set_score_request</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">unknown</span></span><span class="return-annotation">):</span></span>
+
+        
+    </div>
+    <a class="headerlink" href="#SubViewRegressor.set_score_request"></a>
+    
+            <div class="docstring"><p>A descriptor for request methods.</p>
+
+<p><em>New in version 1.3.</em></p>
+
+<h6 id="parameters">Parameters</h6>
+
+<ul>
+<li><strong>name</strong> (str):
+The name of the method for which the request function should be
+created, e.g. <code>"fit"</code> would create a <code>set_fit_request</code> function.</li>
+<li><strong>keys</strong> (list of str):
+A list of strings which are accepted parameters by the created
+function, e.g. <code>["sample_weight"]</code> if the corresponding method
+accepts it as a metadata.</li>
+<li><strong>validate_keys</strong> (bool, default=True):
+Whether to check if the requested parameters fit the actual parameters
+of the method.</li>
+</ul>
+
+<h6 id="notes">Notes</h6>
+
+<p>This class is a descriptor <sup class="footnote-ref" id="fnref-1"><a href="#fn-1">1</a></sup> and uses PEP-362 to set the signature of
+the returned function <sup class="footnote-ref" id="fnref-2"><a href="#fn-2">2</a></sup>.</p>
+
+<h6 id="references">References</h6>
+
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn-1">
+<p><a href="https://docs.python.org/3/howto/descriptor.html">https://docs.python.org/3/howto/descriptor.html</a>&#160;<a href="#fnref-1" class="footnoteBackLink" title="Jump back to footnote 1 in the text.">&#8617;</a></p>
+</li>
+
+<li id="fn-2">
+<p><a href="https://www.python.org/dev/peps/pep-0362/">https://www.python.org/dev/peps/pep-0362/</a>&#160;<a href="#fnref-2" class="footnoteBackLink" title="Jump back to footnote 2 in the text.">&#8617;</a></p>
+</li>
+</ol>
+</div>
+</div>
+
+
+                            </div>
                             <div class="inherited">
                                 <h5>Inherited Members</h5>
                                 <dl>
@@ -385,6 +499,10 @@ The predicted values.</li>
             <div><dt>sklearn.base.BaseEstimator</dt>
                                 <dd id="SubViewRegressor.get_params" class="function">get_params</dd>
                 <dd id="SubViewRegressor.set_params" class="function">set_params</dd>
+
+            </div>
+            <div><dt>sklearn.utils._metadata_requests._MetadataRequester</dt>
+                                <dd id="SubViewRegressor.get_metadata_routing" class="function">get_metadata_routing</dd>
 
             </div>
             <div><dt>sklearn.base.RegressorMixin</dt>

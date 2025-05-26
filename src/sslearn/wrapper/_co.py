@@ -1,28 +1,30 @@
 import sys
 import warnings
+import copy
 from abc import abstractmethod
+
 
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from scipy.special import softmax
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from sklearn.base import clone as skclone
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.metrics import accuracy_score
 from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils import check_array, check_random_state, resample
+from sklearn.utils import check_array, check_random_state, resample, shuffle
 from sklearn.utils.validation import check_is_fitted
 
 
 from sslearn.utils import check_n_jobs
 
-from ..base import BaseEnsemble, get_dataset
+from ..base import BaseEnsemble, get_dataset, get_dataset_regression
 from ..utils import (calc_number_per_class, calculate_prior_probability, check_classifier,
                      choice_with_proportion, confidence_interval, mode, safe_division)
 
@@ -1527,3 +1529,220 @@ class CoForest(BaseCoTraining):
         self.columns_ = [list(range(X.shape[1]))] * self.n_estimators
 
         return self
+
+class CoReg(BaseEstimator, RegressorMixin): 
+    """
+    **Co-Training Regressor**
+    --------------------------------------------
+
+    Implementation of Co-Training for Regression using two K-Nearest Neighbors regressors as base estimators. 
+    It can perform single-view and multi-view learning. 
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `score`: Return the coefficient of determination of the prediction.
+
+
+    **References**
+    ----------
+    Zhou, Z. H., & Li, M. (2005).<br>
+    Semi-supervised regression with co-training.<br>
+    <i>IJCAI</i> 5, 908-913.<br>
+    """
+
+    def __init__(self, k1=3, k2=3, p1=2, p2=5, max_iterations=100, pool_size=100, random_state=None, n_jobs=None): 
+        """
+        Generate Co-Training Regressor.
+
+        Parameters
+        ----------
+        k1 : int, optional
+            The number of neighbors in the first KNeighborsRegressor, by default 3
+        k2 : int, optional
+            The number of neighbors in the second KNeighborsRegressor, by default 3
+        p1 : int, optional  
+            Power parameter for the Minkowski metric in the first KNeighborsRegressor, by default 2
+            It only one view is used for training p1 and p2 should be different.  
+        p2 : int, optional  
+            Power parameter for the Minkowski metric in the second KNeighborsRegressor, by default 5
+            It only one view is used for training p1 and p2 should be different. 
+        max_iterations: int, optional
+            The maximum number of iterations, by default 100
+        pool_size: int, optional
+            The size of the buffer pool, by default 100
+        random_state : int, RandomState instance, optional
+            controls the randomness of the estimator, by default None
+        n_jobs : int, optional
+            The number of jobs to run in parallel for both `fit` and `predict`.
+            `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+            `-1` means using all processors., by default None
+        """
+        self.k1 = k1
+        self.k2 = k2
+        self.p1 = p1
+        self.p2 = p2
+        self.max_iterations = max_iterations
+        self.pool_size = pool_size
+        self.h1 = KNeighborsRegressor(n_neighbors=k1, p=p1)
+        self.h2 = KNeighborsRegressor(n_neighbors=k2, p=p2)
+        self.h1_temp = copy.copy(self.h1)
+        self.h2_temp = copy.copy(self.h2)
+        self.random_state=random_state
+        self.n_jobs = n_jobs
+        self._N_LEARNER = 2
+
+    def fit(self, X, y, X2=None, **kwards): 
+        """Build a Co-Training Regressor from the training set (X, y).
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. First view with n features. 
+        y : array-like of shape (n_samples,)
+            The target values (real numbers), np.nan if unlabeled.
+        X2 : {array-like, sparse matrix} of shape (n_samples, m_features) or None, optional
+            The training input samples. Second optional view with m features, by default None. 
+        Returns
+        -------
+        self : CoReg
+            Fitted estimator.
+        """
+        random_state = check_random_state(self.random_state)
+        self.n_jobs = min(check_n_jobs(self.n_jobs), self._N_LEARNER)
+
+        if isinstance(X, pd.DataFrame): 
+            X = X.to_numpy()
+
+        if isinstance(y, pd.DataFrame): 
+            y = y.to_numpy().flatten()
+
+        X1_label, y_label, X1_unlabel = get_dataset_regression(X, y)
+
+        if X2 is None: 
+            X2_label, y_label, X2_unlabel = get_dataset_regression(X, y)
+        else: 
+            if isinstance(X2, pd.DataFrame): 
+                X2 = X2.to_numpy()
+            X2_label, y_label, X2_unlabel = get_dataset_regression(X2, y)
+
+        y1, y2 = y_label[::], y_label[::]
+
+        #fit models with labeled data
+        self.h1.fit(X1_label, y1)
+        self.h2.fit(X2_label, y2)
+
+        if X1_unlabel.shape[0] == 0:
+            return self
+
+        #select subset U' from U
+        X1_pool, idx1_pool, X2_pool, idx2_pool = shuffle(X1_unlabel, range(X1_unlabel.shape[0]), 
+                                                         X2_unlabel, range(X2_unlabel.shape[0]), random_state=self.random_state)
+
+        X1_pool, X2_pool = X1_pool[:self.pool_size], X2_pool[:self.pool_size]
+        idx1_pool, idx2_pool = idx1_pool[:self.pool_size], idx2_pool[:self.pool_size]
+
+        for i in range(self.max_iterations): 
+            stop_training = True
+            to_remove = []
+            for idx_h in range(1, self._N_LEARNER+1): 
+                if idx_h == 1: 
+                    h = self.h1
+                    h_temp = self.h1_temp
+                    L_X, L_y = X1_label, y1
+                    X_pool = X1_pool
+                else: 
+                    h = self.h2
+                    h_temp = self.h2_temp
+                    L_X, L_y = X2_label, y2
+                    X_pool = X2_pool  
+
+                deltas = np.zeros((X_pool.shape[0],))
+                y_u_hats = np.zeros((X_pool.shape[0],))
+
+                for idx_u, x_u in enumerate(X_pool): 
+                    x_u = x_u.reshape(1, -1)
+                    y_u_hat = h.predict(x_u)
+                    omega = h.kneighbors(x_u, return_distance=False)[0]
+                    X_temp = np.concatenate((L_X, x_u))
+                    y_temp = np.concatenate((L_y, y_u_hat))
+                    h_temp.fit(X_temp, y_temp)
+
+                    delta = 0
+                    for idx_o in omega: 
+                        delta += (L_y[idx_o] - h.predict(L_X[idx_o].reshape(1, -1))) ** 2
+                        delta -= (L_y[idx_o]) - h_temp.predict(L_X[idx_o].reshape(1, -1)) ** 2
+
+                    deltas[idx_u] = delta
+                    y_u_hats[idx_u] = y_u_hat
+
+                if deltas.size: 
+
+                    #Choose bigger delta
+                    max_idx = np.argmax(deltas)
+
+                    if deltas[max_idx] > 0: 
+                        stop_training = False
+
+                        if idx_h == 1: 
+                            x_u = X2_pool[max_idx].reshape(1, -1)
+                            y_u_hat = y_u_hats[max_idx]
+                            idx_u = idx2_pool[max_idx]
+                            X2_label = np.concatenate((X2_label, x_u))
+                            y2 = np.append(y2, y_u_hat)
+                        else: 
+                            x_u = X1_pool[max_idx].reshape(1, -1)
+                            y_u_hat = y_u_hats[max_idx]
+                            idx_u = idx1_pool[max_idx]
+                            X1_label = np.concatenate((X1_label, x_u))
+                            y1 = np.append(y1, y_u_hat)
+                        to_remove.append(idx_u)
+
+            if stop_training: 
+                break
+            else: 
+                #refit
+                self.h1.fit(X1_label, y1)
+                self.h2.fit(X2_label, y2)
+
+                #delete labeled instance from U
+                X1_unlabel = np.delete(X1_unlabel, to_remove, axis=0)
+                X2_unlabel = np.delete(X2_unlabel, to_remove, axis=0)
+
+                #select subset U' from U
+                X1_pool, idx1_pool, X2_pool, idx2_pool = shuffle(X1_unlabel, range(X1_unlabel.shape[0]), 
+                                                                 X2_unlabel, range(X2_unlabel.shape[0]), random_state=self.random_state)
+
+                X1_pool, X2_pool = X1_pool[:self.pool_size], X2_pool[:self.pool_size]
+                idx1_pool, idx2_pool = idx1_pool[:self.pool_size], idx2_pool[:self.pool_size]
+
+        return self
+
+
+    def predict(self, X, X2=None): 
+        """Calculates the prediction of the model as the mean of the predictions of h1 and h2. 
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            First view with n features.
+        X2 : {array-like, sparse matrix} of shape (n_samples, m_features) or None, optional
+            Second optional view with m features, by default None. 
+        Returns
+        -------
+        y : array-like of shape (n_sampes,)
+            Prediction of the model. 
+        """
+        if isinstance(X, pd.DataFrame):
+            X = X.to_numpy()
+        result1 = self.h1.predict(X)
+
+        if X2 is not None: 
+            if isinstance(X2, pd.DataFrame): 
+                X2 = X2.to_numpy()
+            result2 = self.h2.predict(X2)
+        else: 
+            result2 = self.h2.predict(X)
+        result = 0.5 * (result1 + result2)
+        return result 
+
+        

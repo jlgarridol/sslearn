@@ -22,20 +22,24 @@ Democratic co-learning
 Random subspace co-training
 * [RelRasco](#RelRasco):
 Relevant random subspace co-training
+* [CoReg](#CoReg):
+Co-training for regression
 * [CoForest](#CoForest):
 Co-Forest
 * [TriTraining](#TriTraining):
 Tri-training
 * [DeTriTraining](#DeTriTraining):
 Data Editing Tri-training
+* [TriTrainingRegressor](#TriTrainingRegressor):
+Tri-training for regression
 
 """
 
 from ._co import (CoForest, CoTraining, CoTrainingByCommittee,
-                  DemocraticCoLearning, Rasco, RelRasco)
+                  DemocraticCoLearning, Rasco, RelRasco, CoReg)
 from ._self import SelfTraining, Setred
-from ._tritraining import DeTriTraining, TriTraining
+from ._tritraining import DeTriTraining, TriTraining, TriTrainingRegressor
 
 __all__ = ["SelfTraining", "Setred", "CoTraining", "CoTrainingByCommittee",
-           "DemocraticCoLearning", "Rasco", "RelRasco", "CoForest",
-           "TriTraining", "DeTriTraining"]
+           "DemocraticCoLearning", "Rasco", "RelRasco", "CoReg", "CoForest",
+           "TriTraining", "DeTriTraining", "TriTrainingRegressor"]

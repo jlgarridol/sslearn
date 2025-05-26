@@ -5,17 +5,17 @@ import warnings as warn
 import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
-from sklearn.base import ClassifierMixin
+from sklearn.base import ClassifierMixin, RegressorMixin, BaseEstimator
 from sklearn.base import clone as skclone
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils import check_random_state, resample
 from sklearn.preprocessing import LabelEncoder
 from sklearn.exceptions import ConvergenceWarning
 
-from ..base import get_dataset
+from ..base import get_dataset, get_dataset_regression
 from ..restricted import WhoIsWhoClassifier, combine_predictions
-from ..utils import check_classifier, check_n_jobs, safe_division
+from ..utils import check_classifier, check_regressor, check_n_jobs, safe_division
 from ._co import BaseCoTraining
 
 import time
@@ -814,3 +814,266 @@ class DeTriTraining(TriTraining):
         self.columns_ = [list(range(X.shape[1]))]
 
         return self
+
+
+class TriTrainingRegressor(BaseEstimator, RegressorMixin):
+    """
+    **TriTrainingRegressor. Trio of regressors with bootstrapping.**
+
+    The main process is:
+    1. Generate three regressors using bootstrapping.
+    2. Iterate until convergence:
+        1. Calculate the error between two hypotheses.
+        2. If the error is less than the previous error, generate a dataset with the instances where both hypotheses agree.
+        3. Retrain the regressors with the new dataset and the original labeled dataset.
+    3. Combine the predictions of the three regressors.
+
+    **Methods**
+    -------
+    - `fit`: Fit the model with the labeled instances.
+    - `predict` : Predict the class for each instance.
+    - `score`: Return the coefficient of determination of the prediction.
+
+    **References**
+    ----------
+    To be published.
+    """
+    def __init__(self,  
+                 base_estimator=DecisionTreeRegressor(), 
+                 n_samples=None, 
+                 y_tol_per=0.1, 
+                 random_state=None, 
+                 n_jobs=None): 
+
+        """TriTrainingRegressor. Trio of regressors with bootstrapping.
+
+        Parameters
+        ----------
+        base_estimator : RegressorMixin, optional
+            An estimator object implementing fit and predict, by default DecisionTreeRegressor()
+        n_samples : int, optional
+            Number of samples to generate.
+            If left to None this is automatically set to the first dimension of the arrays., by default None
+        y_tol_per : float, optional
+            Number between 0 and 1 that represents the percentage of the range between the minimum and maximum values of ``y``. It is used to calculate ``y_tol``. 
+            y_tol = y_tol_per * ( max(y) - min(y) )
+            By default 0.1.
+        random_state : int, RandomState instance, optional
+            controls the randomness of the estimator, by default None
+        n_jobs : int, optional
+            The number of jobs to run in parallel for both `fit` and `predict`.
+            `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+            `-1` means using all processors., by default None
+        """
+        self._N_LEARNER = 3
+        self.base_estimator = check_regressor(base_estimator, collection_size=self._N_LEARNER)
+        self.n_samples = n_samples
+        self.y_tol_per = y_tol_per
+        self._epsilon = sys.float_info.epsilon
+        self.random_state = random_state
+        self.n_jobs = n_jobs
+
+
+    def fit(self, X, y, **kwards):
+        """Build a TriTraining regressor from the training set (X, y).
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples.
+        y : array-like of shape (n_samples,)
+            The target values (real numbers), np.nan if unlabeled.
+        Returns
+        -------
+        self : TriTrainingRegressor
+            Fitted estimator.
+        """
+        random_state = check_random_state(self.random_state)
+        self.n_jobs = min(check_n_jobs(self.n_jobs), self._N_LEARNER)
+
+        if isinstance(X, pd.DataFrame): 
+            X = X.to_numpy()
+
+        if isinstance(y, pd.DataFrame): 
+            y = y.to_numpy().flatten()
+
+        X_label, y_label, X_unlabel = get_dataset_regression(X, y)
+
+        is_df = isinstance(X_label, pd.DataFrame)
+
+        hypotheses = []
+        e_ = [0.5] * self._N_LEARNER
+        l_ = [0] * self._N_LEARNER
+
+        for i in range(self._N_LEARNER):
+            X_sampled, y_sampled = resample(
+                X_label,
+                y_label,
+                replace=True,
+                n_samples=self.n_samples,
+                random_state=random_state,
+            )
+
+            hypotheses.append(
+                skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X_sampled, y_sampled, **kwards)
+            )
+
+        something_has_changed = True if X_unlabel.size > 0 else False
+
+        self.y_tol = self.y_tol_per*(np.max(y_label)-np.min(y_label))
+
+        while something_has_changed:
+            something_has_changed = False
+            L = [[]] * self._N_LEARNER
+            Ly = [[]] * self._N_LEARNER
+            e = []
+            updates = [False] * 3
+
+            for i in range(self._N_LEARNER):
+                hj, hk = TriTrainingRegressor._another_hs(hypotheses, i)
+                e.append(
+                    self._measure_error(X_label, y_label, hj, hk, self._epsilon)
+                )
+                if e_[i] <= e[i]:
+                    continue
+
+                y_p = np.mean(np.array([hj.predict(X_unlabel), hk.predict(X_unlabel)]), axis=0)
+                validx = TriTrainingRegressor._are_same_label(hj.predict(X_unlabel), hk.predict(X_unlabel), self.y_tol)
+
+                L[i] = X_unlabel[validx]
+                Ly[i] = y_p[validx]
+
+                if l_[i] == 0:
+                    l_[i] = math.floor(
+                        safe_division(e[i], (e_[i] - e[i]), self._epsilon) + 1
+                    )
+                if l_[i] >= len(L[i]):
+                    continue
+                if e[i] * len(L[i]) < e_[i] * l_[i]:
+                    updates[i] = True
+                elif l_[i] > safe_division(e[i], e_[i] - e[i], self._epsilon):
+                    L[i], Ly[i] = TriTraining._subsample(
+                        (L[i], Ly[i]),
+                        math.ceil(
+                            safe_division(e_[i] * l_[i], e[i], self._epsilon) - 1
+                        ),
+                        random_state,
+                    )
+                    if is_df:
+                        L[i] = pd.DataFrame(L[i], columns=X_label.columns)
+                    updates[i] = True
+
+            hypotheses = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._fit_estimator)(
+                    hypotheses[i], X_label, y_label, L[i], Ly[i], updates[i], **kwards
+                )
+                for i in range(self._N_LEARNER)
+            )
+
+            for i in range(self._N_LEARNER):
+                if updates[i]:
+                    e_[i] = e[i]
+                    l_[i] = len(L[i])
+                    something_has_changed = True
+
+        self.h_ = hypotheses
+        self.columns_ = [list(range(X.shape[1]))] * self._N_LEARNER
+
+        return self    
+
+    @staticmethod
+    def _another_hs(hs, index):
+        """Get the other hypotheses
+        Parameters
+        ----------
+        hs : list
+            hypotheses collection
+        index : int
+            base hypothesis  index
+        Returns
+        -------
+        classifiers: list
+            Collection of other hypotheses
+        """
+        another_hs = []
+        for i in range(len(hs)):
+            if i != index:
+                another_hs.append(hs[i])
+        return another_hs
+
+    @staticmethod
+    def _are_same_label(y1, y2, y_tol): 
+        """Checks if two outputs are similar enough to be considered equal. 
+        Parameters
+        ----------
+        y1 : array-like of shape (n_samples,)
+            The target values predicted by h1 (real numbers). 
+        y2 : array-like of shape (n_samples,)
+            The target values predicted by h2 (real_numbers). 
+        y_tol : float
+            The absolute tolerance parameter. 
+        Returns
+        -------
+        mask : array-like of shape (n_samples,)  
+            Returns a boolean array of where y1 and y2 are equal within the given tolerance. 
+        """
+        return np.isclose(y1, y2, atol = y_tol)
+
+    def _measure_error(
+        self, X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=sys.float_info.epsilon, **kwards
+    ):
+        """Calculate the error between two hypotheses
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training labeled input samples.
+        y : array-like of shape (n_samples,)
+            The target values (real numbers).
+        h1 : RegressorMixin
+            First hypothesis
+        h2 : RegressorMixin
+            Second hypothesis
+        epsilon : float
+            A small number to avoid division by zero
+        Returns
+        -------
+        error : float
+            Number of labeled examples for which both h1 and h2 predict similar values but different to y, divided by 
+            the number of labeled examples for which both h1 and h2 predict similar values. 
+        """
+        y1 = h1.predict(X).astype('float64')
+        y2 = h2.predict(X).astype('float64')
+
+        predict_same = TriTrainingRegressor._are_same_label(y1, y2, self.y_tol)
+        predict_wrong = np.logical_not(TriTrainingRegressor._are_same_label(np.mean(np.array([y1, y2]), axis=0), y, self.y_tol))
+
+        error = np.count_nonzero(np.logical_and(predict_same, predict_wrong))
+        coincidence = np.count_nonzero(predict_same)
+
+        return safe_division(error, coincidence, epsilon)
+
+    def _fit_estimator(self, hyp, X_label, y_label, L, Ly, update, **kwards):
+        if update:
+            _tempL = np.concatenate((X_label, L))
+            _tempY = np.concatenate((y_label, Ly))
+
+            return hyp.fit(_tempL, _tempY, **kwards)
+        return hyp
+
+    def predict(self, X):
+        """Calculates the prediction of the model as the mean of the predictions of h1, h2 and h3. 
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Returns
+        -------
+        y : array-like of shape (n_sampes,)
+            Prediction of the model. 
+        """
+        if isinstance(X, pd.DataFrame): 
+            X = X.to_numpy()
+        predictions = []
+        for h in self.h_: 
+            predictions.append(h.predict(X))
+        return np.mean(predictions, axis=0)
+
+

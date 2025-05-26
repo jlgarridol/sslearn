@@ -29,8 +29,8 @@ import math
 import pandas as pd
 
 from statsmodels.stats.proportion import proportion_confint
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.base import ClassifierMixin
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.base import ClassifierMixin, RegressorMixin
 
 __all__ = ["safe_division", "confidence_interval", "choice_with_proportion", "calculate_prior_probability",
            "mode", "check_n_jobs", "check_classifier"]
@@ -215,3 +215,18 @@ def check_classifier(base_classifier, can_be_list=True, collection_size=None):
         if not isinstance(base_classifier, ClassifierMixin):
             raise AttributeError(f"base_classifier must be a ClassifierMixin, but found {type(base_classifier)}")
         return base_classifier
+
+def check_regressor(base_regressor, can_be_list=True, collection_size=None): 
+    if base_regressor is None: 
+        return DecisionTreeRegressor()
+    elif can_be_list and (type(base_regressor) == list or type(base_regressor) == tuple): 
+        if collection_size is not None: 
+            if len(base_regressor) != collection_size: 
+                raise AttributeError(f"base_regressor is a list of regressors, but its lenght ({len(base_regressor)}) is different from expected ({collection_size})")
+        for i, br in enumerate(base_regressor): 
+            base_regressor[i] =check_regressor(br, False)
+        return list(base_regressor) # Transform to list
+    else: 
+        if not isinstance(base_regressor, RegressorMixin): 
+            raise AttributeError(f"base_regressor must be a RegressorMixin, but found{type(base_regressor)}")
+        return base_regressor
