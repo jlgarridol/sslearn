@@ -8,8 +8,7 @@ Examples
 In this page we provide some code examples to show how to use the library. Also, exists a [Jupyter Notebook](https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#scrollTo=KS-6GNxCayxf) with the same examples to run in Google Colab.
 
 
-Datasets manipulation
----------------------
+## Datasets manipulation
 
 SSLearn include tools for loading csv and dat (KEEL) datasets. Also, it provides a function to generate a semi-supervised dataset from a labeled dataset.
 
@@ -58,8 +57,7 @@ for X_train, y_train, label_indices, unlabel_indices in skss.split(X_iris, y_iri
 
 `X_train` and `y_train` are the set ready to be used in a semi-supervised algorithm, with the "-1" in the target column for the unlabeled instances.
 
-Wrappers
---------
+## Wrappers
 
 The wrappers are the most widely used algorithms in the semi-supervised learning field. The library includes the most popular ones. The algorithms included are:
 * `SelfTraining`: Self-training algorithm for one classifier.
@@ -143,7 +141,47 @@ tritraining = TriTraining(base_estimator=[subview1, subview2, subview3], random_
 The wrappers that support multi-learning can be used with the subview adapters. The adapters are in the `sslearn.subview` module. 
 
 
-### Restricted set classification
+### Comparison example
+
+A comparison example is available in the [Jupyter Notebook](https://colab.research.google.com/drive/1wKSz-f7N4elqQwz_phrWXDrf3lRqaD6s#sandboxMode=true&scrollTo=L4vJsnE0AwVE). Here is a snippet of the code with the dataset already loaded.
+
+The propose of this code is compare the accuracy of the algorithms in a semi-supervised dataset. It is used a 10-fold cross-validation to get the accuracy of each algorithm, and with the 10%, 20%, 30%, and 40% of the instances labeled.
+
+
+```python
+# The dataset is already loaded, the models are built and the results objects have been created.
+
+# First statified k-fold
+skf = StratifiedKFold(n_splits=10)
+for train_index, test_index in skf.split(X, y):
+    X_train, X_test = X[train_index], X[test_index]
+    y_train, y_test = y[train_index], y[test_index]
+    for i, lr in enumerate([0.1, 0.2, 0.3, 0.4]):
+      # Create the semi-supervised dataset
+      X_ss, y_ss, _, _ = artificial_ssl_dataset(X_train, y_train, lr, 1)
+      for name, model in models.items():
+        # Fit the model
+        model.fit(X_ss, y_ss)
+        # Score the results and save it
+        results[name][i].append(model.score(X_test, y_test))
+```
+
+The average results are:
+
+|                          | 10%    | 20%    | 30%    | 40%    |
+|--------------------------|---------|---------|---------|---------|
+| Self-Training            | 89.99% | 90.52% | 91.05% | 89.81% |
+| Setred                   | 88.76% | 90.86% | 90.86% | 91.04% |
+| Co-Training              | 90.69% | 92.27% | 91.75% | 91.75% |
+| Co-Training by Committee | 91.22% | 92.62% | 91.75% | 91.75% |
+| Democratic Co-Learning   | 91.92% | 92.80% | 93.68% | 94.20% |
+| RASCO                    | 90.86% | 91.74% | 94.38% | 93.33% |
+| RelRASCO                 | 90.87% | 93.15% | 92.45% | 93.50% |
+| CoForest                 | 91.39% | 92.80% | 92.63% | 92.45% |
+| TriTraining              | 91.56% | 90.68% | 91.04% | 91.75% |
+| DeTriTraining            | 85.24% | 85.06% | 85.06% | 85.24% |
+
+## Restricted set classification
 
 The RSC algorithms support datasets with pairwise constraints. The library provides the `WhoIsWhoClassifier`, the `feature_fusion` and `probability_fusion` methods.
 `WhoIsWhoClassifier` is a wrapper that uses the RSC algorithms and supports only cannot-link constraints. The `feature_fusion` and `probability_fusion` methods supports both constraints but only in prediction time. All algorithms are in the `sslearn.restriced` module.

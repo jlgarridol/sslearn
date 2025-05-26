@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Testing 
 - Added tests for the new regression methods and the changes in the dataset reading functions; by @aliciaolivaresgil.
 
+## [1.0.5.3] - 2024-11-29
+
+### HotFix
+
+- Remove debug logs in DeTriTraining.
+
 ## [1.0.5.2] - 2024-05-27
 
 ### HotFix
