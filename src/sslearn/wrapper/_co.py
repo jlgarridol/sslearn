@@ -1600,7 +1600,7 @@ class CoReg(BaseEstimator, RegressorMixin):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. First view with n features. 
         y : array-like of shape (n_samples,)
-            The target values (real numbers), np.NaN if unlabeled.
+            The target values (real numbers), np.nan if unlabeled.
         X2 : {array-like, sparse matrix} of shape (n_samples, m_features) or None, optional
             The training input samples. Second optional view with m features, by default None. 
         Returns

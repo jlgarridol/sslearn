@@ -28,7 +28,7 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
     encoding: str, optional
         Encoding of file, by default "utf-8"
     is_regression: bool, optional
-        Indicates if the data set is for regression, if True, target value of unlabeled instances is set to np.NaN, by default False
+        Indicates if the data set is for regression, if True, target value of unlabeled instances is set to np.nan, by default False
 
     Returns
     -------
@@ -83,7 +83,7 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
         y = data[target_col]
 
         if is_regression: 
-            y[y == "unlabeled"] = np.NaN
+            y[y == "unlabeled"] = np.nan
             y = y.astype(float)
         else: 
             y[y == "unlabeled"] = y.dtype.type(-1)
@@ -136,7 +136,7 @@ def read_csv(path, format="pandas", secure=False, target_col=-1, is_regression=F
         X, y = secure_dataset(X, y)
 
     if is_regression: 
-        y[y == "None"] = np.NaN
+        y[y == "None"] = np.nan
         y = y.astype(float)
         # Transform of the Series x all values that is None to NaN
         

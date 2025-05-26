@@ -881,7 +881,7 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
         y : array-like of shape (n_samples,)
-            The target values (real numbers), np.NaN if unlabeled.
+            The target values (real numbers), np.nan if unlabeled.
         Returns
         -------
         self : TriTrainingRegressor
