@@ -48,13 +48,15 @@ class SelfTraining(SelfTrainingClassifier):
 
     _estimator_type = "classifier"
 
-    def __init__(self,
-                 base_estimator,
-                 threshold=0.75,
-                 criterion='threshold',
-                 k_best=10,
-                 max_iter=10,
-                 verbose=False):
+    def __init__(
+        self,
+        base_estimator,
+        threshold=0.75,
+        criterion="threshold",
+        k_best=10,
+        max_iter=10,
+        verbose=False,
+    ):
         """Self-training. Adaptation of SelfTrainingClassifier from sklearn with data loader compatible.
 
         This class allows a given supervised classifier to function as a
@@ -98,7 +100,9 @@ class SelfTraining(SelfTrainingClassifier):
         verbose : bool, default=False
             Enable verbose output.
         """
-        super().__init__(base_estimator, threshold, criterion, k_best, max_iter, verbose)
+        super().__init__(
+            base_estimator, threshold, criterion, k_best, max_iter, verbose
+        )
 
     def fit(self, X, y):
         """
@@ -121,7 +125,7 @@ class SelfTraining(SelfTrainingClassifier):
         y_adapted = y.copy()
         if y_adapted.dtype.type is str or y_adapted.dtype.type is np.str_:
             y_adapted = y_adapted.astype(object)
-            y_adapted[y_adapted == '-1'] = -1
+            y_adapted[y_adapted == "-1"] = -1
         return super().fit(X, y_adapted)
 
 
@@ -183,7 +187,7 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
         """
         Create a SETRED classifier.
         It is a self-training algorithm that uses a rejection mechanism to avoid adding noisy samples to the training set.
-        
+
         Parameters
         ----------
         base_estimator : ClassifierMixin, optional
@@ -218,7 +222,11 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
     def __create_neighborhood(self, X):
         # kneighbors_graph(X, 1, metric=self.distance, n_jobs=self.n_jobs).toarray()
         return kneighbors_graph(
-            X, self.graph_neighbors, metric=self.distance, n_jobs=self.n_jobs, mode="distance"
+            X,
+            self.graph_neighbors,
+            metric=self.distance,
+            n_jobs=self.n_jobs,
+            mode="distance",
         ).toarray()
 
     def fit(self, X, y, **kwars):
@@ -235,7 +243,7 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
         -------
         self: Setred
             Fitted estimator.
-        """        
+        """
         random_state = check_random_state(self.random_state)
 
         X_label, y_label, X_unlabel = get_dataset(X, y)
@@ -294,15 +302,21 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
 
             weights = self.__create_neighborhood(pre_L)
             #  Keep only weights for L_
-            weights = weights[-L_.shape[0]:, :]
+            weights = weights[-L_.shape[0] :, :]
 
-            idx = np.searchsorted(np.array(list(y_probabilities.keys())), y_, sorter=sort_idx)
-            p_wrong = 1 - np.asarray(np.array(list(y_probabilities.values())))[sort_idx][idx]
+            idx = np.searchsorted(
+                np.array(list(y_probabilities.keys())), y_, sorter=sort_idx
+            )
+            p_wrong = (
+                1 - np.asarray(np.array(list(y_probabilities.values())))[sort_idx][idx]
+            )
             #  Must weights be the inverse of distance?
-            weights = np.divide(1, weights, out=np.zeros_like(weights), where=weights != 0)
+            weights = np.divide(
+                1, weights, out=np.zeros_like(weights), where=weights != 0
+            )
 
             weights_sum = weights.sum(axis=1)
-            weights_square_sum = (weights ** 2).sum(axis=1)
+            weights_square_sum = (weights**2).sum(axis=1)
 
             iid_random = random_state.binomial(
                 1, np.repeat(p_wrong, weights.shape[1]).reshape(weights.shape)
@@ -311,10 +325,12 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
 
             mu_h0 = p_wrong * weights_sum
             sigma_h0 = np.sqrt((1 - p_wrong) * p_wrong * weights_square_sum)
-            
-            z_score = np.divide((ji - mu_h0), sigma_h0, out=np.zeros_like(sigma_h0), where=sigma_h0 != 0)
+
+            z_score = np.divide(
+                (ji - mu_h0), sigma_h0, out=np.zeros_like(sigma_h0), where=sigma_h0 != 0
+            )
             # z_score = (ji - mu_h0) / sigma_h0
-            
+
             oi = norm.sf(abs(z_score), mu_h0, sigma_h0)
             to_add = (oi < self.rejection_threshold) & (z_score < mu_h0)
 
@@ -323,7 +339,7 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
             else:
                 L_filtered = L_[to_add, :]
             y_filtered = y_[to_add]
-            
+
             if is_df:
                 X_label = pd.concat([X_label, L_filtered])
             else:
@@ -366,7 +382,7 @@ class Setred(BaseEstimator, MetaEstimatorMixin):
             The predicted classes
         """
         return self._base_estimator.predict_proba(X, **kwards)
-    
+
     def score(self, X, y, sample_weight=None):
         """
         Return the mean accuracy on the given test data and labels.

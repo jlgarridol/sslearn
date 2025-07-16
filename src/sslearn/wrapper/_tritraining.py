@@ -18,8 +18,6 @@ from ..restricted import WhoIsWhoClassifier, combine_predictions
 from ..utils import check_classifier, check_regressor, check_n_jobs, safe_division
 from ._co import BaseCoTraining
 
-import time
-
 
 class TriTraining(BaseCoTraining):
     """
@@ -72,10 +70,12 @@ class TriTraining(BaseCoTraining):
             The number of jobs to run in parallel for both `fit` and `predict`.
             `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
             `-1` means using all processors., by default None
-       
+
         """
         self._N_LEARNER = 3
-        self.base_estimator = check_classifier(base_estimator, collection_size=self._N_LEARNER)
+        self.base_estimator = check_classifier(
+            base_estimator, collection_size=self._N_LEARNER
+        )
         self.n_samples = n_samples
         self._epsilon = sys.float_info.epsilon
         self.random_state = random_state
@@ -132,13 +132,19 @@ class TriTraining(BaseCoTraining):
 
             if is_df:
                 X_sampled = pd.DataFrame(X_sampled, columns=X_label.columns)
-                X_sampled = pd.concat([pd.DataFrame(instances, columns=X_label.columns), X_sampled])
+                X_sampled = pd.concat(
+                    [pd.DataFrame(instances, columns=X_label.columns), X_sampled]
+                )
             else:
                 X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
             y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
 
             hypotheses.append(
-                skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X_sampled, y_sampled, **kwards)
+                skclone(
+                    self.base_estimator
+                    if type(self.base_estimator) is not list
+                    else self.base_estimator[i]
+                ).fit(X_sampled, y_sampled, **kwards)
             )
 
         something_has_changed = True if X_unlabel.size > 0 else False
@@ -151,9 +157,7 @@ class TriTraining(BaseCoTraining):
 
             for i in range(self._N_LEARNER):
                 hj, hk = TriTraining._another_hs(hypotheses, i)
-                e.append(
-                    self._measure_error(X_label, y_label, hj, hk, self._epsilon)
-                )
+                e.append(self._measure_error(X_label, y_label, hj, hk, self._epsilon))
                 if e_[i] <= e[i]:
                     continue
                 y_p = hj.predict(X_unlabel)
@@ -252,7 +256,13 @@ class TriTraining(BaseCoTraining):
         return resample(*L, replace=False, n_samples=select, random_state=random_state)
 
     def _measure_error(
-        self, X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=sys.float_info.epsilon, **kwards
+        self,
+        X,
+        y,
+        h1: ClassifierMixin,
+        h2: ClassifierMixin,
+        epsilon=sys.float_info.epsilon,
+        **kwards,
     ):
         """Calculate the error between two hypotheses
         Parameters
@@ -284,7 +294,7 @@ class TriTraining(BaseCoTraining):
 class WiWTriTraining(TriTraining):
     """
     **Who-Is-Who TriTraining.**
-     
+
     Trio of classifiers with bootstrapping and restricted set classification.
     Is the same as TriTraining but with the restricted set classification.
     Maninly, the conflict rate penalizes the ***measure error*** of basic TriTraining, it can be calculated over differentes subsamples of X, can be:
@@ -292,8 +302,8 @@ class WiWTriTraining(TriTraining):
     * `labeled_plus` over complete L union L',
     * `unlabeled`: over complete U,
     * `all`: over complete X (LuU) and
-    * `none`: don't penalize the ***meause error***, only use the restrictions for avoid share classes in the same group. 
-    
+    * `none`: don't penalize the ***meause error***, only use the restrictions for avoid share classes in the same group.
+
     **Methods**
     -------
     - `fit`: Fit the model with the labeled instances. Receives the instance group, an array-like of shape (n_samples) with the group of each instance. Two instances with the same label are not allowed to be in the same group.
@@ -419,15 +429,22 @@ class WiWTriTraining(TriTraining):
 
             if is_df:
                 X_sampled = pd.DataFrame(X_sampled, columns=X_label.columns)
-                X_sampled = pd.concat([pd.DataFrame(instances, columns=X_label.columns), X_sampled])
+                X_sampled = pd.concat(
+                    [pd.DataFrame(instances, columns=X_label.columns), X_sampled]
+                )
             else:
                 X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
             y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
             group_sample = np.concatenate((np.array(groups), group_sample), axis=0)
 
             hypotheses.append(
-                WhoIsWhoClassifier(self.base_estimator if not isinstance(self.base_estimator, list) else self.base_estimator[i], method=self.method, conflict_weighted=self.conflict_weighted).
-                fit(X_sampled, y_sampled, instance_group=group_sample, **kwards)
+                WhoIsWhoClassifier(
+                    self.base_estimator
+                    if not isinstance(self.base_estimator, list)
+                    else self.base_estimator[i],
+                    method=self.method,
+                    conflict_weighted=self.conflict_weighted,
+                ).fit(X_sampled, y_sampled, instance_group=group_sample, **kwards)
             )
 
         something_has_changed = True if X_unlabel.shape[0] > 0 else False
@@ -443,7 +460,18 @@ class WiWTriTraining(TriTraining):
             for i in range(self._N_LEARNER):
                 hj, hk = TriTraining._another_hs(hypotheses, i)
                 e.append(
-                    self._measure_error(X_label, y_label, hj, hk, self._epsilon, U=X_unlabel, LU=X, GL=group_label, GU=group_unlabel, GLU=instance_group)
+                    self._measure_error(
+                        X_label,
+                        y_label,
+                        hj,
+                        hk,
+                        self._epsilon,
+                        U=X_unlabel,
+                        LU=X,
+                        GL=group_label,
+                        GU=group_unlabel,
+                        GLU=instance_group,
+                    )
                 )
                 if e_[i] <= e[i]:
                     continue
@@ -475,7 +503,15 @@ class WiWTriTraining(TriTraining):
 
             hypotheses = Parallel(n_jobs=self.n_jobs)(
                 delayed(self._fit_estimator)(
-                    hypotheses[i], X_label, y_label, L[i], Ly[i], updates[i], group_label=group_label, Lg=G[i], **kwards
+                    hypotheses[i],
+                    X_label,
+                    y_label,
+                    L[i],
+                    Ly[i],
+                    updates[i],
+                    group_label=group_label,
+                    Lg=G[i],
+                    **kwards,
                 )
                 for i in range(self._N_LEARNER)
             )
@@ -491,7 +527,15 @@ class WiWTriTraining(TriTraining):
 
         return self
 
-    def _measure_error(self, L, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=sys.float_info.epsilon, **kwards):
+    def _measure_error(
+        self,
+        L,
+        y,
+        h1: ClassifierMixin,
+        h2: ClassifierMixin,
+        epsilon=sys.float_info.epsilon,
+        **kwards,
+    ):
         """Calculate the error between two hypotheses
         Parameters
         ----------
@@ -519,13 +563,13 @@ class WiWTriTraining(TriTraining):
         GU = kwards.get("GU", None)
         GLU = kwards.get("GLU", None)
         if self.conflict_over == "labeled":
-            conflict = (h1.conflict_rate(L, GL) + h2.conflict_rate(L, GL))
+            conflict = h1.conflict_rate(L, GL) + h2.conflict_rate(L, GL)
         elif self.conflict_over == "labeled_plus":
-            conflict = (h1.conflict_in_train + h2.conflict_in_train)
+            conflict = h1.conflict_in_train + h2.conflict_in_train
         elif self.conflict_over == "unlabeled":
-            conflict = (h1.conflict_rate(U, GU) + h2.conflict_rate(U, GU))
+            conflict = h1.conflict_rate(U, GU) + h2.conflict_rate(U, GU)
         elif self.conflict_over == "all":
-            conflict = (h1.conflict_rate(LU, GLU) + h2.conflict_rate(LU, GLU))
+            conflict = h1.conflict_rate(LU, GLU) + h2.conflict_rate(LU, GLU)
         else:
             conflict = 0
         return me * (1 + conflict / 2)
@@ -548,7 +592,9 @@ class WiWTriTraining(TriTraining):
     def predict(self, X, instance_group):
         y_probas = self.predict_proba(X)
 
-        y_preds = combine_predictions(y_probas, instance_group, len(self.classes_), self.method)
+        y_preds = combine_predictions(
+            y_probas, instance_group, len(self.classes_), self.method
+        )
 
         return self.classes_.take(y_preds)
 
@@ -577,32 +623,40 @@ class DeTriTraining(TriTraining):
     [10.1007/11925231_61](https://doi.org/10.1007/11925231_61)
     """
 
-    def __init__(self, base_estimator=DecisionTreeClassifier(), k_neighbors=3,
-                 n_samples=None, mode="seeded", max_iterations=100, n_jobs=None, random_state=None):
+    def __init__(
+        self,
+        base_estimator=DecisionTreeClassifier(),
+        k_neighbors=3,
+        n_samples=None,
+        mode="seeded",
+        max_iterations=100,
+        n_jobs=None,
+        random_state=None,
+    ):
         """
         DeTriTraining - TriTraining with Depurated and Clustering.
-        Avoid the noise generated by the TriTraining algorithm by depurating the enlarged dataset and clustering the instances.        
+        Avoid the noise generated by the TriTraining algorithm by depurating the enlarged dataset and clustering the instances.
 
         Parameters
         ----------
         base_estimator : ClassifierMixin, optional
             An estimator object implementing fit and predict_proba, by default DecisionTreeClassifier()
         n_samples : int, optional
-            Number of samples to generate. 
+            Number of samples to generate.
             If left to None this is automatically set to the first dimension of the arrays., by default None
         k_neighbors : int, optional
-            Number of neighbors for depurate classification. 
+            Number of neighbors for depurate classification.
             If at least k_neighbors/2+1 have a class other than the one predicted, the class is ignored., by default 3
         mode : string, optional
             How to calculate the cluster each instance belongs to.
             If `seeded` each instance belong to nearest cluster.
-            If `constrained` each instance belong to nearest cluster unless the instance is in to enlarged dataset, 
+            If `constrained` each instance belong to nearest cluster unless the instance is in to enlarged dataset,
             then the instance belongs to the cluster of its class., by default `seeded`
         max_iterations : int, optional
             Maximum number of iterations, by default 100
         n_jobs : int, optional
-            The number of parallel jobs to run for neighbors search. 
-            None means 1 unless in a joblib.parallel_backend context. -1 means using all processors. 
+            The number of parallel jobs to run for neighbors search.
+            None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.
             Doesn't affect fit method., by default None
         random_state : int, RandomState instance, optional
             controls the randomness of the estimator, by default None
@@ -613,7 +667,7 @@ class DeTriTraining(TriTraining):
         self.max_iterations = max_iterations
         self.n_jobs = n_jobs
         if mode != "seeded" and mode != "constrained":
-            raise AttributeError("`mode` must be \"seeded\" or \"constrained\".")
+            raise AttributeError('`mode` must be "seeded" or "constrained".')
 
     def _depure(self, S):
         """Depure the S dataset
@@ -628,7 +682,6 @@ class DeTriTraining(TriTraining):
         tuple : (X, y)
             Enlarged dataset with instances where at least k_neighbors/2+1 have the same class.
         """
-        init = time.time()
         knn = KNeighborsClassifier(n_neighbors=self.k_neighbors, n_jobs=self.n_jobs)
         valid = knn.fit(*S).predict(S[0]) == S[1]
         return S[0][valid], S[1][valid]
@@ -651,7 +704,6 @@ class DeTriTraining(TriTraining):
         centroids = dict()
         clusters = set(S[1])
 
-        # uses as numpy
         if isinstance(X, pd.DataFrame):
             X = X.to_numpy()
         if isinstance(S[0], pd.DataFrame):
@@ -660,42 +712,15 @@ class DeTriTraining(TriTraining):
         for k in clusters:
             centroids[k] = np.mean(S[0][S[1] == k], axis=0)
 
-        def seeded(X):
-            # For each instance, calculate the distance to each centroid
-            distances = np.linalg.norm(X[:, None, :] - np.array(list(centroids.values())), axis=2)
-            # Get the index of the nearest centroid
-            return np.argmin(distances, axis=1)
-
-        def constrained(X):
-            # Calculate the distances to centroids using broadcasting
-            distances = np.linalg.norm(X[:, None, :] - np.array(list(centroids.values())), axis=2)
-            # Get the index of the nearest centroid
-            nearest = np.argmin(distances, axis=1)
-            # Create a mask to find instances in X that belong to S[0]
-            mask = (S[0] == X[:, None])
-            # Find the row and column indices where all elements are True
-            i, j = np.where(mask.all(axis=2))
-            # Initialize cluster with -1
-            cluster = np.full(X.shape[0], -1, dtype=int)
-            # Update cluster for the instances found in S[0]
-            cluster[i] = S[1][j]
-            # Update cluster for instances not found in S[0]
-            cluster[cluster == -1] = nearest[cluster == -1]
-
-            return cluster
-
-        if self.mode == "seeded":
-            op = seeded
-        elif self.mode == "constrained":
-            op = constrained
-
         changes = True
         iterations = 0
         while changes and iterations < self.max_iterations:
             changes = False
             iterations += 1
-            # Need to vectorize
-            new_clusters = op(X)
+            if self.mode == "constrained":
+                new_clusters = self.__constrained(X, centroids, S)
+            elif self.mode == "seeded":
+                new_clusters = self.__seeded(X, centroids)
             new_centroids = dict()
             for k in clusters:
                 if np.any(new_clusters == k):
@@ -705,6 +730,25 @@ class DeTriTraining(TriTraining):
             centroids = new_centroids
 
         return new_clusters
+    
+    def __seeded(self, X, centroids):
+        distances = np.linalg.norm(
+            X[:, None, :] - np.array(list(centroids.values())), axis=2
+        )
+        return np.argmin(distances, axis=1)
+    
+    def __constrained(X, centroids, S=None):
+            distances = np.linalg.norm(
+                X[:, None, :] - np.array(list(centroids.values())), axis=2
+            )
+            nearest = np.argmin(distances, axis=1)
+            mask = S[0] == X[:, None]
+            i, j = np.where(mask.all(axis=2))
+            cluster = np.full(X.shape[0], -1, dtype=int)
+            cluster[i] = S[1][j]
+            cluster[cluster == -1] = nearest[cluster == -1]
+
+            return cluster
 
     def fit(self, X, y, **kwards):
         """Build a DeTriTraining classifier from the training set (X, y).
@@ -748,22 +792,31 @@ class DeTriTraining(TriTraining):
         S_ = []
         hypothesis = []
         for i in range(self._N_LEARNER):
-            X_sampled, y_sampled = \
-                resample(X_label, y_label, replace=True,
-                         n_samples=self.n_samples,
-                         random_state=self.random_state)
+            X_sampled, y_sampled = resample(
+                X_label,
+                y_label,
+                replace=True,
+                n_samples=self.n_samples,
+                random_state=self.random_state,
+            )
             if is_df:
                 X_sampled = pd.DataFrame(X_sampled, columns=X_label.columns)
             hypothesis.append(
-                skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(
-                    X_sampled, y_sampled, **kwards)
+                skclone(
+                    self.base_estimator
+                    if type(self.base_estimator) is not list
+                    else self.base_estimator[i]
+                ).fit(X_sampled, y_sampled, **kwards)
             )
 
             # Keep class order
             if not is_df:
                 X_sampled = np.concatenate((np.array(instances), X_sampled), axis=0)
             else:
-                X_sampled = pd.concat([pd.DataFrame(instances, columns=X_label.columns), X_sampled], axis=0)
+                X_sampled = pd.concat(
+                    [pd.DataFrame(instances, columns=X_label.columns), X_sampled],
+                    axis=0,
+                )
 
             y_sampled = np.concatenate((np.array(labels), y_sampled), axis=0)
 
@@ -783,12 +836,19 @@ class DeTriTraining(TriTraining):
                 hj, hk = TriTraining._another_hs(hypothesis, i)
                 y_p = hj.predict(X_unlabel)
                 validx = y_p == hk.predict(X_unlabel)
-                L[i] = (X_unlabel[validx] if not is_df else X_unlabel.iloc[validx, :], y_p[validx])
+                L[i] = (
+                    X_unlabel[validx] if not is_df else X_unlabel.iloc[validx, :],
+                    y_p[validx],
+                )
 
             for i, _ in enumerate(L):
-
                 if len(L[i][0]) > 0:
-                    S_[i] = np.concatenate((X_label, L[i][0])) if not is_df else pd.concat([X_label, L[i][0]]), np.concatenate((y_label, L[i][1]))
+                    S_[i] = (
+                        np.concatenate((X_label, L[i][0]))
+                        if not is_df
+                        else pd.concat([X_label, L[i][0]]),
+                        np.concatenate((y_label, L[i][1])),
+                    )
                     S_[i] = self._depure(S_[i])
 
             for i in range(self._N_LEARNER):
@@ -800,9 +860,17 @@ class DeTriTraining(TriTraining):
             if not changes:
                 break
         else:
-            warn.warn("Maximum number of iterations reached before convergence. Consider increasing max_iter to improve the fit.", ConvergenceWarning)
+            warn.warn(
+                "Maximum number of iterations reached before convergence. Consider increasing max_iter to improve the fit.",
+                ConvergenceWarning,
+            )
 
-        S = np.concatenate([x[0] for x in S_]) if not is_df else pd.concat([x[0] for x in S_]), np.concatenate([x[1] for x in S_])
+        S = (
+            np.concatenate([x[0] for x in S_])
+            if not is_df
+            else pd.concat([x[0] for x in S_]),
+            np.concatenate([x[1] for x in S_]),
+        )
         S_0, index_ = np.unique(S[0], axis=0, return_index=True)
         S_1 = S[1][index_]
         S = S_0, S_1
@@ -810,7 +878,14 @@ class DeTriTraining(TriTraining):
 
         new_y = self._clustering(S, X)
 
-        self.h_ = [skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X, new_y, **kwards) for i in range(self._N_LEARNER)]
+        self.h_ = [
+            skclone(
+                self.base_estimator
+                if type(self.base_estimator) is not list
+                else self.base_estimator[i]
+            ).fit(X, new_y, **kwards)
+            for i in range(self._N_LEARNER)
+        ]
         self.columns_ = [list(range(X.shape[1]))]
 
         return self
@@ -838,13 +913,15 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
     ----------
     To be published.
     """
-    def __init__(self,  
-                 base_estimator=DecisionTreeRegressor(), 
-                 n_samples=None, 
-                 y_tol_per=0.1, 
-                 random_state=None, 
-                 n_jobs=None): 
 
+    def __init__(
+        self,
+        base_estimator=DecisionTreeRegressor(),
+        n_samples=None,
+        y_tol_per=0.1,
+        random_state=None,
+        n_jobs=None,
+    ):
         """TriTrainingRegressor. Trio of regressors with bootstrapping.
 
         Parameters
@@ -855,7 +932,7 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
             Number of samples to generate.
             If left to None this is automatically set to the first dimension of the arrays., by default None
         y_tol_per : float, optional
-            Number between 0 and 1 that represents the percentage of the range between the minimum and maximum values of ``y``. It is used to calculate ``y_tol``. 
+            Number between 0 and 1 that represents the percentage of the range between the minimum and maximum values of ``y``. It is used to calculate ``y_tol``.
             y_tol = y_tol_per * ( max(y) - min(y) )
             By default 0.1.
         random_state : int, RandomState instance, optional
@@ -866,13 +943,14 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
             `-1` means using all processors., by default None
         """
         self._N_LEARNER = 3
-        self.base_estimator = check_regressor(base_estimator, collection_size=self._N_LEARNER)
+        self.base_estimator = check_regressor(
+            base_estimator, collection_size=self._N_LEARNER
+        )
         self.n_samples = n_samples
         self.y_tol_per = y_tol_per
         self._epsilon = sys.float_info.epsilon
         self.random_state = random_state
         self.n_jobs = n_jobs
-
 
     def fit(self, X, y, **kwards):
         """Build a TriTraining regressor from the training set (X, y).
@@ -890,10 +968,10 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
         random_state = check_random_state(self.random_state)
         self.n_jobs = min(check_n_jobs(self.n_jobs), self._N_LEARNER)
 
-        if isinstance(X, pd.DataFrame): 
+        if isinstance(X, pd.DataFrame):
             X = X.to_numpy()
 
-        if isinstance(y, pd.DataFrame): 
+        if isinstance(y, pd.DataFrame):
             y = y.to_numpy().flatten()
 
         X_label, y_label, X_unlabel = get_dataset_regression(X, y)
@@ -914,12 +992,16 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
             )
 
             hypotheses.append(
-                skclone(self.base_estimator if type(self.base_estimator) is not list else self.base_estimator[i]).fit(X_sampled, y_sampled, **kwards)
+                skclone(
+                    self.base_estimator
+                    if type(self.base_estimator) is not list
+                    else self.base_estimator[i]
+                ).fit(X_sampled, y_sampled, **kwards)
             )
 
         something_has_changed = True if X_unlabel.size > 0 else False
 
-        self.y_tol = self.y_tol_per*(np.max(y_label)-np.min(y_label))
+        self.y_tol = self.y_tol_per * (np.max(y_label) - np.min(y_label))
 
         while something_has_changed:
             something_has_changed = False
@@ -930,14 +1012,16 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
 
             for i in range(self._N_LEARNER):
                 hj, hk = TriTrainingRegressor._another_hs(hypotheses, i)
-                e.append(
-                    self._measure_error(X_label, y_label, hj, hk, self._epsilon)
-                )
+                e.append(self._measure_error(X_label, y_label, hj, hk, self._epsilon))
                 if e_[i] <= e[i]:
                     continue
 
-                y_p = np.mean(np.array([hj.predict(X_unlabel), hk.predict(X_unlabel)]), axis=0)
-                validx = TriTrainingRegressor._are_same_label(hj.predict(X_unlabel), hk.predict(X_unlabel), self.y_tol)
+                y_p = np.mean(
+                    np.array([hj.predict(X_unlabel), hk.predict(X_unlabel)]), axis=0
+                )
+                validx = TriTrainingRegressor._are_same_label(
+                    hj.predict(X_unlabel), hk.predict(X_unlabel), self.y_tol
+                )
 
                 L[i] = X_unlabel[validx]
                 Ly[i] = y_p[validx]
@@ -978,7 +1062,7 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
         self.h_ = hypotheses
         self.columns_ = [list(range(X.shape[1]))] * self._N_LEARNER
 
-        return self    
+        return self
 
     @staticmethod
     def _another_hs(hs, index):
@@ -1001,25 +1085,30 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
         return another_hs
 
     @staticmethod
-    def _are_same_label(y1, y2, y_tol): 
-        """Checks if two outputs are similar enough to be considered equal. 
+    def _are_same_label(y1, y2, y_tol):
+        """Checks if two outputs are similar enough to be considered equal.
         Parameters
         ----------
         y1 : array-like of shape (n_samples,)
-            The target values predicted by h1 (real numbers). 
+            The target values predicted by h1 (real numbers).
         y2 : array-like of shape (n_samples,)
-            The target values predicted by h2 (real_numbers). 
+            The target values predicted by h2 (real_numbers).
         y_tol : float
-            The absolute tolerance parameter. 
+            The absolute tolerance parameter.
         Returns
         -------
-        mask : array-like of shape (n_samples,)  
-            Returns a boolean array of where y1 and y2 are equal within the given tolerance. 
+        mask : array-like of shape (n_samples,)
+            Returns a boolean array of where y1 and y2 are equal within the given tolerance.
         """
-        return np.isclose(y1, y2, atol = y_tol)
+        return np.isclose(y1, y2, atol=y_tol)
 
     def _measure_error(
-        self, X, y, h1: ClassifierMixin, h2: ClassifierMixin, epsilon=sys.float_info.epsilon, **kwards
+        self,
+        X,
+        y,
+        h1: ClassifierMixin,
+        h2: ClassifierMixin,
+        epsilon=sys.float_info.epsilon,
     ):
         """Calculate the error between two hypotheses
         Parameters
@@ -1037,14 +1126,18 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         error : float
-            Number of labeled examples for which both h1 and h2 predict similar values but different to y, divided by 
-            the number of labeled examples for which both h1 and h2 predict similar values. 
+            Number of labeled examples for which both h1 and h2 predict similar values but different to y, divided by
+            the number of labeled examples for which both h1 and h2 predict similar values.
         """
-        y1 = h1.predict(X).astype('float64')
-        y2 = h2.predict(X).astype('float64')
+        y1 = h1.predict(X).astype("float64")
+        y2 = h2.predict(X).astype("float64")
 
         predict_same = TriTrainingRegressor._are_same_label(y1, y2, self.y_tol)
-        predict_wrong = np.logical_not(TriTrainingRegressor._are_same_label(np.mean(np.array([y1, y2]), axis=0), y, self.y_tol))
+        predict_wrong = np.logical_not(
+            TriTrainingRegressor._are_same_label(
+                np.mean(np.array([y1, y2]), axis=0), y, self.y_tol
+            )
+        )
 
         error = np.count_nonzero(np.logical_and(predict_same, predict_wrong))
         coincidence = np.count_nonzero(predict_same)
@@ -1060,20 +1153,18 @@ class TriTrainingRegressor(BaseEstimator, RegressorMixin):
         return hyp
 
     def predict(self, X):
-        """Calculates the prediction of the model as the mean of the predictions of h1, h2 and h3. 
+        """Calculates the prediction of the model as the mean of the predictions of h1, h2 and h3.
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Returns
         -------
         y : array-like of shape (n_sampes,)
-            Prediction of the model. 
+            Prediction of the model.
         """
-        if isinstance(X, pd.DataFrame): 
+        if isinstance(X, pd.DataFrame):
             X = X.to_numpy()
         predictions = []
-        for h in self.h_: 
+        for h in self.h_:
             predictions.append(h.predict(X))
         return np.mean(predictions, axis=0)
-
-

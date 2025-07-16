@@ -9,10 +9,10 @@ This module contains classes to train a classifier using the restricted set clas
 
 ## Functions
 
-[conflict_rate](#conflict_rate): 
+[conflict_rate](#conflict_rate):
 > Compute the conflict rate of a prediction, given a set of restrictions.
 
-[combine_predictions](#combine_predictions): 
+[combine_predictions](#combine_predictions):
 > Combine the predictions of a group of instances to keep the restrictions.
 
 [feature_fusion](#feature_fusion):
@@ -29,13 +29,20 @@ from sklearn.base import ClassifierMixin, MetaEstimatorMixin, BaseEstimator
 from scipy.optimize import linear_sum_assignment
 import warnings
 import pandas as pd
-__all__ = ["conflict_rate", "combine_predictions", "feature_fusion", "probability_fusion", "WhoIsWhoClassifier"]
- 
-    
+
+__all__ = [
+    "conflict_rate",
+    "combine_predictions",
+    "feature_fusion",
+    "probability_fusion",
+    "WhoIsWhoClassifier",
+]
+
+
 def feature_fusion(classifier, X, must_link, cannot_link):
     """
-    Restricted Set Classification for the instances with pairwise constraints. 
-    Combine all instances that have the must-link constraint with the average of their features.    
+    Restricted Set Classification for the instances with pairwise constraints.
+    Combine all instances that have the must-link constraint with the average of their features.
 
     Parameters
     ----------
@@ -62,13 +69,13 @@ def feature_fusion(classifier, X, must_link, cannot_link):
     dataset = pd.read_csv("dataset.csv")
 
     must_link = pd.read_csv("must_link.csv", index_col=0).to_dict(orient='index')
-    # must_link = {0: [0, 2], 1: [1, 3]} -> 
-    # instances 0 and 2 must have the same label, 
+    # must_link = {0: [0, 2], 1: [1, 3]} ->
+    # instances 0 and 2 must have the same label,
     # and instances 1 and 3 must have the same label
 
     cannot_link = pd.read_csv("cannot_link.csv", index_col=0).to_dict(orient='index')
     # cannot_link = {0: [0, 1], 1: [2, 3]} ->
-    # instances 0 and 1 cannot have the same label, 
+    # instances 0 and 1 cannot have the same label,
     # and instances 2 and 3 cannot have the same label
 
     X, y = dataset.iloc[:, :-1].values, dataset.iloc[:, -1].values
@@ -86,19 +93,21 @@ def feature_fusion(classifier, X, must_link, cannot_link):
     ----------
     L.I. Kuncheva, J.L. Garrido-Labrador, I. Ramos-Pérez, S.L. Hennessey, J.J. Rodríguez (2024).<br>
     Semi-supervised classification with pairwise constraints: A case study on animal identification from video.<br>
-    <i>Information Fusion,</i><br> 
+    <i>Information Fusion,</i><br>
     104, 102188, [10.1016/j.inffus.2023.102188](https://doi.org/10.1016/j.inffus.2023.102188)
     """
-    
+
     X_combined = __combine_features(X, must_link)
     y_pred_proba = classifier.predict_proba(X_combined)
 
-    return __restricted_set_classification(y_pred_proba, cannot_link, classifier.classes_)
+    return __restricted_set_classification(
+        y_pred_proba, cannot_link, classifier.classes_
+    )
 
 
 def probability_fusion(classifier, X, must_link, cannot_link):
     """
-    Restricted Set Classification for the instances with pairwise constraints. 
+    Restricted Set Classification for the instances with pairwise constraints.
     The class probability for each instance is defined as the mean of the probabilities reported by the classifier according to the must-link constraint.
 
     Parameters
@@ -126,13 +135,13 @@ def probability_fusion(classifier, X, must_link, cannot_link):
     dataset = pd.read_csv("dataset.csv")
 
     must_link = pd.read_csv("must_link.csv", index_col=0).to_dict(orient='index')
-    # must_link = {0: [0, 2], 1: [1, 3]} -> 
-    # instances 0 and 2 must have the same label, 
+    # must_link = {0: [0, 2], 1: [1, 3]} ->
+    # instances 0 and 2 must have the same label,
     # and instances 1 and 3 must have the same label
 
     cannot_link = pd.read_csv("cannot_link.csv", index_col=0).to_dict(orient='index')
     # cannot_link = {0: [0, 1], 1: [2, 3]} ->
-    # instances 0 and 1 cannot have the same label, 
+    # instances 0 and 1 cannot have the same label,
     # and instances 2 and 3 cannot have the same label
 
     X, y = dataset.iloc[:, :-1].values, dataset.iloc[:, -1].values
@@ -150,7 +159,7 @@ def probability_fusion(classifier, X, must_link, cannot_link):
     ----------
     L.I. Kuncheva, J.L. Garrido-Labrador, I. Ramos-Pérez, S.L. Hennessey, J.J. Rodríguez (2024).<br>
     Semi-supervised classification with pairwise constraints: A case study on animal identification from video.<br>
-    <i>Information Fusion,</i><br> 
+    <i>Information Fusion,</i><br>
     104, 102188, [10.1016/j.inffus.2023.102188](https://doi.org/10.1016/j.inffus.2023.102188)
     """
 
@@ -161,7 +170,6 @@ def probability_fusion(classifier, X, must_link, cannot_link):
 
 
 class WhoIsWhoClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
-
     def __init__(self, base_estimator, method="hungarian", conflict_weighted=True):
         """
         Who is Who Classifier
@@ -176,14 +184,15 @@ class WhoIsWhoClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             The method to use to assing class, it can be `greedy` to first-look or `hungarian` to use the Hungarian algorithm, by default "hungarian"
         conflict_weighted : bool, default=True
             Whether to weighted the confusion rate by the number of instances with the same group.
-        """        
+        """
         allowed_methods = ["greedy", "hungarian"]
         self.base_estimator = base_estimator
         self.method = method
         if method not in allowed_methods:
-            raise ValueError(f"method {self.method} not supported, use one of {allowed_methods}")
+            raise ValueError(
+                f"method {self.method} not supported, use one of {allowed_methods}"
+            )
         self.conflict_weighted = conflict_weighted
-
 
     def fit(self, X, y, instance_group=None, **kwards):
         """Fit the model according to the given training data.
@@ -203,7 +212,9 @@ class WhoIsWhoClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.base_estimator = self.base_estimator.fit(X, y, **kwards)
         self.classes_ = self.base_estimator.classes_
         if instance_group is not None:
-            self.conflict_in_train = conflict_rate(self.base_estimator.predict(X), instance_group, self.conflict_weighted)
+            self.conflict_in_train = conflict_rate(
+                self.base_estimator.predict(X), instance_group, self.conflict_weighted
+            )
         else:
             self.conflict_in_train = None
         return self
@@ -237,13 +248,14 @@ class WhoIsWhoClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         array-like of shape (n_samples, n_classes)
             The class probabilities of the input samples.
         """
-        
+
         y_prob = self.predict_proba(X)
-        
-        y_predicted = combine_predictions(y_prob, instance_group, len(self.classes_), self.method)
+
+        y_predicted = combine_predictions(
+            y_prob, instance_group, len(self.classes_), self.method
+        )
 
         return self.classes_.take(y_predicted)
-
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -277,17 +289,23 @@ def conflict_rate(y_pred, restrictions, weighted=True):
     """
     return __conflict_measure_cl(y_pred, restrictions, weighted)
 
+
 def __conflict_measure_cl(y_pred, restrictions, weighted=True):
+    restricted_df = pd.DataFrame({"y_pred": y_pred, "restrictions": restrictions})
 
-    restricted_df = pd.DataFrame({'y_pred': y_pred, 'restrictions': restrictions})
-
-    conflicted = restricted_df.groupby('restrictions').agg({'y_pred': lambda x: np.unique(x, return_counts=True)[1][np.unique(x, return_counts=True)[1]>1].sum()})
+    conflicted = restricted_df.groupby("restrictions").agg(
+        {
+            "y_pred": lambda x: np.unique(x, return_counts=True)[1][
+                np.unique(x, return_counts=True)[1] > 1
+            ].sum()
+        }
+    )
     if weighted:
         return conflicted.sum().y_pred / len(y_pred)
     else:
-        rcount = restricted_df.groupby('restrictions').count()
+        rcount = restricted_df.groupby("restrictions").count()
         return (conflicted.y_pred / rcount.y_pred).sum() / len(rcount)
-    
+
 
 def combine_predictions(y_probas, instance_group, class_number, method="hungarian"):
     """
@@ -311,30 +329,33 @@ def combine_predictions(y_probas, instance_group, class_number, method="hungaria
     """
     y_predicted = []
     for group in np.unique(instance_group):
-           
         mask = instance_group == group
         probas_matrix = y_probas[mask]
-        
 
         preds = list(np.argmax(probas_matrix, axis=1))
 
         if len(preds) == len(set(preds)) or probas_matrix.shape[0] > class_number:
             y_predicted.extend(preds)
             if probas_matrix.shape[0] > class_number:
-                warnings.warn("That the number of instances in the group is greater than the number of classes.", UserWarning)
+                warnings.warn(
+                    "That the number of instances in the group is greater than the number of classes.",
+                    UserWarning,
+                )
             continue
 
         if method == "greedy":
             y = _greedy(probas_matrix)
         elif method == "hungarian":
             y = _hungarian(probas_matrix)
-        
+
         y_predicted.extend(y)
     return y_predicted
 
-def _greedy(probas_matrix):        
 
-    probas = probas_matrix.reshape(probas_matrix.size,)
+def _greedy(probas_matrix):
+    probas = probas_matrix.reshape(
+        probas_matrix.size,
+    )
     order = probas.argsort()[::-1]
 
     y_pred_group = [None for i in range(probas_matrix.shape[0])]
@@ -348,51 +369,52 @@ def _greedy(probas_matrix):
             y_pred_group[instance] = class_
             instance_to_predict.remove(instance)
             class_predicted.add(class_)
-            
+
     return y_pred_group
-        
+
 
 def _hungarian(probas_matrix):
-    
     costs = np.log(probas_matrix)
     costs[costs == -np.inf] = 0  # if proba is 0, then the cost is 0
     _, col_ind = linear_sum_assignment(costs, maximize=True)
     col_ind = list(col_ind)
-        
+
     return col_ind
 
+
 def __combine_probabilities(y_probs, objects_in_track, classes):
-    """"
+    """ "
     Averages the classifier probabilities of the instances in the same track.
-    
-    :param y_probs: classifier probabilities for the instances 
+
+    :param y_probs: classifier probabilities for the instances
     :param objects_in_track: dictionary with the tracks
     :param classes: classes used to train the classifier
-    
+
     :return: a tuple with the modified y_probs ans the predicted classes
     """
-    
+
     y_probs_combined = y_probs.copy()
-    
+
     for objects in objects_in_track.values():
         if len(objects) <= 1:
-            continue         
+            continue
         means = y_probs_combined[objects, :].mean(axis=0)
-        y_probs_combined[objects, :] = means  
+        y_probs_combined[objects, :] = means
 
     preds = classes.take(list(np.argmax(y_probs_combined, axis=1)))
     return y_probs_combined, preds
 
+
 def __combine_features(X, objects_in_track):
     """
     Averages the features of the instances in the same track.
-    
+
     :param X: feature values of the instances.
     :param objects_in_track: dictionary with the tracks
-    
+
     :return: a modified X with averaged features
     """
-    
+
     X_combined = X.copy()
     is_df = isinstance(X, pd.DataFrame)
     if is_df:
@@ -401,17 +423,18 @@ def __combine_features(X, objects_in_track):
         if len(objects) <= 1:
             continue
         means = X_combined[objects].mean(axis=0)
-        X_combined[objects] = means 
+        X_combined[objects] = means
     return X_combined
+
 
 def __restricted_set_classification(y_probs, instances_by_frame, classes):
     """
     Restricted Set Classification for the instances in several frames
-    
+
     :param y_probs: the probabilities given by the classifier for the instances
     :param instances_by_frame: which instances are in each frame
     :param classes: the classes seen by the classifier
-    
+
     :return: the predicted labels
     """
 
@@ -425,35 +448,38 @@ def __restricted_set_classification(y_probs, instances_by_frame, classes):
         restricted_pred.extend(group_pred)
         num_conflicts += conflict
 
-    assert len(restricted_pred) == len(y_probs), "The number of predictions is different from the number of instances, check cannot link constraints, all instances must be in a cannot-link group."
-        
+    assert len(restricted_pred) == len(y_probs), (
+        "The number of predictions is different from the number of instances, check cannot link constraints, all instances must be in a cannot-link group."
+    )
+
     return restricted_pred
+
 
 def __restricted_set_hungarian(probs, classes):
     """
     Restricted Set Classification for a set of objects that have to be of different classes
-    
+
     :param probs: the probabilities given by the classifier
     :param classes: the classes seen by the classifier
-    
+
     :return: a tuple with 1) the Hungarian method was used (0 or 1), and 2) the predicted classes
     """
-    
+
     rows, cols = probs.shape
     preds = list(np.argmax(probs, axis=1))
 
     if rows > cols or len(preds) == len(set(preds)):
         # return 0 if rows > cols else 1, classes.take(preds)
         return 0, classes.take(preds)
-    costs = np.log(probs)    
-        
+    costs = np.log(probs)
+
     try:
         row_ind, col_ind = linear_sum_assignment(costs, maximize=True)
         col_ind = list(col_ind)
-    except: # some of the values was -Inf
-        probs += np.nextafter(0, 1) # small double value
-        costs = np.log(probs)        
+    except:  # some of the values was -Inf
+        probs += np.nextafter(0, 1)  # small double value
+        costs = np.log(probs)
         row_ind, col_ind = linear_sum_assignment(costs, maximize=True)
         col_ind = list(col_ind)
-        
+
     return 1, classes.take(col_ind)

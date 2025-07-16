@@ -9,7 +9,7 @@ This module contains utility functions that are used in different parts of the l
 > Safely divide two numbers preventing division by zero.
 [confidence_interval](#confidence_interval):
 > Calculate the confidence interval of the predictions.
-[choice_with_proportion](#choice_with_proportion): 
+[choice_with_proportion](#choice_with_proportion):
 > Choice the best predictions according to the proportion of each class.
 [calculate_prior_probability](#calculate_prior_probability):
 > Calculate the priori probability of each label.
@@ -32,8 +32,15 @@ from statsmodels.stats.proportion import proportion_confint
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.base import ClassifierMixin, RegressorMixin
 
-__all__ = ["safe_division", "confidence_interval", "choice_with_proportion", "calculate_prior_probability",
-           "mode", "check_n_jobs", "check_classifier"]
+__all__ = [
+    "safe_division",
+    "confidence_interval",
+    "choice_with_proportion",
+    "calculate_prior_probability",
+    "mode",
+    "check_n_jobs",
+    "check_classifier",
+]
 
 
 def safe_division(dividend, divisor, epsilon):
@@ -58,7 +65,7 @@ def safe_division(dividend, divisor, epsilon):
     return dividend / divisor
 
 
-def confidence_interval(X, hyp, y, alpha=.95):
+def confidence_interval(X, hyp, y, alpha=0.95):
     """Calculate the confidence interval of the predictions
 
     Parameters
@@ -109,7 +116,9 @@ def choice_with_proportion(predictions, class_predicted, proportion, extra=0):
     indices = np.zeros(0)
     for c in proportion:
         instances = class_predicted == c
-        to_add = np.argsort(predictions, kind="mergesort")[instances][::-1][0:for_each_class[c] + extra]
+        to_add = np.argsort(predictions, kind="mergesort")[instances][::-1][
+            0 : for_each_class[c] + extra
+        ]
         indices = np.concatenate((indices, to_add))
 
     return indices.astype(int)
@@ -192,7 +201,7 @@ def check_n_jobs(n_jobs):
 def calc_number_per_class(y_label):
     classes = np.unique(y_label)
     proportion = calculate_prior_probability(y_label)
-    factor = 1/min(proportion.values())
+    factor = 1 / min(proportion.values())
     number_per_class = dict()
     for c in classes:
         number_per_class[c] = math.ceil(proportion[c] * factor)
@@ -201,32 +210,44 @@ def calc_number_per_class(y_label):
 
 
 def check_classifier(base_classifier, can_be_list=True, collection_size=None):
-
     if base_classifier is None:
         return DecisionTreeClassifier()
-    elif can_be_list and (type(base_classifier) == list or type(base_classifier) == tuple):
+    elif can_be_list and (
+        type(base_classifier) == list or type(base_classifier) == tuple
+    ):
         if collection_size is not None:
             if len(base_classifier) != collection_size:
-                raise AttributeError(f"base_classifier is a list of classifiers, but its length ({len(base_classifier)}) is different from expected ({collection_size})")
+                raise AttributeError(
+                    f"base_classifier is a list of classifiers, but its length ({len(base_classifier)}) is different from expected ({collection_size})"
+                )
         for i, bc in enumerate(base_classifier):
             base_classifier[i] = check_classifier(bc, False)
         return list(base_classifier)  # Transform to list
     else:
         if not isinstance(base_classifier, ClassifierMixin):
-            raise AttributeError(f"base_classifier must be a ClassifierMixin, but found {type(base_classifier)}")
+            raise AttributeError(
+                f"base_classifier must be a ClassifierMixin, but found {type(base_classifier)}"
+            )
         return base_classifier
 
-def check_regressor(base_regressor, can_be_list=True, collection_size=None): 
-    if base_regressor is None: 
+
+def check_regressor(base_regressor, can_be_list=True, collection_size=None):
+    if base_regressor is None:
         return DecisionTreeRegressor()
-    elif can_be_list and (type(base_regressor) == list or type(base_regressor) == tuple): 
-        if collection_size is not None: 
-            if len(base_regressor) != collection_size: 
-                raise AttributeError(f"base_regressor is a list of regressors, but its lenght ({len(base_regressor)}) is different from expected ({collection_size})")
-        for i, br in enumerate(base_regressor): 
-            base_regressor[i] =check_regressor(br, False)
-        return list(base_regressor) # Transform to list
-    else: 
-        if not isinstance(base_regressor, RegressorMixin): 
-            raise AttributeError(f"base_regressor must be a RegressorMixin, but found{type(base_regressor)}")
+    elif can_be_list and (
+        type(base_regressor) == list or type(base_regressor) == tuple
+    ):
+        if collection_size is not None:
+            if len(base_regressor) != collection_size:
+                raise AttributeError(
+                    f"base_regressor is a list of regressors, but its lenght ({len(base_regressor)}) is different from expected ({collection_size})"
+                )
+        for i, br in enumerate(base_regressor):
+            base_regressor[i] = check_regressor(br, False)
+        return list(base_regressor)  # Transform to list
+    else:
+        if not isinstance(base_regressor, RegressorMixin):
+            raise AttributeError(
+                f"base_regressor must be a RegressorMixin, but found{type(base_regressor)}"
+            )
         return base_regressor

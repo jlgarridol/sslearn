@@ -18,4 +18,4 @@ This module contains functions to split datasets into training and testing sets.
 
 from ._split import artificial_ssl_dataset, StratifiedKFoldSS
 
-__all__ = ['artificial_ssl_dataset', 'StratifiedKFoldSS']
+__all__ = ["artificial_ssl_dataset", "StratifiedKFoldSS"]

@@ -29,18 +29,24 @@ from joblib import Parallel, delayed
 from sklearn.base import BaseEstimator, ClassifierMixin, MetaEstimatorMixin
 from sklearn.base import clone as skclone
 from sklearn.base import is_classifier
-from sklearn.multiclass import (LabelBinarizer, OneVsRestClassifier,
-                                _ConstantPredictor, _num_samples,
-                                _predict_binary)
+from sklearn.multiclass import (
+    LabelBinarizer,
+    OneVsRestClassifier,
+    _ConstantPredictor,
+    _num_samples,
+)
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import check_X_y, check_array
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.metaestimators import available_if
 from sklearn.ensemble._base import _set_random_states
 from sklearn.utils import check_random_state
 
-__all__ = ["get_dataset", "get_dataset_regression", "FakedProbaClassifier", "OneVsRestSSLClassifier"]
-
+__all__ = [
+    "get_dataset",
+    "get_dataset_regression",
+    "FakedProbaClassifier",
+    "OneVsRestSSLClassifier",
+]
 
 
 def get_dataset(X, y):
@@ -70,7 +76,7 @@ def get_dataset(X, y):
 
     X = check_array(X)
     y = check_array(y, ensure_2d=False, dtype=y.dtype.type)
-    
+
     X_label = X[y != y.dtype.type(-1)]
     y_label = y[y != y.dtype.type(-1)]
     X_unlabel = X[y == y.dtype.type(-1)]
@@ -83,7 +89,8 @@ def get_dataset(X, y):
 
     return X_label, y_label, X_unlabel
 
-def get_dataset_regression(X, y): 
+
+def get_dataset_regression(X, y):
     """Check and divide regression dataset between labeled and unlabeled data.
 
     Parameters
@@ -103,31 +110,31 @@ def get_dataset_regression(X, y):
         Unlabeled features matrix.
     """
     is_df = False
-    if isinstance(X, pd.DataFrame): 
+    if isinstance(X, pd.DataFrame):
         is_df = True
         columns = X.columns
 
     X = check_array(X)
 
     if is_df:
-        X_label = X[~np.isnan(y.to_numpy(dtype='float32'))]
-        y_label = y[~np.isnan(y.to_numpy(dtype='float32'))]
-        X_unlabel = X[np.isnan(y.to_numpy(dtype='float32'))]
-    else: 
+        X_label = X[~np.isnan(y.to_numpy(dtype="float32"))]
+        y_label = y[~np.isnan(y.to_numpy(dtype="float32"))]
+        X_unlabel = X[np.isnan(y.to_numpy(dtype="float32"))]
+    else:
         X_label = X[~np.isnan(y)]
         y_label = y[~np.isnan(y)]
         X_unlabel = X[np.isnan(y)]
 
     X_label, y_label = check_X_y(X_label, y_label)
 
-    if is_df: 
+    if is_df:
         X_label = pd.DataFrame(X_label, columns=columns)
         X_unlabel = pd.DataFrame(X_unlabel, columns=columns)
 
     return X_label, y_label, X_unlabel
 
-class BaseEnsemble(ABC, MetaEstimatorMixin, BaseEstimator):
 
+class BaseEnsemble(ABC, MetaEstimatorMixin, BaseEstimator):
     @abstractmethod
     def predict_proba(self, X):
         pass
@@ -144,19 +151,20 @@ class BaseEnsemble(ABC, MetaEstimatorMixin, BaseEstimator):
             Array with predicted labels.
         """
         predicted_probabilitiy = self.predict_proba(X)
-        classes = self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)),
-                                  axis=0)
+        classes = self.classes_.take(
+            (np.argmax(predicted_probabilitiy, axis=1)), axis=0
+        )
 
         # If exists label_encoder_ attribute, use it to transform classes
         if hasattr(self, "label_encoder_"):
             classes = self.label_encoder_.inverse_transform(classes)
-            
+
         return classes
 
 
 class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """
-    Fake predict_proba method for classifiers that do not have it. 
+    Fake predict_proba method for classifiers that do not have it.
     When predict_proba is called, it will use one hot encoding to fake the probabilities if base_estimator does not have predict_proba method.
 
     Examples
@@ -218,7 +226,7 @@ class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return self.base_estimator.predict(X)
 
     def predict_proba(self, X):
-        """Predict the probabilities of each class for X. 
+        """Predict the probabilities of each class for X.
         If the base estimator does not have a predict_proba method, it will be faked using one hot encoding.
 
         Parameters
@@ -233,7 +241,9 @@ class FakedProbaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         if "predict_proba" in dir(self.base_estimator):
             return self.base_estimator.predict_proba(X)
         else:
-            return self.one_hot.transform(self.base_estimator.predict(X).reshape(-1, 1)).toarray()
+            return self.one_hot.transform(
+                self.base_estimator.predict(X).reshape(-1, 1)
+            ).toarray()
 
 
 def _fit_binary_ssl(estimator, X, y_label, size, classes=None, **fit_params):
@@ -255,6 +265,7 @@ def _fit_binary_ssl(estimator, X, y_label, size, classes=None, **fit_params):
         estimator = skclone(estimator)
         estimator.fit(X, y, **fit_params)
     return estimator
+
 
 def _predict_binary_ssl(estimator, X, **predict_params):
     """Make predictions using a single binary estimator."""
@@ -298,7 +309,9 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
         columns = (col.toarray().ravel() for col in Y.T)
 
         estimators = [skclone(self.estimator) for _ in range(len(self.classes_))]
-        rs = check_random_state(estimators[0].get_params(deep=False).get("random_state", None))
+        rs = check_random_state(
+            estimators[0].get_params(deep=False).get("random_state", None)
+        )
         for e in estimators:
             _set_random_states(e, rs)
 
@@ -312,7 +325,7 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
                     "not %s" % self.label_binarizer_.classes_[i],
                     self.label_binarizer_.classes_[i],
                 ],
-                **fit_params
+                **fit_params,
             )
             for i, column in enumerate(columns)
         )
@@ -338,19 +351,23 @@ class OneVsRestSSLClassifier(OneVsRestClassifier):
                 argmaxima[maxima == pred] = i
             return self.classes_[argmaxima]
         else:
-            if (hasattr(self.estimators_[0], "decision_function") and
-                    is_classifier(self.estimators_[0])):
+            if hasattr(self.estimators_[0], "decision_function") and is_classifier(
+                self.estimators_[0]
+            ):
                 thresh = 0
             else:
-                thresh = .5
-            indices = array.array('i')
-            indptr = array.array('i', [0])
+                thresh = 0.5
+            indices = array.array("i")
+            indptr = array.array("i", [0])
             for e in self.estimators_:
-                indices.extend(np.where(_predict_binary_ssl(e, X, **kwards) > thresh)[0])
+                indices.extend(
+                    np.where(_predict_binary_ssl(e, X, **kwards) > thresh)[0]
+                )
                 indptr.append(len(indices))
             data = np.ones(len(indices), dtype=int)
-            indicator = sp.csc_matrix((data, indices, indptr),
-                                      shape=(n_samples, len(self.estimators_)))
+            indicator = sp.csc_matrix(
+                (data, indices, indptr), shape=(n_samples, len(self.estimators_))
+            )
             return self.label_binarizer_.inverse_transform(indicator)
 
     def predict_proba(self, X, **kwards):

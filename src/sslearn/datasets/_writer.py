@@ -4,7 +4,17 @@ import numpy as np
 import pandas as pd
 
 
-def save_keel(X, y, route, name=None, attribute_name=None, target_name="Class",  classification=True, unlabeled=True, force_targets=None):
+def save_keel(
+    X,
+    y,
+    route,
+    name=None,
+    attribute_name=None,
+    target_name="Class",
+    classification=True,
+    unlabeled=True,
+    force_targets=None,
+):
     """Save a dataset in the KEEL format
 
     Parameters
@@ -27,7 +37,7 @@ def save_keel(X, y, route, name=None, attribute_name=None, target_name="Class", 
         If the dataset has unlabeled instances, by default True
     force_targets : collection, optional
         Force the targets to be a specific value, by default None
-    """    
+    """
     columns = []
     types = []
     min_max = []
@@ -38,7 +48,7 @@ def save_keel(X, y, route, name=None, attribute_name=None, target_name="Class", 
     if classification:
         y = y.astype("str")
 
-        if unlabeled:            
+        if unlabeled:
             y = y.astype("str")
             if y.dtype.itemsize < np.array("unlabeled").dtype.itemsize:
                 y = y.astype(f"<U{len('unlabeled')}")
@@ -82,7 +92,7 @@ def save_keel(X, y, route, name=None, attribute_name=None, target_name="Class", 
     value = f"@relation {name}"
     for c, t, mm in zip(columns, types, min_max):
         value += f"\n@attribute {c}{t}{mm}"
-    
+
     value += "\n@inputs " + ",".join(attribute_name)
     value += f"\n@outputs {target_name}"
     value += "\n@data\n"

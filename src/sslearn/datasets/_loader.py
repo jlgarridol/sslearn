@@ -2,17 +2,26 @@ import pandas as pd
 import numpy as np
 import warnings
 from ._preprocess import secure_dataset
-pd.options.mode.chained_assignment = None 
+
+pd.options.mode.chained_assignment = None
 
 keel_type_cheat = {
     "string": "string",
     "integer": "int",
     "real": "float",
-    "numeric": "double"
+    "numeric": "double",
 }
 
 
-def read_keel(path, format="pandas", secure=False, target_col=None, encoding="utf-8", is_regression=False, **kwards):
+def read_keel(
+    path,
+    format="pandas",
+    secure=False,
+    target_col=None,
+    encoding="utf-8",
+    is_regression=False,
+    **kwards,
+):
     """Read a .dat file from KEEL (http://www.keel.es/)
 
     Parameters
@@ -55,14 +64,17 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
                 attributes.append(name_)
                 types.append(keel_type_cheat[type_])
             elif "@outputs" in line:
-                target = line.split(" ")[1].strip('\n')
+                target = line.split(" ")[1].strip("\n")
             elif "@data" in line:
                 break
     if target is None:
         target = attributes[-1]
-    data = pd.read_csv(path, skiprows=counter-1, header=None, **kwards)
+    data = pd.read_csv(path, skiprows=counter - 1, header=None, **kwards)
     if len(data.columns) != len(attributes):
-        warnings.warn(f"The dataset's have {len(data.columns)} columns but file declares {len(attributes)}.", RuntimeWarning)
+        warnings.warn(
+            f"The dataset's have {len(data.columns)} columns but file declares {len(attributes)}.",
+            RuntimeWarning,
+        )
         X = data
         y = None
     else:
@@ -82,10 +94,10 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
         X = data[att_columns]
         y = data[target_col]
 
-        if is_regression: 
+        if is_regression:
             y[y == "unlabeled"] = np.nan
             y = y.astype(float)
-        else: 
+        else:
             y[y == "unlabeled"] = y.dtype.type(-1)
             if secure:
                 X, y = secure_dataset(X, y)
@@ -99,7 +111,9 @@ def read_keel(path, format="pandas", secure=False, target_col=None, encoding="ut
     return X, y
 
 
-def read_csv(path, format="pandas", secure=False, target_col=-1, is_regression=False, **kwards):
+def read_csv(
+    path, format="pandas", secure=False, target_col=-1, is_regression=False, **kwards
+):
     """Read a .csv file
 
     Parameters
@@ -125,7 +139,9 @@ def read_csv(path, format="pandas", secure=False, target_col=-1, is_regression=F
     data = pd.read_csv(path, **kwards)
 
     if target_col is None:
-        raise AttributeError("`read_csv` do not allow a `None` value for `target_col`, use `integer` or `string` instead.")
+        raise AttributeError(
+            "`read_csv` do not allow a `None` value for `target_col`, use `integer` or `string` instead."
+        )
     elif isinstance(target_col, str):
         target_col = data.columns.index(target_col)
 
@@ -135,11 +151,10 @@ def read_csv(path, format="pandas", secure=False, target_col=-1, is_regression=F
     if not is_regression and secure:
         X, y = secure_dataset(X, y)
 
-    if is_regression: 
+    if is_regression:
         y[y == "None"] = np.nan
         y = y.astype(float)
         # Transform of the Series x all values that is None to NaN
-        
 
     if format == "numpy":
         X = X.to_numpy()

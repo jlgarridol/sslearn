@@ -5,7 +5,7 @@ This module contains classes to train semi-supervised learning algorithms using 
 
 ## Self-Training Algorithms
 
-* [SelfTraining](#SelfTraining): 
+* [SelfTraining](#SelfTraining):
 Self-training algorithm.
 * [Setred](#Setred):
 Self-training with redundancy reduction.
@@ -35,11 +35,29 @@ Tri-training for regression
 
 """
 
-from ._co import (CoForest, CoTraining, CoTrainingByCommittee,
-                  DemocraticCoLearning, Rasco, RelRasco, CoReg)
+from ._co import (
+    CoForest,
+    CoTraining,
+    CoTrainingByCommittee,
+    DemocraticCoLearning,
+    Rasco,
+    RelRasco,
+    CoReg,
+)
 from ._self import SelfTraining, Setred
 from ._tritraining import DeTriTraining, TriTraining, TriTrainingRegressor
 
-__all__ = ["SelfTraining", "Setred", "CoTraining", "CoTrainingByCommittee",
-           "DemocraticCoLearning", "Rasco", "RelRasco", "CoReg", "CoForest",
-           "TriTraining", "DeTriTraining", "TriTrainingRegressor"]
+__all__ = [
+    "SelfTraining",
+    "Setred",
+    "CoTraining",
+    "CoTrainingByCommittee",
+    "DemocraticCoLearning",
+    "Rasco",
+    "RelRasco",
+    "CoReg",
+    "CoForest",
+    "TriTraining",
+    "DeTriTraining",
+    "TriTrainingRegressor",
+]
